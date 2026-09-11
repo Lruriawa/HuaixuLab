@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎨 渐变生成器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画 ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉 ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+
+        /* ===== 页脚 ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器 ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:#ffffff;
+            box-shadow:inset 0 0 40px rgba(0,0,0,0.02);
+            padding:16px;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+
+        /* ===== 渐变预览 ===== */
+        .gradient-preview {
+            width:100%;
+            height:120px;
+            border-radius:12px;
+            margin-bottom:14px;
+            border:1px solid rgba(0,0,0,0.06);
+            transition:background 0.3s;
+            background:linear-gradient(135deg, #6c5ce7, #a29bfe);
+        }
+
+        /* ===== 预设按钮 ===== */
+        .preset-group {
+            display:flex;
+            flex-wrap:wrap;
+            gap:6px;
+            margin-bottom:10px;
+        }
+        .preset-group .preset-btn {
+            padding:4px 12px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:20px;
+            background:rgba(0,0,0,0.02);
+            color:rgba(0,0,0,0.25);
+            font-size:0.6rem;
+            cursor:pointer;
+            transition:all 0.3s;
+            font-weight:600;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .preset-group .preset-btn:hover {
+            background:rgba(0,0,0,0.04);
+            color:rgba(0,0,0,0.5);
+        }
+        .preset-group .preset-btn.active {
+            background:rgba(33,110,57,0.1);
+            border-color:rgba(33,110,57,0.2);
+            color:#216E39;
+        }
+
+        /* ===== 颜色控制 ===== */
+        .color-controls {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            margin-bottom:12px;
+        }
+        .color-row {
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .color-row label {
+            color:rgba(0,0,0,0.3);
+            font-size:0.7rem;
+            min-width:30px;
+        }
+        .color-row input[type="color"] {
+            width:40px;
+            height:40px;
+            border:2px solid rgba(0,0,0,0.06);
+            border-radius:8px;
+            background:transparent;
+            cursor:pointer;
+            padding:2px;
+        }
+        .color-row input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+        .color-row input[type="color"]::-webkit-color-swatch { border:none; border-radius:6px; }
+        .color-row .hex-input {
+            flex:1;
+            background:rgba(0,0,0,0.02);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:8px;
+            padding:8px 12px;
+            color:#1a1a1a;
+            font-size:0.8rem;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            outline:none;
+            transition:border-color 0.3s;
+        }
+        .color-row .hex-input:focus { border-color:rgba(33,110,57,0.3); }
+
+        /* ===== 角度控制 ===== */
+        .angle-control {
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .angle-control label {
+            color:rgba(0,0,0,0.3);
+            font-size:0.7rem;
+            min-width:30px;
+        }
+        .angle-control input[type="range"] {
+            flex:1;
+            -webkit-appearance:none;
+            height:4px;
+            background:rgba(0,0,0,0.08);
+            border-radius:4px;
+            outline:none;
+            transition:background 0.3s;
+        }
+        .angle-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance:none;
+            width:16px;
+            height:16px;
+            border-radius:50%;
+            background:#216E39;
+            cursor:pointer;
+            box-shadow:0 2px 8px rgba(33,110,57,0.25);
+        }
+        .angle-control .angle-value {
+            color:rgba(0,0,0,0.3);
+            font-size:0.7rem;
+            min-width:40px;
+            text-align:right;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+        }
+
+        /* ===== 代码输出 ===== */
+        .code-output {
+            background:rgba(0,0,0,0.02);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:10px 14px;
+            color:#216E39;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            font-size:0.7rem;
+            word-break:break-all;
+            min-height:44px;
+            line-height:1.7;
+            cursor:pointer;
+            transition:background 0.2s;
+        }
+        .code-output:hover {
+            background:rgba(0,0,0,0.04);
+        }
+
+        /* ===== 按钮组 ===== */
+        .btn-group {
+            display:flex;
+            gap:8px;
+            margin-top:10px;
+        }
+        .btn-group button {
+            flex:1;
+            padding:8px 12px;
+            border:none;
+            border-radius:10px;
+            font-size:0.8rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+        .btn-group button:hover { opacity:0.9; }
+        .btn-group .btn-copy {
+            background:rgba(33,110,57,0.08);
+            border:1px solid rgba(33,110,57,0.1);
+            color:#216E39;
+        }
+        .btn-group .btn-copy:hover { background:rgba(33,110,57,0.12); }
+        .btn-group .btn-random {
+            background:linear-gradient(135deg, #7c3aed, #a29bfe);
+            color:#fff;
+            box-shadow:0 4px 20px rgba(108,92,231,0.2);
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.35);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.55); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position:fixed;
+            bottom:80px;
+            left:50%;
+            transform:translateX(-50%) translateY(80px);
+            background:rgba(0,0,0,0.8);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:10px 24px;
+            border-radius:30px;
+            font-size:0.85rem;
+            border:1px solid rgba(255,255,255,0.06);
+            opacity:0;
+            transition:all 0.4s ease;
+            pointer-events:none;
+            z-index:100;
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; }
+            .gradient-preview { height:90px; }
+            .color-row .hex-input { font-size:0.7rem; padding:6px 10px; }
+            .color-row input[type="color"] { width:34px; height:34px; }
+            .code-output { font-size:0.6rem; min-height:36px; padding:8px 10px; }
+            .btn-group button { font-size:0.7rem; padding:6px 10px; }
+            .preset-group .preset-btn { font-size:0.55rem; padding:3px 10px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .toast { font-size:0.75rem; padding:8px 18px; bottom:70px; }
+        }
+        @media (max-width: 380px) {
+            .color-row { flex-wrap:wrap; }
+            .color-row label { min-width:20px; }
+            .color-row .hex-input { flex:1 1 100%; }
+            .btn-group { flex-wrap:wrap; }
+            .btn-group button { flex:1 1 40%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+    <div class="logo">🎨</div>
+    <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+    <div class="loading-status">加载中...</div>
+    <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<script>
+    setTimeout(function() {
+        var loader = document.getElementById('loader');
+        if (loader) loader.classList.add('hide');
+    }, 2500);
+    if (document.readyState !== 'loading') {
+        setTimeout(function() {
+            document.getElementById('loader').classList.add('hide');
+        }, 2500);
+    }
+</script>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+    <a href="https://lab.lruriawa.top/" class="brand">
+        <span class="logo-icon">🧪</span>
+        <span class="brand-text">槐序Lab实验室</span>
+    </a>
+    <span class="title">🎨 渐变生成</span>
+    <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+    <div class="tool-header">
+        <span style="opacity:0.4;">🎨</span>
+        <span class="title-tag">渐变生成器</span>
+    </div>
+
+    <div class="tool-container">
+        <div class="gradient-preview" id="gradientPreview"></div>
+
+        <div class="preset-group" id="presetGroup">
+            <button class="preset-btn active" data-preset="0">日落</button>
+            <button class="preset-btn" data-preset="1">海洋</button>
+            <button class="preset-btn" data-preset="2">森林</button>
+            <button class="preset-btn" data-preset="3">极光</button>
+            <button class="preset-btn" data-preset="4">火焰</button>
+            <button class="preset-btn" data-preset="5">星空</button>
+        </div>
+
+        <div class="color-controls">
+            <div class="color-row">
+                <label>起始</label>
+                <input type="color" id="color1" value="#6c5ce7">
+                <input type="text" class="hex-input" id="hex1" value="#6c5ce7" maxlength="7">
+            </div>
+            <div class="color-row">
+                <label>结束</label>
+                <input type="color" id="color2" value="#a29bfe">
+                <input type="text" class="hex-input" id="hex2" value="#a29bfe" maxlength="7">
+            </div>
+            <div class="angle-control">
+                <label>角度</label>
+                <input type="range" id="angleSlider" min="0" max="360" value="135">
+                <span class="angle-value" id="angleDisplay">135°</span>
+            </div>
+        </div>
+
+        <div class="code-output" id="codeOutput">
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-copy" id="copyBtn">📋 复制代码</button>
+            <button class="btn-random" id="randomBtn">🎲 随机</button>
+        </div>
+    </div>
+
+    <div class="how-to-play">
+        <strong>🎨 渐变生成器：</strong>
+        选择颜色和角度 · 实时预览 · 一键复制 CSS 代码 · 支持预设方案
+    </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+    <span class="text">
+        🧪 槐序Lab实验室 · 渐变生成器 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+        &nbsp;&nbsp;<span class="love">❤️</span>
+    </span>
+</footer>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+    // ===== Toast =====
+    const toast = document.getElementById('toast');
+    let toastTimer = null;
+
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+    }
+
+    // ===== 预设渐变 =====
+    const presets = [
+        { c1: '#6c5ce7', c2: '#a29bfe', angle: 135 },
+        { c1: '#0066ff', c2: '#00d2ff', angle: 135 },
+        { c1: '#11998e', c2: '#38ef7d', angle: 135 },
+        { c1: '#00b4db', c2: '#0083b0', angle: 135 },
+        { c1: '#f12711', c2: '#f5af19', angle: 135 },
+        { c1: '#1a1a2e', c2: '#16213e', angle: 135 },
+    ];
+
+    let currentPreset = 0;
+
+    const preview = document.getElementById('gradientPreview');
+    const color1 = document.getElementById('color1');
+    const color2 = document.getElementById('color2');
+    const hex1 = document.getElementById('hex1');
+    const hex2 = document.getElementById('hex2');
+    const angleSlider = document.getElementById('angleSlider');
+    const angleDisplay = document.getElementById('angleDisplay');
+    const codeOutput = document.getElementById('codeOutput');
+
+    function getGradientCSS() {
+        const c1 = hex1.value || '#6c5ce7';
+        const c2 = hex2.value || '#a29bfe';
+        const angle = angleSlider.value;
+        return `background: linear-gradient(${angle}deg, ${c1}, ${c2});`;
+    }
+
+    function updateGradient() {
+        const css = getGradientCSS();
+        preview.style.background = css.replace('background: ', '');
+        codeOutput.textContent = css;
+    }
+
+    function syncColorInputs() {
+        hex1.value = color1.value;
+        hex2.value = color2.value;
+        updateGradient();
+    }
+
+    function loadPreset(index) {
+        const p = presets[index];
+        if (!p) return;
+        color1.value = p.c1;
+        color2.value = p.c2;
+        hex1.value = p.c1;
+        hex2.value = p.c2;
+        angleSlider.value = p.angle;
+        angleDisplay.textContent = p.angle + '°';
+        currentPreset = index;
+        document.querySelectorAll('.preset-btn').forEach((btn, i) => {
+            btn.classList.toggle('active', i === index);
+        });
+        updateGradient();
+    }
+
+    // ===== 事件绑定 =====
+    color1.addEventListener('input', syncColorInputs);
+    color2.addEventListener('input', syncColorInputs);
+
+    hex1.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+            color1.value = val;
+            updateGradient();
+        }
+    });
+    hex2.addEventListener('input', function() {
+        const val = this.value.trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+            color2.value = val;
+            updateGradient();
+        }
+    });
+
+    angleSlider.addEventListener('input', function() {
+        angleDisplay.textContent = this.value + '°';
+        updateGradient();
+    });
+
+    // 预设按钮
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            loadPreset(parseInt(this.dataset.preset));
+        });
+    });
+
+    // 复制
+    document.getElementById('copyBtn').addEventListener('click', function() {
+        const code = codeOutput.textContent;
+        navigator.clipboard.writeText(code).then(() => {
+            showToast('✅ 已复制 CSS 代码');
+        }).catch(() => {
+            const range = document.createRange();
+            range.selectNode(codeOutput);
+            window.getSelection().removeAllRanges();
+            window.getSelection().addRange(range);
+            document.execCommand('copy');
+            showToast('✅ 已复制 CSS 代码');
+        });
+    });
+
+    // 随机
+    document.getElementById('randomBtn').addEventListener('click', function() {
+        const randomColor1 = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        const randomColor2 = '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+        const randomAngle = Math.floor(Math.random() * 360);
+        color1.value = randomColor1;
+        color2.value = randomColor2;
+        hex1.value = randomColor1;
+        hex2.value = randomColor2;
+        angleSlider.value = randomAngle;
+        angleDisplay.textContent = randomAngle + '°';
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        updateGradient();
+        showToast('🎲 随机渐变已生成');
+    });
+
+    // 点击代码区域复制
+    codeOutput.addEventListener('click', function() {
+        document.getElementById('copyBtn').click();
+    });
+
+    // ===== 初始化 =====
+    loadPreset(0);
+</script>
+</body>
+</html>

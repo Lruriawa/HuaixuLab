@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌧️ 彩虹雨-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    overflow:hidden;
+    height:100vh;
+    width:100vw;
+    position:relative;
+  }
+
+  /* ===== 加载动画（与粒子文字一致） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 全屏 Canvas ===== */
+  #canvas {
+    display:block;
+    width:100vw;
+    height:100vh;
+    background: transparent; /* 由 body 渐变背景透出 */
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:1;
+  }
+
+  /* ===== 页眉（毛玻璃，与之前完全一致） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃，与之前完全一致） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 加载动画 -->
+<div id="loader">
+  <div class="logo">🌧️</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 全屏 Canvas（置于底层） ===== -->
+<canvas id="canvas"></canvas>
+
+<!-- ===== 页眉（浮于上层） ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌧️ 彩虹雨 <span>· 全屏粒子</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 彩虹雨 · 全屏粒子动画 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// 加载动画隐藏
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// Canvas 全屏逻辑
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// 为了在浅色背景上显示清晰，增加雨滴的发光和对比
+const drops = [];
+const COUNT = 300;
+for (let i = 0; i < COUNT; i++) {
+  drops.push({
+    x: Math.random() * W,
+    y: Math.random() * H,
+    len: 10 + Math.random() * 25,
+    speed: 4 + Math.random() * 8,
+    hue: Math.random() * 360,
+    width: 1 + Math.random() * 2
+  });
+}
+
+function draw() {
+  // 使用透明背景擦除，让 body 渐变色透出，同时产生拖尾
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = 'rgba(255,255,255,0.08)'; // 轻微擦除，产生拖尾
+  ctx.fillRect(0, 0, W, H);
+  
+  ctx.globalCompositeOperation = 'lighter';
+  
+  for (let d of drops) {
+    d.y += d.speed;
+    d.hue = (d.hue + 0.2) % 360;
+    if (d.y > H) {
+      d.y = -d.len;
+      d.x = Math.random() * W;
+      d.hue = Math.random() * 360;
+      d.speed = 4 + Math.random() * 8;
+    }
+    
+    const alpha = 0.4 + 0.6 * (1 - d.y / H);
+    ctx.globalAlpha = alpha * 0.8;
+    // 增强发光，适应浅色背景
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = `hsla(${d.hue}, 90%, 60%, 0.6)`;
+    ctx.strokeStyle = `hsl(${d.hue}, 90%, 60%)`;
+    ctx.lineWidth = d.width;
+    
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x, d.y + d.len);
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0;
+    // 雨滴头部光点
+    ctx.fillStyle = `hsla(${d.hue}, 90%, 80%, ${alpha * 0.4})`;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, 2 + d.width * 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'source-over';
+  
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

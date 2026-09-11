@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌌 3D 螺旋星系-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    overflow:hidden;
+    height:100vh;
+    width:100vw;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 3D 渲染容器（全屏置于底层） ===== */
+  #three-container {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    z-index:1;
+    background:#050510;
+  }
+  #three-container canvas {
+    display:block;
+    width:100% !important;
+    height:100% !important;
+  }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+    pointer-events:none;
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+    pointer-events:auto;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+    pointer-events:auto;
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+    pointer-events:none;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+    pointer-events:none;
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+    pointer-events:none;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 交互提示（浮于3D场景上方） ===== */
+  .hint {
+    position:fixed;
+    bottom:80px;
+    left:0;
+    right:0;
+    z-index:5;
+    text-align:center;
+    color:rgba(255,255,255,0.08);
+    font-size:0.8rem;
+    letter-spacing:1px;
+    pointer-events:none;
+    font-weight:400;
+    transition:opacity 0.5s;
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+    .hint { font-size:0.6rem; bottom:65px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🌌</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 3D 渲染容器 ===== -->
+<div id="three-container"></div>
+
+<!-- ===== 交互提示 ===== -->
+<div class="hint">👆 单指旋转 · 双指缩放</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌌 3D螺旋星系 <span>· 3D交互</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 3D螺旋星系 · 3D交互 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<!-- ===== Three.js 导入映射 ===== -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- ===== Three.js 核心逻辑 ===== -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===== 加载完成隐藏加载动画 =====
+const loader = document.getElementById('loader');
+if (loader) {
+  setTimeout(() => { loader.classList.add('hide'); }, 2500);
+}
+
+// ===== 获取容器 =====
+const container = document.getElementById('three-container');
+
+// ===== 场景、相机、渲染器 =====
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(10, 6, 15);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setClearColor(0x050510);
+container.appendChild(renderer.domElement);
+
+// ===== 轨道控制器 =====
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 1.2;
+controls.rotateSpeed = 0.8;
+controls.enableZoom = true;
+controls.target.set(0, 0, 0);
+
+// ===== 创建星系粒子 =====
+const count = 8000;
+const positions = new Float32Array(count * 3);
+const colors = new Float32Array(count * 3);
+const sizes = new Float32Array(count);
+
+const innerColor = new THREE.Color(0xffaa44);
+const outerColor = new THREE.Color(0x4488ff);
+
+for (let i = 0; i < count; i++) {
+  const radius = Math.pow(Math.random(), 1.5) * 12;
+  const angle = radius * 2.5 + Math.random() * 0.8;
+  const spread = (1 - radius / 12) * 1.2 + 0.2;
+
+  const x = Math.cos(angle) * radius + (Math.random() - 0.5) * spread;
+  const z = Math.sin(angle) * radius + (Math.random() - 0.5) * spread;
+  const y = (Math.random() - 0.5) * spread * 0.6;
+
+  positions[i * 3] = x;
+  positions[i * 3 + 1] = y;
+  positions[i * 3 + 2] = z;
+
+  const mixFactor = radius / 12;
+  const color = innerColor.clone().lerp(outerColor, mixFactor);
+  color.multiplyScalar(0.6 + Math.random() * 0.5);
+
+  colors[i * 3] = color.r;
+  colors[i * 3 + 1] = color.g;
+  colors[i * 3 + 2] = color.b;
+
+  sizes[i] = 0.08 + Math.random() * 0.25;
+}
+
+const geometry = new THREE.BufferGeometry();
+geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+const material = new THREE.PointsMaterial({
+  size: 0.15,
+  vertexColors: true,
+  transparent: true,
+  opacity: 0.95,
+  blending: THREE.AdditiveBlending,
+  depthWrite: false,
+  sizeAttenuation: true,
+});
+
+const galaxy = new THREE.Points(geometry, material);
+scene.add(galaxy);
+
+// ===== 背景繁星 =====
+const starGeo = new THREE.BufferGeometry();
+const starCount = 2000;
+const starPos = new Float32Array(starCount * 3);
+for (let i = 0; i < starCount * 3; i++) {
+  starPos[i] = (Math.random() - 0.5) * 200;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+const starMat = new THREE.PointsMaterial({
+  color: 0xffffff,
+  size: 0.15,
+  transparent: true,
+  opacity: 0.6,
+  blending: THREE.AdditiveBlending,
+  sizeAttenuation: true
+});
+const stars = new THREE.Points(starGeo, starMat);
+scene.add(stars);
+
+// ===== 窗口自适应 =====
+window.addEventListener('resize', () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+
+// ===== 动画循环 =====
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

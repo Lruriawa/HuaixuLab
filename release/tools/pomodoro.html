@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⏱️ 番茄时钟-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 工具容器（毛玻璃卡片） ===== */
+  .tool-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .tool-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .tool-header .title-tag {
+    color:rgba(0,0,0,0.3);
+    font-size:0.9rem;
+    font-weight:400;
+  }
+
+  /* ===== 内部工具容器（浅色毛玻璃） ===== */
+  .tool-container {
+    position:relative;
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.6);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(0,0,0,0.04);
+    padding:20px 16px;
+    min-height:340px;
+  }
+
+  /* ===== 计时器显示 ===== */
+  .timer-display {
+    text-align:center;
+    padding:20px 0 10px;
+    font-size:4.8rem;
+    font-weight:200;
+    color:#1a1a1a;
+    font-variant-numeric:tabular-nums;
+    letter-spacing:3px;
+    font-family:'MiSans', 'Courier New', monospace;
+    background:rgba(0,0,0,0.02);
+    border-radius:16px;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .timer-display .work-mode { color:#216E39; }
+  .timer-display .break-mode { color:#1abc9c; }
+  .timer-label {
+    text-align:center;
+    color:rgba(0,0,0,0.25);
+    font-size:0.9rem;
+    margin-top:6px;
+    font-weight:400;
+  }
+
+  /* ===== 模式切换 ===== */
+  .mode-switch {
+    display:flex;
+    gap:8px;
+    justify-content:center;
+    margin:16px 0 14px;
+  }
+  .mode-switch button {
+    padding:6px 20px;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:20px;
+    background:rgba(255,255,255,0.4);
+    color:rgba(0,0,0,0.3);
+    font-size:0.8rem;
+    cursor:pointer;
+    transition:all 0.2s;
+    font-weight:500;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .mode-switch button:active { transform:scale(0.94); }
+  .mode-switch button.active {
+    background:rgba(33,110,57,0.08);
+    color:#216E39;
+    border-color:rgba(33,110,57,0.12);
+  }
+  .mode-switch button:hover { background:rgba(0,0,0,0.04); }
+
+  /* ===== 控制按钮 ===== */
+  .controls {
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .controls button {
+    padding:10px 26px;
+    border:none;
+    border-radius:40px;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform 0.2s, opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .controls button:active { transform:scale(0.94); }
+  .controls button:hover { opacity:0.9; }
+  .btn-start {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    box-shadow:0 4px 20px rgba(64,196,99,0.25);
+  }
+  .btn-pause {
+    background:linear-gradient(135deg, #f59e0b, #d97706);
+    color:#fff;
+    box-shadow:0 4px 20px rgba(245,158,11,0.25);
+  }
+  .btn-reset {
+    background:rgba(0,0,0,0.04);
+    color:rgba(0,0,0,0.4);
+    border:1px solid rgba(0,0,0,0.06);
+  }
+  .btn-reset:hover { background:rgba(0,0,0,0.06); }
+
+  /* ===== 说明 ===== */
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:12px;
+    color:rgba(0,0,0,0.4);
+    font-size:0.85rem;
+    line-height:1.6;
+    text-align:center;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+  /* ===== 响铃遮罩 ===== */
+  .alarm-overlay {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(8px);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:100;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.5s ease;
+  }
+  .alarm-overlay.show {
+    opacity:1;
+    pointer-events:auto;
+  }
+  .alarm-overlay .alarm-icon {
+    font-size:5rem;
+    animation: alarmBounce 0.6s ease-in-out infinite alternate;
+  }
+  @keyframes alarmBounce {
+    0% { transform:scale(1) rotate(-5deg); }
+    100% { transform:scale(1.1) rotate(5deg); }
+  }
+  .alarm-overlay .alarm-title {
+    color:#fff;
+    font-size:2.2rem;
+    font-weight:700;
+    margin-top:12px;
+  }
+  .alarm-overlay .alarm-sub {
+    color:rgba(255,255,255,0.4);
+    font-size:1rem;
+    margin-top:4px;
+  }
+  .alarm-overlay .alarm-btn {
+    margin-top:24px;
+    padding:12px 40px;
+    border:none;
+    border-radius:40px;
+    font-size:1.1rem;
+    font-weight:600;
+    cursor:pointer;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    transition:transform 0.2s, opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .alarm-overlay .alarm-btn:active { transform:scale(0.94); }
+  .alarm-overlay .alarm-btn:hover { opacity:0.9; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .tool-wrapper { padding:12px; }
+    .tool-header { font-size:0.85rem; }
+    .tool-container { padding:16px 12px; min-height:300px; }
+    .timer-display { font-size:3.6rem; padding:16px 0 8px; }
+    .timer-label { font-size:0.8rem; }
+    .mode-switch button { font-size:0.7rem; padding:4px 14px; }
+    .controls button { font-size:0.9rem; padding:8px 20px; }
+    .how-to-play { font-size:0.75rem; padding:8px 10px; }
+    .alarm-overlay .alarm-title { font-size:1.8rem; }
+    .alarm-overlay .alarm-icon { font-size:4rem; }
+  }
+  @media (max-width: 380px) {
+    .timer-display { font-size:2.8rem; }
+    .controls { gap:6px; }
+    .controls button { font-size:0.8rem; padding:6px 14px; }
+    .mode-switch { gap:4px; }
+    .mode-switch button { font-size:0.6rem; padding:3px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">⏱️</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">⏱️ 番茄时钟</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="tool-wrapper">
+  <div class="tool-header">
+    <span style="opacity:0.5;">⏱️</span>
+    <span class="title-tag">番茄时钟</span>
+  </div>
+
+  <div class="tool-container">
+    <div class="timer-display" id="timerDisplay">25:00</div>
+    <div class="timer-label" id="timerLabel">🍅 专注时间</div>
+
+    <div class="mode-switch">
+      <button class="active" data-mode="work">📖 专注 25min</button>
+      <button data-mode="break">☕ 休息 5min</button>
+    </div>
+
+    <div class="controls">
+      <button class="btn-start" id="startBtn">▶ 开始</button>
+      <button class="btn-pause" id="pauseBtn" style="display:none;">⏸ 暂停</button>
+      <button class="btn-reset" id="resetBtn">🔄 重置</button>
+    </div>
+  </div>
+
+  <div class="how-to-play">
+    <strong>💡 使用：</strong> 专注25分钟 · 休息5分钟 · 循环使用提高效率
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 番茄时钟 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<!-- ===== 响铃遮罩 ===== -->
+<div class="alarm-overlay" id="alarmOverlay">
+  <div class="alarm-icon">🔔</div>
+  <div class="alarm-title" id="alarmTitle">⏰ 时间到！</div>
+  <div class="alarm-sub" id="alarmSub">休息时间到了，起来活动一下吧</div>
+  <button class="alarm-btn" id="alarmBtn">✅ 知道了</button>
+</div>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为番茄时钟核心逻辑，完整保留 =====
+const display = document.getElementById('timerDisplay');
+const label = document.getElementById('timerLabel');
+const startBtn = document.getElementById('startBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const resetBtn = document.getElementById('resetBtn');
+const alarmOverlay = document.getElementById('alarmOverlay');
+const alarmTitle = document.getElementById('alarmTitle');
+const alarmSub = document.getElementById('alarmSub');
+const alarmBtn = document.getElementById('alarmBtn');
+
+let totalSeconds = 25 * 60;
+let remaining = totalSeconds;
+let timer = null;
+let isPaused = false;
+let mode = 'work';
+
+// ===== 响铃功能（Web Audio API） =====
+function playAlarm() {
+  try {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523.25, 659.25, 783.99, 1046.50];
+    let index = 0;
+
+    function playNote() {
+      if (index >= notes.length) {
+        index = 0;
+        if (++playedRounds >= 2) {
+          return;
+        }
+        setTimeout(playNote, 400);
+        return;
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = notes[index];
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.25);
+      index++;
+      setTimeout(playNote, 300);
+    }
+
+    let playedRounds = 0;
+    playNote();
+
+    setTimeout(() => {
+      try {
+        const osc2 = audioCtx.createOscillator();
+        const gain2 = audioCtx.createGain();
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.frequency.value = 880;
+        osc2.type = 'sine';
+        gain2.gain.setValueAtTime(0.25, audioCtx.currentTime);
+        gain2.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc2.start(audioCtx.currentTime);
+        osc2.stop(audioCtx.currentTime + 0.3);
+      } catch(e) {}
+    }, 600);
+
+    setTimeout(() => {
+      try {
+        const osc3 = audioCtx.createOscillator();
+        const gain3 = audioCtx.createGain();
+        osc3.connect(gain3);
+        gain3.connect(audioCtx.destination);
+        osc3.frequency.value = 1108.73;
+        osc3.type = 'sine';
+        gain3.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain3.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc3.start(audioCtx.currentTime);
+        osc3.stop(audioCtx.currentTime + 0.3);
+      } catch(e) {}
+    }, 900);
+
+  } catch (e) {
+    console.log('🔔 时间到！');
+  }
+}
+
+// ===== 显示响铃遮罩 =====
+function showAlarm() {
+  if (mode === 'work') {
+    alarmTitle.textContent = '🍅 专注结束！';
+    alarmSub.textContent = '休息一下，起来活动活动吧 ☕';
+  } else {
+    alarmTitle.textContent = '☕ 休息结束！';
+    alarmSub.textContent = '继续专注，开始下一轮 📖';
+  }
+  alarmOverlay.classList.add('show');
+  playAlarm();
+}
+
+function hideAlarm() {
+  alarmOverlay.classList.remove('show');
+}
+
+alarmBtn.addEventListener('click', hideAlarm);
+
+// ===== 计时器核心 =====
+function formatTime(s) {
+  const m = String(Math.floor(s / 60)).padStart(2,'0');
+  const sec = String(s % 60).padStart(2,'0');
+  return m + ':' + sec;
+}
+
+function updateDisplay() {
+  display.textContent = formatTime(remaining);
+  if (mode === 'work') {
+    label.textContent = '🍅 专注时间';
+    display.className = 'timer-display work-mode';
+  } else {
+    label.textContent = '☕ 休息时间';
+    display.className = 'timer-display break-mode';
+  }
+}
+
+function tick() {
+  if (remaining <= 0) {
+    clearInterval(timer);
+    timer = null;
+    showAlarm();
+    startBtn.style.display = 'inline-block';
+    startBtn.textContent = '▶ 开始';
+    pauseBtn.style.display = 'none';
+    isPaused = false;
+    return;
+  }
+  remaining--;
+  updateDisplay();
+}
+
+// ===== 模式切换 =====
+document.querySelectorAll('.mode-switch button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    if (timer) return;
+    document.querySelectorAll('.mode-switch button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    mode = this.dataset.mode;
+    remaining = mode === 'work' ? 25 * 60 : 5 * 60;
+    updateDisplay();
+    hideAlarm();
+  });
+});
+
+// ===== 开始 =====
+startBtn.addEventListener('click', function() {
+  if (timer) return;
+  if (remaining <= 0) {
+    remaining = mode === 'work' ? 25 * 60 : 5 * 60;
+    updateDisplay();
+  }
+  timer = setInterval(tick, 1000);
+  this.style.display = 'none';
+  pauseBtn.style.display = 'inline-block';
+  isPaused = false;
+  hideAlarm();
+});
+
+// ===== 暂停 =====
+pauseBtn.addEventListener('click', function() {
+  if (!timer) return;
+  clearInterval(timer);
+  timer = null;
+  this.style.display = 'none';
+  startBtn.style.display = 'inline-block';
+  startBtn.textContent = '▶ 继续';
+  isPaused = true;
+});
+
+// ===== 重置 =====
+resetBtn.addEventListener('click', function() {
+  clearInterval(timer);
+  timer = null;
+  remaining = mode === 'work' ? 25 * 60 : 5 * 60;
+  updateDisplay();
+  startBtn.style.display = 'inline-block';
+  startBtn.textContent = '▶ 开始';
+  pauseBtn.style.display = 'none';
+  isPaused = false;
+  hideAlarm();
+});
+
+// ===== 初始化 =====
+updateDisplay();
+</script>
+</body>
+</html>

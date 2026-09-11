@@ -1,0 +1,1857 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>槐序Lab-槐序实验室-心理健康测评中心</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        /* ===== 基础重置 ===== */
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color:transparent; }
+        
+        /* ===== 滚动条 ===== */
+        ::-webkit-scrollbar { width:4px; }
+        ::-webkit-scrollbar-track { background:transparent; }
+        ::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.1); border-radius:10px; }
+
+        /* ===== 主体 ===== */
+        body {
+            min-height:100vh;
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            padding:0;
+            display:flex;
+            justify-content:center;
+            overflow-x:hidden;
+            padding-top:70px;
+        }
+        body::before {
+            content:'';
+            position:fixed;
+            top:-30%;
+            left:-20%;
+            width:70%;
+            height:70%;
+            background:radial-gradient(ellipse, rgba(64,196,99,0.06), transparent 70%);
+            pointer-events:none;
+            z-index:0;
+            animation: glowMove 20s ease-in-out infinite alternate;
+        }
+        body::after {
+            content:'';
+            position:fixed;
+            bottom:-30%;
+            right:-20%;
+            width:60%;
+            height:60%;
+            background:radial-gradient(ellipse, rgba(48,161,78,0.04), transparent 70%);
+            pointer-events:none;
+            z-index:0;
+            animation: glowMove2 25s ease-in-out infinite alternate;
+        }
+        @keyframes glowMove {
+            0% { transform:translate(0,0) scale(1); }
+            100% { transform:translate(10%,10%) scale(1.2); }
+        }
+        @keyframes glowMove2 {
+            0% { transform:translate(0,0) scale(1); }
+            100% { transform:translate(-10%,-10%) scale(1.3); }
+        }
+
+        .container {
+            max-width:1280px;
+            width:100%;
+            position:relative;
+            z-index:1;
+            padding:0 16px 40px;
+        }
+
+        /* ===== 加载动画 ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 导航栏 ===== */
+        .navbar {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:1000;
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border-bottom:1px solid rgba(0,0,0,0.06);
+            padding:0 16px;
+            height:60px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        }
+        .navbar .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.2rem;
+            white-space:nowrap;
+        }
+        .navbar .brand .logo-icon { font-size:1.6rem; }
+        .navbar .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463, #30A14E);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .navbar .nav-right {
+            display:flex;
+            align-items:center;
+            gap:12px;
+        }
+        .navbar .nav-right .site-name {
+            color:rgba(0,0,0,0.4);
+            font-size:0.7rem;
+            letter-spacing:1px;
+            font-weight:300;
+        }
+        .navbar .nav-right .site-name span { color:rgba(0,0,0,0.5); }
+        .navbar .nav-right .nav-link {
+            color:rgba(0,0,0,0.55);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:5px 12px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.08);
+        }
+        .navbar .nav-right .nav-link:hover {
+            background:rgba(0,0,0,0.06);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.15);
+        }
+        .navbar .nav-right .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+            box-shadow:0 4px 20px rgba(64,196,99,0.25);
+        }
+        .navbar .nav-right .nav-link.primary:hover { opacity:0.85; }
+
+        .menu-toggle {
+            display:none;
+            flex-direction:column;
+            gap:4px;
+            background:none;
+            border:none;
+            cursor:pointer;
+            padding:4px;
+            z-index:1001;
+        }
+        .menu-toggle span {
+            display:block;
+            width:24px;
+            height:2px;
+            background:rgba(0,0,0,0.5);
+            border-radius:2px;
+            transition:all 0.3s;
+        }
+        .menu-toggle.active span:nth-child(1) { transform:rotate(45deg) translate(4px,4px); }
+        .menu-toggle.active span:nth-child(2) { opacity:0; }
+        .menu-toggle.active span:nth-child(3) { transform:rotate(-45deg) translate(4px,-4px); }
+
+        .mobile-menu {
+            display:none;
+            position:fixed;
+            top:60px;
+            left:0;
+            right:0;
+            background:rgba(255,255,255,0.98);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border-bottom:1px solid rgba(0,0,0,0.06);
+            padding:16px 20px;
+            z-index:999;
+            flex-direction:column;
+            align-items:center;
+            gap:12px;
+            transform:translateY(-10px);
+            opacity:0;
+            transition:all 0.3s ease;
+            pointer-events:none;
+        }
+        .mobile-menu.open {
+            display:flex;
+            transform:translateY(0);
+            opacity:1;
+            pointer-events:auto;
+        }
+        .mobile-menu .mm-site-name {
+            color:rgba(0,0,0,0.3);
+            font-size:0.8rem;
+            letter-spacing:2px;
+        }
+        .mobile-menu .mm-link {
+            color:rgba(0,0,0,0.55);
+            text-decoration:none;
+            font-size:1rem;
+            padding:8px 20px;
+            border-radius:20px;
+            border:1px solid rgba(0,0,0,0.08);
+            transition:all 0.3s;
+            width:100%;
+            text-align:center;
+        }
+        .mobile-menu .mm-link:hover {
+            background:rgba(0,0,0,0.06);
+            color:#1a1a1a;
+        }
+        .mobile-menu .mm-divider {
+            width:80%;
+            height:1px;
+            background:rgba(0,0,0,0.06);
+        }
+
+        @media (max-width: 640px) {
+            body { padding-top:56px; }
+            .navbar { height:56px; padding:0 14px; }
+            .navbar .brand { font-size:1rem; }
+            .navbar .brand .logo-icon { font-size:1.3rem; }
+            .navbar .nav-right .site-name { display:none; }
+            .navbar .nav-right .nav-link { display:none; }
+            .menu-toggle { display:flex; }
+        }
+        @media (min-width: 641px) {
+            .mobile-menu { display:none !important; }
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            text-align:center;
+            padding:50px 20px 40px;
+            margin-bottom:36px;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border-radius:32px;
+            border:1px solid rgba(0,0,0,0.04);
+            box-shadow:0 8px 40px rgba(0,0,0,0.04), inset 0 1px 0 rgba(255,255,255,0.8);
+            position:relative;
+            overflow:hidden;
+        }
+        .hero::before {
+            content:'';
+            position:absolute;
+            top:-50%;
+            left:-50%;
+            width:200%;
+            height:200%;
+            background:conic-gradient(from 0deg, transparent, rgba(64,196,99,0.04), transparent, rgba(48,161,78,0.02), transparent);
+            animation: headerRotate 30s linear infinite;
+            pointer-events:none;
+        }
+        @keyframes headerRotate {
+            0% { transform:rotate(0deg); }
+            100% { transform:rotate(360deg); }
+        }
+        .hero > * { position:relative; z-index:1; }
+        .hero .logo-big { font-size:4.8rem; display:block; margin-bottom:4px; }
+        .hero h1 {
+            font-size:3.2rem;
+            font-weight:800;
+            background:linear-gradient(135deg, #216E39, #40C463, #30A14E);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+            letter-spacing:-0.5px;
+        }
+        .hero .tagline {
+            color:rgba(0,0,0,0.35);
+            font-size:1.2rem;
+            margin-top:6px;
+            font-weight:400;
+            letter-spacing:3px;
+        }
+        .hero .desc {
+            color:rgba(0,0,0,0.35);
+            font-size:0.95rem;
+            margin-top:10px;
+            max-width:600px;
+            margin-left:auto;
+            margin-right:auto;
+            line-height:1.8;
+        }
+        .hero .badge-group {
+            display:flex;
+            gap:12px;
+            justify-content:center;
+            margin-top:16px;
+            flex-wrap:wrap;
+        }
+        .hero .badge-group .badge {
+            padding:5px 16px;
+            background:rgba(64,196,99,0.06);
+            border:1px solid rgba(64,196,99,0.10);
+            border-radius:50px;
+            color:rgba(0,0,0,0.35);
+            font-size:0.8rem;
+            letter-spacing:0.5px;
+        }
+        .hero .badge-group .badge strong { color:#216E39; font-weight:600; }
+
+        /* ===== 测评卡片网格 ===== */
+        .section-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-bottom:16px;
+            padding-bottom:10px;
+            border-bottom:1px solid rgba(0,0,0,0.06);
+        }
+        .section-title {
+            color:#1a1a1a;
+            font-size:1.6rem;
+            font-weight:700;
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .section-title .emoji { font-size:1.4rem; }
+        .section-title .count {
+            font-size:0.8rem;
+            font-weight:400;
+            background:rgba(0,0,0,0.04);
+            padding:2px 14px;
+            border-radius:30px;
+            color:rgba(0,0,0,0.25);
+        }
+        .section-desc {
+            color:rgba(0,0,0,0.2);
+            font-size:0.85rem;
+            font-weight:400;
+        }
+
+        .grid {
+            display:grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap:16px;
+            margin-bottom:30px;
+        }
+
+        .card {
+            background:rgba(255,255,255,0.5);
+            backdrop-filter:blur(10px);
+            -webkit-backdrop-filter:blur(10px);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:20px;
+            padding:24px 16px 20px;
+            text-align:center;
+            text-decoration:none;
+            color:#1a1a1a;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor:pointer;
+            position:relative;
+            overflow:hidden;
+            box-shadow:0 2px 8px rgba(0,0,0,0.02);
+            min-height:180px;
+        }
+        .card::before {
+            content:'';
+            position:absolute;
+            inset:0;
+            background:linear-gradient(135deg, rgba(64,196,99,0.04), transparent);
+            opacity:0;
+            transition:opacity 0.4s;
+            pointer-events:none;
+        }
+        .card:hover {
+            transform:translateY(-6px);
+            background:rgba(255,255,255,0.8);
+            border-color:rgba(64,196,99,0.15);
+            box-shadow:0 16px 48px rgba(0,0,0,0.06), 0 0 30px rgba(64,196,99,0.02);
+        }
+        .card:hover::before { opacity:1; }
+        .card:active { transform:scale(0.96); transition-duration:0.05s; }
+
+        .card .icon { font-size:3rem; line-height:1.2; margin-bottom:8px; transition:transform 0.3s; }
+        .card:hover .icon { transform:scale(1.1); }
+        .card h3 { font-size:1.1rem; font-weight:600; margin-bottom:4px; color:#1a1a1a; }
+        .card .desc { font-size:0.8rem; color:rgba(0,0,0,0.35); margin:0; line-height:1.5; }
+        .card .meta {
+            margin-top:10px;
+            display:flex;
+            gap:10px;
+            font-size:0.6rem;
+            color:rgba(0,0,0,0.2);
+            justify-content:center;
+            flex-wrap:wrap;
+        }
+        .card .meta span {
+            padding:2px 10px;
+            background:rgba(0,0,0,0.04);
+            border-radius:20px;
+        }
+        .card .meta .tag-ai {
+            background:rgba(139,92,246,0.12);
+            color:#7c3aed;
+        }
+        .card .meta .tag-hot {
+            background:rgba(239,68,68,0.10);
+            color:#dc2626;
+        }
+        .card .new-badge {
+            position:absolute;
+            top:8px;
+            right:8px;
+            font-size:0.5rem;
+            font-weight:700;
+            color:#216E39;
+            background:rgba(64,196,99,0.12);
+            padding:2px 10px;
+            border-radius:12px;
+            letter-spacing:0.5px;
+            animation: pulse 1.8s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%, 100% { opacity:1; } 50% { opacity:0.3; } }
+
+        @media (max-width: 640px) {
+            .grid { grid-template-columns: repeat(2, 1fr); gap:10px; }
+            .card { padding:16px 10px 14px; min-height:150px; }
+            .card .icon { font-size:2.2rem; }
+            .card h3 { font-size:0.9rem; }
+            .card .desc { font-size:0.7rem; }
+            .card .meta { font-size:0.5rem; gap:6px; }
+            .card .meta span { padding:1px 8px; }
+            .card .new-badge { font-size:0.4rem; top:4px; right:4px; padding:1px 6px; }
+            .section-title { font-size:1.3rem; }
+            .hero { padding:30px 16px 24px; }
+            .hero h1 { font-size:2.2rem; }
+            .hero .logo-big { font-size:3.5rem; }
+        }
+        @media (max-width: 400px) {
+            .grid { grid-template-columns: 1fr 1fr; gap:8px; }
+            .card { min-height:130px; padding:12px 8px 10px; }
+            .card .icon { font-size:1.8rem; }
+            .card h3 { font-size:0.8rem; }
+        }
+
+        .footer {
+            text-align:center;
+            margin-top:20px;
+            padding:24px 0 14px;
+            border-top:1px solid rgba(0,0,0,0.06);
+            color:rgba(0,0,0,0.35);
+            font-size:0.9rem;
+            line-height:2.0;
+            letter-spacing:0.5px;
+        }
+        .footer .love { color:rgba(239,68,68,0.15); font-size:0.95rem; }
+        .footer .links { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; }
+        .footer .links a {
+            color:rgba(0,0,0,0.35);
+            text-decoration:none;
+            font-size:0.8rem;
+            transition:color 0.2s;
+        }
+        .footer .links a:hover { color:rgba(0,0,0,0.6); }
+
+        /* ===== 免责声明弹窗 ===== */
+        .modal-overlay {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background:rgba(0,0,0,0.35);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            z-index:200;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 0.4s ease;
+            padding:20px;
+        }
+        .modal-overlay.show {
+            opacity:1;
+            pointer-events:auto;
+        }
+        .modal-box {
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-radius:24px;
+            padding:28px 24px 24px;
+            max-width:400px;
+            width:100%;
+            box-shadow:0 20px 60px rgba(0,0,0,0.12);
+            border:1px solid rgba(0,0,0,0.04);
+            text-align:center;
+            transform:scale(0.95) translateY(10px);
+            transition:transform 0.4s ease;
+        }
+        .modal-overlay.show .modal-box {
+            transform:scale(1) translateY(0);
+        }
+        .modal-box .modal-icon {
+            font-size:3.5rem;
+            margin-bottom:6px;
+        }
+        .modal-box h3 {
+            font-size:1.3rem;
+            color:#1a1a1a;
+            font-weight:700;
+            margin-bottom:12px;
+        }
+        .modal-box .modal-body {
+            text-align:left;
+            color:rgba(0,0,0,0.55);
+            font-size:0.9rem;
+            line-height:1.9;
+            margin-bottom:20px;
+        }
+        .modal-box .modal-body p {
+            margin-bottom:8px;
+        }
+        .modal-box .modal-body strong {
+            color:#1a1a1a;
+            font-weight:600;
+        }
+        .modal-box .modal-buttons {
+            display:flex;
+            gap:10px;
+            justify-content:center;
+            flex-wrap:wrap;
+        }
+        .modal-box .modal-btn {
+            padding:10px 28px;
+            border:none;
+            border-radius:40px;
+            font-size:1rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.2s;
+            touch-action:manipulation;
+        }
+        .modal-box .modal-btn:active { transform:scale(0.95); }
+        .modal-box .modal-btn.cancel {
+            background:rgba(0,0,0,0.05);
+            color:rgba(0,0,0,0.4);
+        }
+        .modal-box .modal-btn.cancel:hover { background:rgba(0,0,0,0.08); }
+        .modal-box .modal-btn.confirm {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            color:#fff;
+            box-shadow:0 4px 16px rgba(33,110,57,0.3);
+        }
+        .modal-box .modal-btn.confirm:hover { opacity:0.9; }
+
+        /* ===== 退出确认弹窗（自定义，与读心术风格一致） ===== */
+        .exit-modal-overlay {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background:rgba(0,0,0,0.35);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            z-index:300;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 0.4s ease;
+            padding:20px;
+        }
+        .exit-modal-overlay.show {
+            opacity:1;
+            pointer-events:auto;
+        }
+        .exit-modal-overlay .exit-modal-box {
+            background:rgba(255,255,255,0.95);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-radius:24px;
+            padding:28px 24px 24px;
+            max-width:400px;
+            width:100%;
+            box-shadow:0 20px 60px rgba(0,0,0,0.12);
+            border:1px solid rgba(0,0,0,0.04);
+            text-align:center;
+            transform:scale(0.95) translateY(10px);
+            transition:transform 0.4s ease;
+        }
+        .exit-modal-overlay.show .exit-modal-box {
+            transform:scale(1) translateY(0);
+        }
+        .exit-modal-box .exit-modal-icon {
+            font-size:3.5rem;
+            margin-bottom:6px;
+        }
+        .exit-modal-box h3 {
+            font-size:1.3rem;
+            color:#1a1a1a;
+            font-weight:700;
+            margin-bottom:8px;
+        }
+        .exit-modal-box .exit-modal-body {
+            text-align:center;
+            color:rgba(0,0,0,0.55);
+            font-size:0.9rem;
+            line-height:1.9;
+            margin-bottom:20px;
+        }
+        .exit-modal-box .exit-modal-body p {
+            margin-bottom:4px;
+        }
+        .exit-modal-box .exit-modal-buttons {
+            display:flex;
+            gap:10px;
+            justify-content:center;
+            flex-wrap:wrap;
+        }
+        .exit-modal-box .exit-modal-btn {
+            padding:10px 28px;
+            border:none;
+            border-radius:40px;
+            font-size:1rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.2s;
+            touch-action:manipulation;
+        }
+        .exit-modal-box .exit-modal-btn:active { transform:scale(0.95); }
+        .exit-modal-box .exit-modal-btn.cancel {
+            background:rgba(0,0,0,0.05);
+            color:rgba(0,0,0,0.4);
+        }
+        .exit-modal-box .exit-modal-btn.cancel:hover { background:rgba(0,0,0,0.08); }
+        .exit-modal-box .exit-modal-btn.confirm {
+            background:linear-gradient(135deg, #e74c3c, #c0392b);
+            color:#fff;
+            box-shadow:0 4px 16px rgba(231,76,60,0.3);
+        }
+        .exit-modal-box .exit-modal-btn.confirm:hover { opacity:0.9; }
+
+        /* ===== 结果页内嵌样式 ===== */
+        .result-content {
+            padding:10px 0;
+            width:100%;
+        }
+        .result-content .result-card {
+            background:rgba(33,110,57,0.06);
+            border-radius:16px;
+            padding:16px;
+            border:1px solid rgba(33,110,57,0.08);
+            width:100%;
+            margin-bottom:12px;
+        }
+        .result-content .result-card .result-title {
+            font-size:1.4rem;
+            font-weight:700;
+            color:#216E39;
+            margin-bottom:4px;
+        }
+        .result-content .result-card .result-sub {
+            font-size:0.8rem;
+            color:rgba(0,0,0,0.4);
+            margin-bottom:8px;
+        }
+        .result-content .result-card .result-desc {
+            font-size:0.9rem;
+            color:#1a1a1a;
+            line-height:1.8;
+        }
+        .result-content .result-card .result-score {
+            margin-top:10px;
+            padding-top:10px;
+            border-top:1px solid rgba(0,0,0,0.04);
+            font-size:0.75rem;
+            color:rgba(0,0,0,0.25);
+            display:flex;
+            justify-content:space-around;
+            flex-wrap:wrap;
+            gap:6px;
+        }
+        .result-content .result-card .result-score span {
+            display:inline-flex;
+            align-items:center;
+            gap:4px;
+        }
+        .result-content .result-card .result-score .bar-bg {
+            display:inline-block;
+            width:40px;
+            height:4px;
+            background:rgba(0,0,0,0.06);
+            border-radius:2px;
+            overflow:hidden;
+            vertical-align:middle;
+        }
+        .result-content .result-card .result-score .bar-fill {
+            height:100%;
+            border-radius:2px;
+            transition:width 0.8s ease;
+        }
+
+        .btn-group {
+            display:flex;
+            gap:10px;
+            flex-wrap:wrap;
+            justify-content:center;
+            margin-top:6px;
+        }
+        .btn-group .btn-secondary {
+            padding:10px 24px;
+            border:1.5px solid rgba(0,0,0,0.06);
+            border-radius:40px;
+            background:rgba(255,255,255,0.6);
+            color:#1a1a1a;
+            font-size:0.9rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:all 0.2s;
+            touch-action:manipulation;
+        }
+        .btn-group .btn-secondary:active { transform:scale(0.95); }
+        .btn-group .btn-secondary:hover {
+            background:rgba(33,110,57,0.06);
+            border-color:#216E39;
+        }
+        .btn-group .btn-secondary.share-btn {
+            background:linear-gradient(135deg, #fbbf24, #f59e0b);
+            border-color:#fbbf24;
+            color:#1a1a1a;
+        }
+
+        .toast {
+            position:fixed;
+            bottom:100px;
+            left:50%;
+            transform:translateX(-50%);
+            background:rgba(0,0,0,0.75);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:10px 24px;
+            border-radius:30px;
+            font-size:0.9rem;
+            font-weight:500;
+            z-index:999;
+            opacity:0;
+            transition:opacity 0.4s ease;
+            pointer-events:none;
+            white-space:nowrap;
+        }
+        .toast.show { opacity:1; }
+
+        /* ===== 答题页面样式（与AI读心术一致） ===== */
+        .question-wrapper {
+            grid-column:1/-1;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(10px);
+            border-radius:20px;
+            padding:20px 18px;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .question-wrapper .q-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:8px;
+        }
+        .question-wrapper .q-header .q-title {
+            font-weight:700;
+            color:#1a1a1a;
+            font-size:1rem;
+        }
+        .question-wrapper .q-header .q-progress {
+            color:rgba(0,0,0,0.2);
+            font-size:0.75rem;
+        }
+        .question-wrapper .q-progress-bar {
+            width:100%;
+            height:4px;
+            background:rgba(0,0,0,0.06);
+            border-radius:4px;
+            margin-bottom:16px;
+            overflow:hidden;
+        }
+        .question-wrapper .q-progress-bar .q-bar-fill {
+            height:100%;
+            background:linear-gradient(90deg,#216E39,#40C463);
+            border-radius:4px;
+            transition:width 0.5s ease;
+        }
+        .question-wrapper .q-nav {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:12px;
+        }
+        .question-wrapper .q-nav .q-step {
+            color:rgba(0,0,0,0.2);
+            font-size:0.75rem;
+        }
+        .question-wrapper .q-nav .q-exit {
+            background:rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.06);
+            color:rgba(0,0,0,0.3);
+            padding:3px 12px;
+            border-radius:30px;
+            font-size:0.7rem;
+            cursor:pointer;
+            transition:all 0.2s;
+            font-weight:500;
+        }
+        .question-wrapper .q-nav .q-exit:active {
+            transform:scale(0.95);
+            background:rgba(239,68,68,0.08);
+            border-color:rgba(239,68,68,0.2);
+            color:#e74c3c;
+        }
+        .question-wrapper .q-text {
+            font-size:1.1rem;
+            font-weight:600;
+            color:#1a1a1a;
+            line-height:1.7;
+            margin-bottom:14px;
+            min-height:60px;
+        }
+        .question-wrapper .q-options {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+        }
+        .question-wrapper .q-options button {
+            padding:12px 16px;
+            border:1.5px solid rgba(0,0,0,0.06);
+            border-radius:14px;
+            background:rgba(255,255,255,0.5);
+            font-size:0.95rem;
+            color:#1a1a1a;
+            cursor:pointer;
+            transition:all 0.2s;
+            text-align:left;
+            font-weight:500;
+            touch-action:manipulation;
+            width:100%;
+        }
+        .question-wrapper .q-options button:active {
+            transform:scale(0.97);
+        }
+        .question-wrapper .q-options button.selected {
+            background:rgba(33,110,57,0.12);
+            border-color:#216E39;
+            box-shadow:0 0 0 2px rgba(33,110,57,0.08);
+        }
+        .question-wrapper .q-options button:hover {
+            background:rgba(33,110,57,0.04);
+            border-color:rgba(33,110,57,0.2);
+        }
+        .question-wrapper .q-controls {
+            display:grid;
+            grid-template-columns:1fr 1fr 1fr;
+            gap:8px;
+            margin-top:14px;
+            padding-top:12px;
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .question-wrapper .q-controls button {
+            padding:8px 0;
+            border:none;
+            border-radius:30px;
+            font-size:0.85rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:all 0.2s;
+            touch-action:manipulation;
+            background:rgba(0,0,0,0.04);
+            color:rgba(0,0,0,0.4);
+            text-align:center;
+        }
+        .question-wrapper .q-controls button:active {
+            transform:scale(0.95);
+        }
+        .question-wrapper .q-controls button:disabled {
+            opacity:0.25;
+            cursor:not-allowed;
+        }
+        .question-wrapper .q-controls button.confirm-btn {
+            background:linear-gradient(135deg,#216E39,#40C463);
+            color:#fff;
+            box-shadow:0 4px 16px rgba(33,110,57,0.25);
+        }
+        .question-wrapper .q-controls button.confirm-btn:disabled {
+            opacity:0.4;
+            cursor:not-allowed;
+            box-shadow:none;
+            background:rgba(0,0,0,0.08);
+            color:rgba(0,0,0,0.2);
+        }
+        .question-wrapper .q-controls button.prev-btn:disabled,
+        .question-wrapper .q-controls button.next-btn:disabled {
+            background:rgba(0,0,0,0.02);
+            color:rgba(0,0,0,0.15);
+        }
+
+        /* ===== 结果容器 ===== */
+        .result-wrapper {
+            grid-column:1/-1;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(10px);
+            border-radius:20px;
+            padding:20px 18px;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+
+        @media (max-width:640px) {
+            .toast { font-size:0.8rem; padding:8px 18px; white-space:normal; max-width:80%; }
+            .question-wrapper { padding:16px 14px; }
+            .question-wrapper .q-text { font-size:1rem; min-height:50px; }
+            .question-wrapper .q-options button { font-size:0.85rem; padding:10px 14px; }
+            .question-wrapper .q-controls { gap:6px; }
+            .question-wrapper .q-controls button { font-size:0.75rem; padding:6px 0; }
+            .exit-modal-box { padding:20px 16px; }
+            .exit-modal-box .exit-modal-body { font-size:0.85rem; }
+            .exit-modal-box .exit-modal-btn { padding:8px 20px; font-size:0.9rem; }
+        }
+        @media (max-width:380px) {
+            .question-wrapper .q-controls { gap:4px; }
+            .question-wrapper .q-controls button { font-size:0.7rem; padding:5px 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">🧠</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            var loader = document.getElementById('loader');
+            if (loader) loader.classList.add('hide');
+        }, 2000);
+        if (document.readyState !== 'loading') {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2000);
+        }
+    </script>
+
+    <!-- ===== 导航栏 ===== -->
+    <nav class="navbar">
+        <a href="index.html" class="brand">
+            <span class="logo-icon">🧠</span>
+            <span class="brand-text">槐序Lab-心理健康测评中心</span>
+            <span class="brand-sub"></span>
+        </a>
+        <div class="nav-right">
+            <span class="site-name"><span>✦</span> 心理健康 · 人格 · 情绪 · 压力</span>
+            <a href="https://lab.lruriawa.top/" class="nav-link">🏠 首页</a>
+            <a href="https://tech.www.lruriawa.top" class="nav-link">💌 官网</a>
+            <a href="https://blog.lruriawa.top" class="nav-link">📝 博客</a>
+            <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🚀 项目列表</a>
+            <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ===== 移动端下拉菜单 ===== -->
+    <div class="mobile-menu" id="mobileMenu">
+        <span class="mm-site-name">✦ 心理健康 · 人格 · 情绪 · 压力</span>
+        <div class="mm-divider"></div>
+        <a href="https://lab.lruriawa.top/" class="mm-link">🏠 首页</a>
+        <a href="https://tech.www.lruriawa.top" class="mm-link">💌 官网</a>
+        <a href="https://blog.lruriawa.top" class="mm-link">📝 博客</a>
+        <div class="mm-divider"></div>
+        <a href="https://lab.lruriawa.top/release/home.html" class="mm-link" style="background:rgba(64,196,99,0.08);border-color:rgba(64,196,99,0.12);color:#216E39;">🚀 项目列表</a>
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ===== 免责声明弹窗 ===== -->
+    <div class="modal-overlay" id="disclaimerModal">
+        <div class="modal-box">
+            <div class="modal-icon">📋</div>
+            <h3>免责声明</h3>
+            <div class="modal-body">
+                <p>本测评仅供<strong>参考</strong>，所有结果基于您的主观回答生成，<strong>不构成</strong>任何专业心理、性格或医疗建议。</p>
+                <p>如果您有心理或情绪上的困扰，请咨询<strong>专业的心理咨询师或医生</strong>。</p>
+                <p>您的回答<strong>仅用于本次测评</strong>，不会被保存或用于其他用途。</p>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn cancel" id="disclaimerCancel">取消</button>
+                <button class="modal-btn confirm" id="disclaimerConfirm">✅ 同意并继续</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== 退出确认弹窗（自定义，与读心术风格一致） ===== -->
+    <div class="exit-modal-overlay" id="exitModal">
+        <div class="exit-modal-box">
+            <div class="exit-modal-icon">⏹️</div>
+            <h3>退出测评</h3>
+            <div class="exit-modal-body">
+                <p>确定要退出当前测评吗？</p>
+                <p style="color:rgba(0,0,0,0.3);font-size:0.85rem;">进度将不会保留</p>
+            </div>
+            <div class="exit-modal-buttons">
+                <button class="exit-modal-btn cancel" id="exitCancel">继续答题</button>
+                <button class="exit-modal-btn confirm" id="exitConfirm">✅ 确定退出</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- ===== Hero ===== -->
+        <section class="hero">
+            <span class="logo-big">🧠</span>
+            <h1>槐序Lab-心理健康测评中心</h1>
+            <p class="tagline">心理健康 · 人格 · 情绪 · 压力</p>
+            <p class="desc">
+                基于专业心理学理论的AI测评工具，帮助你更好地了解自己的思维模式、情绪状态和人格特质。
+            </p>
+            <div class="badge-group">
+                <span class="badge">🧠 <strong>10</strong> 个测评</span>
+                <span class="badge">📊 <strong>AI</strong> 智能分析</span>
+                <span class="badge">🕒 <strong>3-5</strong> 分钟/项</span>
+                <span class="badge">🔒 <strong>匿名</strong> 安全</span>
+            </div>
+        </section>
+
+        <!-- ===== 测评列表 ===== -->
+        <div class="section-header">
+            <div class="section-title">
+                <span class="emoji">📋</span> 心理测评
+                <span class="count">10</span>
+            </div>
+            <span class="section-desc">选择一项开始探索</span>
+        </div>
+
+        <div class="grid" id="testGrid">
+            <!-- 由 JS 动态生成 -->
+        </div>
+
+        <!-- ===== 关于 ===== -->
+        <div style="background:rgba(255,255,255,0.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(0,0,0,0.04);border-radius:20px;padding:24px 28px;margin-bottom:30px;">
+            <h2 style="font-size:1.2rem;color:#1a1a1a;font-weight:700;margin-bottom:8px;">🧠 关于槐序Lab-心理健康测评中心</h2>
+            <p style="color:rgba(0,0,0,0.4);font-size:0.9rem;line-height:1.9;">
+                本平台基于 <strong style="color:#216E39;">人格心理学、情绪心理学</strong> 等经典理论框架，结合AI算法对您的回答进行分析。
+                所有测评均为<strong style="color:#216E39;">匿名</strong>进行，数据仅用于本次测评，不会存储或共享。
+            </p>
+        </div>
+
+        <!-- ===== 底部 ===== -->
+        <div class="footer">
+            <div class="links">
+                <a href="https://lab.lruriawa.top/">🏠 首页</a>
+                <a href="https://tech.www.lruriawa.top">💌 官网</a>
+                <a href="https://blog.lruriawa.top">📝 博客</a>
+                <a href="release/home.html">🚀 项目列表</a>
+            </div>
+            🌟 Copyright © 2023-2026 天津市槐序网络科技工作室<br>
+            <span class="love">❤️ Design by DeepSeek</span>
+        </div>
+
+    </div>
+
+    <script>
+    // ============================================================
+    //  🧠 AI测心理 - 完整10种测评数据
+    // ============================================================
+
+    const tests = [{
+        id: 'mind-reader',
+        icon: '🧠',
+        title: 'AI读心术',
+        desc: '16道题测出你的思维类型：理性/感性/务实',
+        tag: 'AI分析',
+        tagType: 'ai',
+        hot: true,
+        new: true,
+        questions: [
+            { q: '你更倾向于哪种思考方式？', options: [{ text: '逻辑分析，讲究证据和推理', score: '理性' }, { text: '直觉感受，跟着感觉走', score: '感性' }, { text: '结合实际，看什么最管用', score: '务实' }] },
+            { q: '面对一个陌生环境，你通常会？', options: [{ text: '先观察再行动，不做没把握的事', score: '理性' }, { text: '立刻探索，充满好奇', score: '感性' }, { text: '找熟悉的人或东西先稳住', score: '务实' }] },
+            { q: '当你做决定时，最依赖什么？', options: [{ text: '数据和事实', score: '理性' }, { text: '内心的感受和直觉', score: '感性' }, { text: '过去的经验和教训', score: '务实' }] },
+            { q: '你更喜欢哪种社交方式？', options: [{ text: '深度交流，一两个知己就够了', score: '理性' }, { text: '热闹氛围，认识各种有趣的人', score: '感性' }, { text: '随缘，合得来就多聊几句', score: '务实' }] },
+            { q: '当你感到压力时，通常会？', options: [{ text: '分析原因，拆解问题逐个解决', score: '理性' }, { text: '找朋友倾诉或做点别的事转移', score: '感性' }, { text: '直接行动，做点什么让自己不闲着', score: '务实' }] },
+            { q: '你觉得自己最大的优势是？', options: [{ text: '头脑清晰，擅长思考和判断', score: '理性' }, { text: '共情能力强，善解人意', score: '感性' }, { text: '执行力和适应力强', score: '务实' }] },
+            { q: '你更愿意把时间花在？', options: [{ text: '阅读、学习、深度思考', score: '理性' }, { text: '艺术、音乐、与人交流', score: '感性' }, { text: '旅行、动手实践、体验新事物', score: '务实' }] },
+            { q: '你如何看待失败？', options: [{ text: '一个需要分析原因的学习机会', score: '理性' }, { text: '一件让人难过但能让人成长的事', score: '感性' }, { text: '很正常，换个方向继续试就行', score: '务实' }] },
+            { q: '在团队合作中，你通常扮演什么角色？', options: [{ text: '策划者，负责梳理逻辑和制定方案', score: '理性' }, { text: '调和者，关注大家的情绪和氛围', score: '感性' }, { text: '执行者，把想法落地变成现实', score: '务实' }] },
+            { q: '你更喜欢哪种沟通风格？', options: [{ text: '简洁直接，说重点不绕弯子', score: '理性' }, { text: '温和委婉，顾及对方的感受', score: '感性' }, { text: '灵活切换，看情况而定', score: '务实' }] },
+            { q: '当你收到不同意见时，第一反应是？', options: [{ text: '评估对方观点是否合理', score: '理性' }, { text: '在意对方的态度和语气', score: '感性' }, { text: '思考这个意见能不能用上', score: '务实' }] },
+            { q: '你觉得什么最能定义一个人？', options: [{ text: '他/她思考问题的方式', score: '理性' }, { text: '他/她对待他人的态度', score: '感性' }, { text: '他/她做成了什么事', score: '务实' }] },
+            { q: '空闲时间你更喜欢做什么？', options: [{ text: '研究感兴趣的知识或技能', score: '理性' }, { text: '看电影、听音乐、发呆放空', score: '感性' }, { text: '出门走走、做点手工、运动', score: '务实' }] },
+            { q: '你怎样看待规则和标准？', options: [{ text: '规则是有逻辑的，理解了才会遵守', score: '理性' }, { text: '规则可以灵活变通，看情况定', score: '感性' }, { text: '规则有用就遵守，没用就改', score: '务实' }] },
+            { q: '你希望别人怎么评价你？', options: [{ text: '聪明、靠谱、有见解', score: '理性' }, { text: '温暖、真诚、懂人心', score: '感性' }, { text: '果断、能干、有效率', score: '务实' }] },
+            { q: '你觉得自己的人生更像什么？', options: [{ text: '一场需要精心谋划的棋局', score: '理性' }, { text: '一段需要用心感受的旅程', score: '感性' }, { text: '一个需要不断闯关的游戏', score: '务实' }] }
+        ],
+        results: {
+            '理性': { title: '🧠 理性分析型', emoji: '🔍', desc: '你是那种凡事都要讲逻辑的人。做决定前会收集信息、权衡利弊，不容易被情绪左右。别人可能觉得你有点冷静过头，但关键时刻你总是最靠谱的那个。你适合做规划、策略类的工作，也是朋友眼中的"智囊"。不过偶尔也可以试着放下逻辑，跟着感觉走一次，也许会发现不一样的风景。', color: '#3B82F6' },
+            '感性': { title: '🎨 感性探索型', emoji: '🌈', desc: '你的内心世界丰富而敏感，直觉是你最强大的工具。你善于共情，能轻易读懂别人的情绪，在艺术、创作或需要洞察力的领域有天然优势。你相信"感觉对了"比"逻辑通了"更重要。有时候会被人说不切实际，但正是这种特质让你能看到别人看不到的东西。记住：你的感性是一种天赋，不是弱点。', color: '#EC4899' },
+            '务实': { title: '⚡ 务实行动型', emoji: '🚀', desc: '你是那种"少说多做"的人。不会纠结太多，先干了再说。你的执行力很强，适应能力也很好，不管环境怎么变都能找到应对方法。你相信结果比过程更重要，效率比完美更实际。朋友们遇到实际问题总会找你帮忙。不过有时候也可以放慢脚步想一想：这件事真的是对的吗？方向对了，努力才更有价值。', color: '#F59E0B' }
+        }
+    }, {
+        id: 'stress-test',
+        icon: '😰',
+        title: '压力指数测评',
+        desc: '10道题评估你当前的压力水平',
+        tag: '情绪',
+        tagType: '',
+        hot: false,
+        new: true,
+        questions: [
+            { q: '最近一个月，你感到紧张或焦虑的频率是？', options: [{ text: '几乎没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '几乎每天', score: 4 }] },
+            { q: '你觉得自己能掌控生活中的重要事情吗？', options: [{ text: '完全可以', score: 1 }, { text: '大部分可以', score: 2 }, { text: '部分可以', score: 3 }, { text: '几乎不能', score: 4 }] },
+            { q: '最近你是否感到难以集中注意力？', options: [{ text: '没有', score: 1 }, { text: '轻度', score: 2 }, { text: '中度', score: 3 }, { text: '严重', score: 4 }] },
+            { q: '你对自己解决问题的能力有信心吗？', options: [{ text: '非常有信心', score: 1 }, { text: '比较有信心', score: 2 }, { text: '不太有信心', score: 3 }, { text: '完全没有', score: 4 }] },
+            { q: '最近你是否感到疲惫或精力不足？', options: [{ text: '几乎没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '你觉得自己目前的压力主要来自？', options: [{ text: '几乎没有压力', score: 1 }, { text: '工作/学习', score: 2 }, { text: '人际关系', score: 2 }, { text: '多方面综合', score: 3 }] },
+            { q: '最近你是否容易发脾气或情绪波动？', options: [{ text: '没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '非常频繁', score: 4 }] },
+            { q: '你对自己未来的发展感到焦虑吗？', options: [{ text: '完全不焦虑', score: 1 }, { text: '轻度焦虑', score: 2 }, { text: '中度焦虑', score: 3 }, { text: '严重焦虑', score: 4 }] },
+            { q: '最近你是否感到孤独或不被理解？', options: [{ text: '几乎没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '你对自己目前的整体生活满意度如何？', options: [{ text: '非常满意', score: 1 }, { text: '比较满意', score: 2 }, { text: '不太满意', score: 3 }, { text: '很不满意', score: 4 }] }
+        ],
+        results: {
+            'low': { title: '😊 压力水平：较低', emoji: '🌿', desc: '你目前的压力水平较低，情绪状态良好。你能够有效地管理生活中的挑战，并保持积极的心态。建议继续保持现有的生活方式，适当放松和休息，维持这种良好的状态。', color: '#4CAF50' },
+            'medium': { title: '😌 压力水平：中等', emoji: '📊', desc: '你目前处于适度的压力水平。适度的压力可以激发动力，但长期处于这个状态可能需要关注。建议你尝试一些放松方法，如深呼吸、运动或与朋友交流，适当调整生活节奏。', color: '#F59E0B' },
+            'high': { title: '😰 压力水平：较高', emoji: '⚠️', desc: '你的压力水平较高，可能需要更多的关注和调整。长期的高压力可能会影响身心健康。建议你考虑专业的心理支持，同时尝试冥想、瑜伽等放松方式，给自己一些空间和时间恢复。', color: '#EF4444' }
+        }
+    }, {
+        id: 'personality-quick',
+        icon: '🔮',
+        title: '快速人格测试',
+        desc: '12道题了解你的性格底色',
+        tag: '人格',
+        tagType: '',
+        hot: false,
+        new: false,
+        questions: [
+            { q: '在社交场合中，你通常是？', options: [{ text: '主动热情，喜欢和人交谈', score: '外向' }, { text: '安静观察，不太主动发言', score: '内向' }, { text: '看情况而定', score: '中性' }] },
+            { q: '你做决定时更看重？', options: [{ text: '逻辑和事实', score: '理性' }, { text: '情感和感受', score: '感性' }, { text: '两者平衡', score: '中性' }] },
+            { q: '你喜欢的生活节奏是？', options: [{ text: '充实忙碌，喜欢挑战', score: '外向' }, { text: '安静舒缓，享受独处', score: '内向' }, { text: '灵活调整', score: '中性' }] },
+            { q: '面对新事物时，你的态度是？', options: [{ text: '好奇尝试，愿意冒险', score: '开放性' }, { text: '谨慎评估，不轻易尝试', score: '保守' }, { text: '看情况', score: '中性' }] },
+            { q: '你更擅长？', options: [{ text: '理论和概念思考', score: '理性' }, { text: '实际操作和体验', score: '务实' }, { text: '两者都可以', score: '中性' }] },
+            { q: '你希望别人怎么描述你？', options: [{ text: '有趣且充满活力', score: '外向' }, { text: '沉稳且值得信赖', score: '内向' }, { text: '随和且容易相处', score: '中性' }] },
+            { q: '你如何看待规则和惯例？', options: [{ text: '遵守规则，喜欢秩序', score: '保守' }, { text: '挑战规则，追求创新', score: '开放性' }, { text: '灵活变通', score: '中性' }] },
+            { q: '你的房间或工作空间通常是？', options: [{ text: '整洁有序，东西归位', score: '有序' }, { text: '有些杂乱，但能找到东西', score: '灵活' }, { text: '随性而为', score: '中性' }] },
+            { q: '你更喜欢哪种沟通方式？', options: [{ text: '直接明确，说重点', score: '理性' }, { text: '委婉含蓄，照顾感受', score: '感性' }, { text: '看对象而定', score: '中性' }] },
+            { q: '你对自己的未来计划是？', options: [{ text: '有明确的目标和规划', score: '有序' }, { text: '随遇而安，灵活应对', score: '灵活' }, { text: '有一定方向但不确定', score: '中性' }] },
+            { q: '你更容易对什么产生兴趣？', options: [{ text: '新奇和未知的事物', score: '开放性' }, { text: '熟悉和安稳的事物', score: '保守' }, { text: '两者都有', score: '中性' }] },
+            { q: '你认为成功的定义是？', options: [{ text: '实现自己的目标和理想', score: '有序' }, { text: '拥有幸福和满足感', score: '感性' }, { text: '不断成长和进步', score: '开放性' }] }
+        ],
+        results: {
+            '外向_理性_开放性': { title: '🌟 探索型人格', emoji: '🚀', desc: '你是一个充满活力和好奇心的人。你善于社交，喜欢尝试新事物，同时拥有理性的思维方式。你适合从事需要创新和人际互动的工作，如市场、创意、教育等领域。你的优势在于能够快速适应变化，并从中找到机会。', color: '#8B5CF6' },
+            '内向_理性_保守': { title: '📚 思考型人格', emoji: '🧐', desc: '你是一个沉稳、深思熟虑的人。你善于独立思考，注重逻辑和细节，喜欢在安静的环境中专注工作。你适合从事需要深度分析和计划的工作，如研究、编程、策划等。你的优势在于能够看到问题的本质，并给出可靠的解决方案。', color: '#3B82F6' },
+            '外向_感性_开放性': { title: '🎨 创造型人格', emoji: '🌈', desc: '你是一个富有想象力和同情心的人。你善于理解他人，感受世界的多样性，并能够用创意表达自己。你适合从事艺术、设计、咨询、教育等领域。你的优势在于能够建立深层的人际连接，并用独特的视角看待世界。', color: '#EC4899' },
+            '内向_感性_保守': { title: '🌿 宁静型人格', emoji: '🌙', desc: '你是一个温柔、细腻的人。你善于倾听和观察，注重内心世界的丰富和稳定。你适合从事需要耐心和专注的工作，如写作、手工艺、心理辅导等。你的优势在于能够提供温暖的陪伴和深刻的理解。', color: '#10B981' },
+            '中性': { title: '🔄 平衡型人格', emoji: '⚖️', desc: '你是一个灵活、适应性强的人。你能够根据情境调整自己的行为和思维方式，在不同的环境中都能找到自己的位置。你适合从事需要多面手能力的工作，如管理、咨询、教育等。你的优势在于能够理解和连接不同的人和事。', color: '#6366F1' }
+        }
+    }, {
+        id: 'optimism-test',
+        icon: '☀️',
+        title: '乐观指数测评',
+        desc: '8道题测量你的乐观程度',
+        tag: '情绪',
+        tagType: '',
+        hot: false,
+        new: false,
+        questions: [
+            { q: '你对未来三个月的生活有什么预期？', options: [{ text: '充满希望，觉得会变得更好', score: 4 }, { text: '大致和现在差不多', score: 3 }, { text: '有些担忧，可能变差', score: 2 }, { text: '非常悲观，觉得会越来越糟', score: 1 }] },
+            { q: '当你遇到困难时，你通常？', options: [{ text: '相信总能找到解决办法', score: 4 }, { text: '尽力尝试但不确定结果', score: 3 }, { text: '会感到焦虑和不安', score: 2 }, { text: '觉得很难改变什么', score: 1 }] },
+            { q: '你如何看待自己的未来？', options: [{ text: '充满无限可能', score: 4 }, { text: '有希望但需要努力', score: 3 }, { text: '有些迷茫', score: 2 }, { text: '看不到太多希望', score: 1 }] },
+            { q: '面对失败时，你的想法是？', options: [{ text: '这只是暂时的，下次会更好', score: 4 }, { text: '有点难过但会继续尝试', score: 3 }, { text: '会自我怀疑一段时间', score: 2 }, { text: '觉得是自己能力不行', score: 1 }] },
+            { q: '你觉得自己的人生整体上是？', options: [{ text: '幸运的，大部分事情都顺利', score: 4 }, { text: '有起有伏，但总体还行', score: 3 }, { text: '有些不如意', score: 2 }, { text: '很不顺利', score: 1 }] },
+            { q: '当别人取得成就时，你的感受是？', options: [{ text: '为他们高兴，相信自己也行', score: 4 }, { text: '有点羡慕但能调整心态', score: 3 }, { text: '会感到自卑或嫉妒', score: 2 }, { text: '觉得那和自己没关系', score: 1 }] },
+            { q: '你相信努力会带来好结果吗？', options: [{ text: '完全相信', score: 4 }, { text: '大部分时候相信', score: 3 }, { text: '有些怀疑', score: 2 }, { text: '不太相信', score: 1 }] },
+            { q: '你觉得自己以后会实现梦想吗？', options: [{ text: '一定会', score: 4 }, { text: '有可能', score: 3 }, { text: '不太确定', score: 2 }, { text: '觉得不太可能', score: 1 }] }
+        ],
+        results: {
+            'high': { title: '☀️ 乐观指数：高', emoji: '🌻', desc: '你拥有非常乐观的心态。你相信未来充满希望，能够积极地面对生活中的挑战。这种乐观不仅是你的优势，也会感染身边的人。保持这份心态，它会成为你面对生活风雨的坚实支撑。', color: '#F59E0B' },
+            'medium': { title: '🌤️ 乐观指数：中等', emoji: '🌿', desc: '你处于一个平衡的乐观水平。你能够看到生活的积极面，但在遇到较大困难时也会有所担忧。这是很正常的。建议你多关注生活中美好的小事，逐渐培养更积极的思维方式。', color: '#8B5CF6' },
+            'low': { title: '🌧️ 乐观指数：较低', emoji: '💭', desc: '你目前的乐观水平较低，可能经常会感到迷茫或压力。请记住，乐观是可以培养的。建议你尝试每天记录三件值得感恩的事情，多与积极的交流，并给自己一些时间和空间调整心态。如果需要，寻求专业的心理支持也是很好的选择。', color: '#EF4444' }
+        }
+    }, {
+        id: 'social-test',
+        icon: '🤝',
+        title: '社交模式分析',
+        desc: '10道题了解你的社交偏好和风格',
+        tag: '人格',
+        tagType: '',
+        hot: false,
+        new: false,
+        questions: [
+            { q: '你更喜欢哪种聚会规模？', options: [{ text: '大型派对，认识很多新朋友', score: '外向' }, { text: '小型聚会，和熟悉的朋友聊天', score: '内向' }, { text: '都可以，看心情', score: '中性' }] },
+            { q: '在社交场合中，你通常？', options: [{ text: '主动和陌生人交流', score: '外向' }, { text: '等别人来找你说话', score: '内向' }, { text: '看情况而定', score: '中性' }] },
+            { q: '你在社交后通常会感觉？', options: [{ text: '充满能量，还想继续', score: '外向' }, { text: '有些疲惫，需要独处充电', score: '内向' }, { text: '感觉还好，看具体场合', score: '中性' }] },
+            { q: '你更重视朋友的数量还是质量？', options: [{ text: '朋友越多越好', score: '外向' }, { text: '一两个知己就够了', score: '内向' }, { text: '两者都重要', score: '中性' }] },
+            { q: '你在群体中喜欢扮演什么角色？', options: [{ text: '核心人物，活跃气氛', score: '外向' }, { text: '观察者和倾听者', score: '内向' }, { text: '灵活切换', score: '中性' }] },
+            { q: '你需要花多长时间准备一场社交活动？', options: [{ text: '不需要准备，随性出发', score: '外向' }, { text: '需要一些心理准备', score: '内向' }, { text: '看场合而定', score: '中性' }] },
+            { q: '你更喜欢哪种交流方式？', options: [{ text: '当面聊，感受对方的情绪', score: '感性' }, { text: '文字交流，思考更清晰', score: '理性' }, { text: '都可以', score: '中性' }] },
+            { q: '你在社交中最在乎什么？', options: [{ text: '找到有趣的话题和共鸣', score: '外向' }, { text: '保持舒适的边界感', score: '内向' }, { text: '真诚的交流', score: '感性' }] },
+            { q: '你参加完一次社交活动后？', options: [{ text: '会复盘和回味有趣的部分', score: '感性' }, { text: '会反思自己表现如何', score: '理性' }, { text: '过去就过去了，不想太多', score: '中性' }] },
+            { q: '你觉得最好的社交状态是？', options: [{ text: '自由自在，畅所欲言', score: '外向' }, { text: '安静陪伴，不用刻意聊天', score: '内向' }, { text: '根据对象和氛围自然切换', score: '中性' }] }
+        ],
+        results: {
+            '外向_感性': { title: '🌟 社交达人型', emoji: '🎉', desc: '你是天生的社交能手。你充满活力，善于与人建立联系，能够在各种社交场合中自如展现自己。你擅长感知他人的情绪，并用温暖和热情感染周围的人。你的社交能力是你的重要优势，帮助你建立广泛的人际网络。', color: '#F59E0B' },
+            '内向_感性': { title: '🌙 深度连接型', emoji: '💛', desc: '你是那种重质不重量的人。你喜欢一对一或小范围的深度交流，能够建立真诚、持久的关系。你善于倾听和理解他人，给人一种温暖、安心的感觉。你的社交模式虽然不那么广泛，但每一次连接都是深刻而有意义的。', color: '#EC4899' },
+            '内向_理性': { title: '🧘 观察思考型', emoji: '🔍', desc: '你是一个善于观察和思考的人。在社交中，你更倾向于退一步观察，理解人际关系的微妙之处。你喜欢有深度、有意义的对话，不喜欢表面的应酬。你的洞察力让你能够看透问题的本质，在需要分析和判断的场合中表现出色。', color: '#3B82F6' },
+            '外向_理性': { title: '⚡ 社交策略型', emoji: '🎯', desc: '你善于在社交中运用清晰的思维和策略。你能够有效地建立和维护人际关系，同时保持自己的独立性和目标导向。你适合从事需要人际网络和战略思维的工作，如商业拓展、项目管理和领导岗位。', color: '#8B5CF6' },
+            '中性': { title: '🔄 灵活适应型', emoji: '🌊', desc: '你是一个非常灵活和适应的人。你能够根据不同的场合和对象调整自己的社交方式，既能应对热闹的聚会，也能享受安静的陪伴。这种灵活性让你能够在各种社交环境中游刃有余，也让你更容易理解不同人的需求。', color: '#10B981' }
+        }
+    }, {
+        id: 'anxiety-test',
+        icon: '😌',
+        title: '焦虑自评量表',
+        desc: '10道题快速评估你的焦虑倾向',
+        tag: '情绪',
+        tagType: '',
+        hot: false,
+        new: false,
+        questions: [
+            { q: '你是否经常感到紧张或不安？', options: [{ text: '从来没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '几乎总是', score: 4 }] },
+            { q: '你是否容易担心一些小事情？', options: [{ text: '完全不担心', score: 1 }, { text: '有些担心', score: 2 }, { text: '经常担心', score: 3 }, { text: '总是担心', score: 4 }] },
+            { q: '你是否难以放松下来？', options: [{ text: '完全可以放松', score: 1 }, { text: '大多数时候可以', score: 2 }, { text: '难以放松', score: 3 }, { text: '完全无法放松', score: 4 }] },
+            { q: '你是否会因为小事而惊慌失措？', options: [{ text: '不会', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '你是否害怕在社交场合出丑？', options: [{ text: '完全不害怕', score: 1 }, { text: '有些担心', score: 2 }, { text: '经常害怕', score: 3 }, { text: '总是害怕', score: 4 }] },
+            { q: '你是否经常想到坏的事情会发生？', options: [{ text: '从不', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '你是否因为过度思考而影响了睡眠？', options: [{ text: '没有影响', score: 1 }, { text: '轻微影响', score: 2 }, { text: '中度影响', score: 3 }, { text: '严重影响', score: 4 }] },
+            { q: '你是否容易出汗、心跳加快等身体反应？', options: [{ text: '没有', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '你是否会害怕失去控制或发疯？', options: [{ text: '从不', score: 1 }, { text: '偶尔', score: 2 }, { text: '经常', score: 3 }, { text: '总是', score: 4 }] },
+            { q: '这些焦虑情绪影响了你的日常生活吗？', options: [{ text: '没有影响', score: 1 }, { text: '轻微影响', score: 2 }, { text: '中度影响', score: 3 }, { text: '严重影响', score: 4 }] }
+        ],
+        results: {
+            'low': { title: '😊 焦虑倾向：较低', emoji: '🌿', desc: '你的焦虑水平处于健康范围内。你能够有效地管理日常压力，保持平稳的心态。建议继续保持良好的生活习惯，如规律作息、适度运动和积极社交，维持这份平静。', color: '#4CAF50' },
+            'medium': { title: '😌 焦虑倾向：中等', emoji: '📊', desc: '你存在一些焦虑情绪，处于适度的水平。适当的焦虑可以成为前进的动力，但如果感到困扰，也可以尝试一些放松方法，如呼吸训练、正念冥想或与信任的人交流。', color: '#F59E0B' },
+            'high': { title: '😰 焦虑倾向：较高', emoji: '⚠️', desc: '你的焦虑水平较高，可能需要更多的关注和帮助。长期的焦虑可能会影响身心健康和生活质量。建议你考虑寻求专业的心理支持，同时尝试一些有效的应对策略，如认知行为技巧、适度运动和良好的睡眠习惯。', color: '#EF4444' }
+        }
+    }, {
+        id: 'sleep-quality',
+        icon: '💤',
+        title: '睡眠质量测评',
+        desc: '8道题评估你的睡眠状况',
+        tag: '健康',
+        tagType: '',
+        hot: false,
+        new: true,
+        questions: [
+            { q: '你通常需要多长时间才能入睡？', options: [{ text: '15分钟以内', score: 4 }, { text: '15-30分钟', score: 3 }, { text: '30-60分钟', score: 2 }, { text: '超过60分钟', score: 1 }] },
+            { q: '你每晚实际睡眠时间大约是？', options: [{ text: '7-8小时以上', score: 4 }, { text: '6-7小时', score: 3 }, { text: '5-6小时', score: 2 }, { text: '少于5小时', score: 1 }] },
+            { q: '你夜间醒来的频率是？', options: [{ text: '几乎不醒', score: 4 }, { text: '偶尔醒来1次', score: 3 }, { text: '醒来2-3次', score: 2 }, { text: '醒来3次以上', score: 1 }] },
+            { q: '你早上醒来后感觉如何？', options: [{ text: '精力充沛，休息充分', score: 4 }, { text: '感觉还可以', score: 3 }, { text: '有些疲惫', score: 2 }, { text: '非常疲惫，没睡够', score: 1 }] },
+            { q: '你白天是否感到困倦？', options: [{ text: '完全没有', score: 4 }, { text: '偶尔困倦', score: 3 }, { text: '经常困倦', score: 2 }, { text: '总是困倦', score: 1 }] },
+            { q: '你的睡眠环境（安静度、光线等）如何？', options: [{ text: '非常好，完全舒适', score: 4 }, { text: '大部分时候舒适', score: 3 }, { text: '有些干扰', score: 2 }, { text: '经常被干扰', score: 1 }] },
+            { q: '你睡前使用电子设备的情况是？', options: [{ text: '睡前1小时以上不用', score: 4 }, { text: '睡前30-60分钟不用', score: 3 }, { text: '睡前使用但时间不长', score: 2 }, { text: '睡前长时间使用', score: 1 }] },
+            { q: '你对自己的整体睡眠质量满意吗？', options: [{ text: '非常满意', score: 4 }, { text: '比较满意', score: 3 }, { text: '不太满意', score: 2 }, { text: '非常不满意', score: 1 }] }
+        ],
+        results: {
+            'high': { title: '💤 睡眠质量：优质', emoji: '🌙', desc: '你的睡眠质量非常好！你拥有良好的睡眠习惯和舒适的睡眠环境。充足的优质睡眠让你白天精力充沛，身心健康。建议继续保持现有的睡眠习惯，这是你健康生活的重要保障。', color: '#4CAF50' },
+            'medium': { title: '💤 睡眠质量：一般', emoji: '🌓', desc: '你的睡眠质量处于中等水平。可能存在一些影响睡眠的因素，如作息不规律、睡前使用电子设备或环境干扰。建议尝试建立规律的作息时间，睡前放松身心，改善睡眠环境，这些都能帮助你获得更好的睡眠。', color: '#F59E0B' },
+            'low': { title: '💤 睡眠质量：需要改善', emoji: '🌄', desc: '你的睡眠质量需要更多的关注和改善。长期睡眠不足或质量不佳可能会影响身心健康和白天的工作效率。建议你制定固定的作息时间，减少睡前使用电子设备，创造舒适的睡眠环境。如果问题持续，建议咨询专业医生。', color: '#EF4444' }
+        }
+    }, {
+        id: 'self-esteem',
+        icon: '💪',
+        title: '自尊水平测评',
+        desc: '10道题了解你的自我价值感',
+        tag: '人格',
+        tagType: '',
+        hot: false,
+        new: true,
+        questions: [
+            { q: '你对自己整体感觉如何？', options: [{ text: '非常喜欢自己', score: 4 }, { text: '比较喜欢自己', score: 3 }, { text: '不太喜欢自己', score: 2 }, { text: '很不喜欢自己', score: 1 }] },
+            { q: '你觉得自己是一个有价值的人吗？', options: [{ text: '非常有价值', score: 4 }, { text: '有一定价值', score: 3 }, { text: '不太确定', score: 2 }, { text: '觉得自己没价值', score: 1 }] },
+            { q: '当别人批评你时，你会？', options: [{ text: '客观看待，理性分析', score: 4 }, { text: '有些在意但能调整', score: 3 }, { text: '很难过和自我怀疑', score: 2 }, { text: '完全崩溃', score: 1 }] },
+            { q: '你相信自己能够成功吗？', options: [{ text: '完全相信', score: 4 }, { text: '大部分相信', score: 3 }, { text: '有些怀疑', score: 2 }, { text: '完全不相信', score: 1 }] },
+            { q: '你对自己的外表满意吗？', options: [{ text: '非常满意', score: 4 }, { text: '比较满意', score: 3 }, { text: '不太满意', score: 2 }, { text: '很不满意', score: 1 }] },
+            { q: '你觉得自己配得上好的事物吗？', options: [{ text: '完全配得上', score: 4 }, { text: '大部分配得上', score: 3 }, { text: '不太配得上', score: 2 }, { text: '完全不配', score: 1 }] },
+            { q: '面对挑战时，你的态度是？', options: [{ text: '充满信心，敢于尝试', score: 4 }, { text: '有些犹豫但会尝试', score: 3 }, { text: '害怕失败，回避挑战', score: 2 }, { text: '完全逃避', score: 1 }] },
+            { q: '你如何看待自己的优点和缺点？', options: [{ text: '能够接受完整的自己', score: 4 }, { text: '接受大部分', score: 3 }, { text: '只看到缺点', score: 2 }, { text: '完全否定自己', score: 1 }] },
+            { q: '你觉得自己值得被爱吗？', options: [{ text: '非常值得', score: 4 }, { text: '值得', score: 3 }, { text: '不太确定', score: 2 }, { text: '不值得', score: 1 }] },
+            { q: '你对自己未来的发展有信心吗？', options: [{ text: '非常有信心', score: 4 }, { text: '比较有信心', score: 3 }, { text: '不太有信心', score: 2 }, { text: '完全没有', score: 1 }] }
+        ],
+        results: {
+            'high': { title: '💪 自尊水平：高', emoji: '🌟', desc: '你拥有健康的自尊水平。你对自己有积极的认知，能够接纳自己的优点和缺点，面对挑战时充满信心。这种健康的自尊是你心理韧性的重要基础，也是良好人际关系的关键。继续保持，你是值得被爱和被尊重的！', color: '#4CAF50' },
+            'medium': { title: '💪 自尊水平：中等', emoji: '🌱', desc: '你的自尊水平处于中等水平。你有时会自我怀疑，但总体上能够保持积极的自我认知。建议多关注自己的优点和成就，练习自我肯定，减少与他人的比较。记住，你本身就是有价值的。', color: '#F59E0B' },
+            'low': { title: '💪 自尊水平：较低', emoji: '🌿', desc: '你的自尊水平较低，可能需要更多的关注和培养。低自尊可能会影响你的生活质量和人际关系。建议你开始练习自我接纳，记录每天的积极小事，与支持你的人多交流。如果需要，寻求专业的心理支持也是一个明智的选择。', color: '#EF4444' }
+        }
+    }, {
+        id: 'interpersonal',
+        icon: '🤝',
+        title: '人际关系测评',
+        desc: '10道题评估你的人际交往质量',
+        tag: '社交',
+        tagType: '',
+        hot: false,
+        new: true,
+        questions: [
+            { q: '你与他人建立新关系的容易程度是？', options: [{ text: '非常容易，很自然', score: 4 }, { text: '比较容易', score: 3 }, { text: '有些困难', score: 2 }, { text: '非常困难', score: 1 }] },
+            { q: '你与朋友保持联系的频率是？', options: [{ text: '经常主动联系', score: 4 }, { text: '偶尔联系', score: 3 }, { text: '很少联系', score: 2 }, { text: '几乎不联系', score: 1 }] },
+            { q: '你能够设身处地理解他人的感受吗？', options: [{ text: '非常擅长共情', score: 4 }, { text: '比较擅长', score: 3 }, { text: '不太擅长', score: 2 }, { text: '很难理解他人', score: 1 }] },
+            { q: '当你与他人发生冲突时，你会？', options: [{ text: '主动沟通解决', score: 4 }, { text: '尝试沟通但有些困难', score: 3 }, { text: '回避冲突', score: 2 }, { text: '激烈对抗', score: 1 }] },
+            { q: '你觉得自己能信任他人吗？', options: [{ text: '非常容易信任', score: 4 }, { text: '比较信任', score: 3 }, { text: '不太信任', score: 2 }, { text: '很难信任他人', score: 1 }] },
+            { q: '你从朋友那里获得支持的程度是？', options: [{ text: '经常获得支持', score: 4 }, { text: '有时获得支持', score: 3 }, { text: '很少获得支持', score: 2 }, { text: '几乎没有支持', score: 1 }] },
+            { q: '你在社交中感到自在的程度是？', options: [{ text: '非常自在', score: 4 }, { text: '比较自在', score: 3 }, { text: '有些不自在', score: 2 }, { text: '非常不自在', score: 1 }] },
+            { q: '你愿意向朋友倾诉自己的烦恼吗？', options: [{ text: '非常愿意', score: 4 }, { text: '比较愿意', score: 3 }, { text: '不太愿意', score: 2 }, { text: '完全不愿意', score: 1 }] },
+            { q: '你觉得自己的人际关系整体质量如何？', options: [{ text: '非常好', score: 4 }, { text: '比较好', score: 3 }, { text: '一般', score: 2 }, { text: '较差', score: 1 }] },
+            { q: '你在人际交往中感到孤独的频率是？', options: [{ text: '几乎没有', score: 4 }, { text: '偶尔', score: 3 }, { text: '经常', score: 2 }, { text: '总是', score: 1 }] }
+        ],
+        results: {
+            'high': { title: '🤝 人际关系：优质', emoji: '💛', desc: '你拥有良好的人际关系。你善于建立和维护关系，能够有效地沟通和共情，在社交中感到自在，也能够获得足够的支持。这种健康的人际网络是你心理健康的重要支撑。继续保持，珍惜那些真诚的连接！', color: '#4CAF50' },
+            'medium': { title: '🤝 人际关系：中等', emoji: '🌱', desc: '你的人际关系处于中等水平。你可能在某些方面表现出色，但在其他方面还有提升空间。建议主动与朋友联系，练习倾听和共情，建立更深的连接。记住，好的人际关系需要用心经营。', color: '#F59E0B' },
+            'low': { title: '🤝 人际关系：需要改善', emoji: '🌿', desc: '你的人际关系可能需要更多的关注和改善。孤独感或缺乏支持可能会影响你的心理健康。建议你从小事做起，主动与身边的人建立联系，参加一些社交活动，逐步扩大自己的社交圈。如果需要，也可以考虑寻求心理咨询的帮助。', color: '#EF4444' }
+        }
+    }, {
+        id: 'burnout',
+        icon: '🔥',
+        title: '职业倦怠测评',
+        desc: '10道题检测你的工作/学习倦怠程度',
+        tag: '压力',
+        tagType: '',
+        hot: false,
+        new: true,
+        questions: [
+            { q: '你对自己工作/学习的热情程度是？', options: [{ text: '充满热情', score: 4 }, { text: '比较有热情', score: 3 }, { text: '有些厌倦', score: 2 }, { text: '非常厌倦', score: 1 }] },
+            { q: '你感到身心疲惫的频率是？', options: [{ text: '几乎没有', score: 4 }, { text: '偶尔', score: 3 }, { text: '经常', score: 2 }, { text: '总是', score: 1 }] },
+            { q: '你对工作/学习的成就感如何？', options: [{ text: '非常有成就感', score: 4 }, { text: '有一定成就感', score: 3 }, { text: '很少感到成就感', score: 2 }, { text: '完全没有成就感', score: 1 }] },
+            { q: '你是否觉得工作/学习消耗了太多精力？', options: [{ text: '完全没有', score: 4 }, { text: '有些消耗', score: 3 }, { text: '消耗很大', score: 2 }, { text: '完全透支', score: 1 }] },
+            { q: '你是否对工作/学习产生了厌倦感？', options: [{ text: '完全没有', score: 4 }, { text: '有些厌倦', score: 3 }, { text: '非常厌倦', score: 2 }, { text: '无法忍受', score: 1 }] },
+            { q: '你觉得自己在工作/学习中的价值感如何？', options: [{ text: '非常有价值', score: 4 }, { text: '比较有价值', score: 3 }, { text: '价值感较低', score: 2 }, { text: '完全没有价值感', score: 1 }] },
+            { q: '你是否经常想过逃避工作/学习？', options: [{ text: '从来没有', score: 4 }, { text: '偶尔会想', score: 3 }, { text: '经常想', score: 2 }, { text: '总是想逃避', score: 1 }] },
+            { q: '你对自己工作/学习成果的满意度是？', options: [{ text: '非常满意', score: 4 }, { text: '比较满意', score: 3 }, { text: '不太满意', score: 2 }, { text: '很不满意', score: 1 }] },
+            { q: '工作/学习对生活的积极影响程度是？', options: [{ text: '非常积极', score: 4 }, { text: '比较积极', score: 3 }, { text: '影响较小', score: 2 }, { text: '负面影响', score: 1 }] },
+            { q: '你对自己未来工作/学习的态度是？', options: [{ text: '充满希望', score: 4 }, { text: '有些期待', score: 3 }, { text: '有些迷茫', score: 2 }, { text: '非常悲观', score: 1 }] }
+        ],
+        results: {
+            'low': { title: '🔥 倦怠程度：较低', emoji: '🌿', desc: '你目前的工作/学习状态良好，充满热情和动力。你能够从工作中获得成就感和价值感，身心状态也比较平衡。建议继续保持这种积极的状态，同时注意劳逸结合，维持可持续的发展节奏。', color: '#4CAF50' },
+            'medium': { title: '🔥 倦怠程度：中等', emoji: '🌓', desc: '你处于适度的倦怠水平。你可能对工作/学习有些厌倦，但仍然能从中获得一些意义感。建议你适当调整节奏，寻找新的激励点，与同事或同学多交流，重新点燃对工作/学习的热情。', color: '#F59E0B' },
+            'high': { title: '🔥 倦怠程度：较高', emoji: '⚠️', desc: '你的职业倦怠程度较高，需要给予足够的重视。长期的倦怠可能会影响你的身心健康和生活质量。建议你认真考虑调整工作/学习的节奏，必要时寻求专业帮助。记住，你的健康比任何事情都重要。', color: '#EF4444' }
+        }
+    }];
+
+    // ============================================================
+    //  主程序
+    // ============================================================
+
+    let currentTestId = null;
+    let currentStep = 0;
+    let answers = [];
+    let totalQuestions = 0;
+    let testData = null;
+    let isInTest = false;
+
+    const app = document.getElementById('testGrid');
+    const toastEl = document.getElementById('toast');
+    const disclaimerModal = document.getElementById('disclaimerModal');
+    const exitModal = document.getElementById('exitModal');
+
+    function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastEl._timer);
+        toastEl._timer = setTimeout(() => {
+            toastEl.classList.remove('show');
+        }, 2500);
+    }
+
+    // ===== 退出弹窗控制 =====
+    function showExitModal() {
+        exitModal.classList.add('show');
+    }
+
+    function hideExitModal() {
+        exitModal.classList.remove('show');
+    }
+
+    // 点击弹窗外部关闭
+    exitModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideExitModal();
+        }
+    });
+
+    // 继续答题
+    document.getElementById('exitCancel').addEventListener('click', function() {
+        hideExitModal();
+    });
+
+    // 确定退出
+    document.getElementById('exitConfirm').addEventListener('click', function() {
+        hideExitModal();
+        // 执行退出逻辑
+        isInTest = false;
+        testData = null;
+        renderHome();
+        showToast('已退出测评');
+    });
+
+    // ===== 渲染首页 =====
+    function renderHome() {
+        isInTest = false;
+        let html = '';
+        tests.forEach(test => {
+            const tagClass = test.tagType === 'ai' ? 'tag-ai' : '';
+            const hotBadge = test.hot ? '<span class="tag-hot">🔥 热门</span>' : '';
+            const newBadge = test.new ? '<span class="new-badge">NEW</span>' : '';
+            html += `
+                <div class="card" data-testid="${test.id}">
+                    ${newBadge}
+                    <span class="icon">${test.icon}</span>
+                    <h3>${test.title}</h3>
+                    <p class="desc">${test.desc}</p>
+                    <div class="meta">
+                        <span class="${tagClass}">${test.tag}</span>
+                        <span>${test.questions.length} 题</span>
+                        ${hotBadge}
+                    </div>
+                </div>
+            `;
+        });
+
+        app.innerHTML = html;
+
+        document.querySelectorAll('.card[data-testid]').forEach(card => {
+            card.addEventListener('click', function() {
+                const testId = this.dataset.testid;
+                const test = tests.find(t => t.id === testId);
+                if (test) {
+                    showDisclaimer(test);
+                }
+            });
+        });
+    }
+
+    // ===== 免责声明 =====
+    let pendingTest = null;
+
+    function showDisclaimer(test) {
+        pendingTest = test;
+        disclaimerModal.classList.add('show');
+    }
+
+    function hideDisclaimer() {
+        disclaimerModal.classList.remove('show');
+    }
+
+    document.getElementById('disclaimerConfirm').addEventListener('click', function() {
+        hideDisclaimer();
+        if (pendingTest) {
+            setTimeout(() => {
+                startTest(pendingTest);
+                pendingTest = null;
+            }, 200);
+        }
+    });
+
+    document.getElementById('disclaimerCancel').addEventListener('click', function() {
+        hideDisclaimer();
+        pendingTest = null;
+    });
+
+    disclaimerModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideDisclaimer();
+            pendingTest = null;
+        }
+    });
+
+    // ===== 开始测评 =====
+    function startTest(test) {
+        isInTest = true;
+        currentTestId = test.id;
+        testData = test;
+        currentStep = 0;
+        totalQuestions = test.questions.length;
+        answers = new Array(totalQuestions).fill(-1);
+        renderTest();
+    }
+
+    // ===== 渲染测评（使用AI读心术样式） =====
+    function renderTest() {
+        if (!testData || !isInTest) return;
+
+        if (currentStep >= totalQuestions) {
+            renderResult();
+            return;
+        }
+
+        const q = testData.questions[currentStep];
+        const progress = ((currentStep) / totalQuestions * 100).toFixed(0);
+        const selectedIdx = answers[currentStep];
+
+        let optionsHtml = '';
+        q.options.forEach((opt, idx) => {
+            const isSelected = (selectedIdx === idx);
+            optionsHtml += `
+                <button class="opt-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">
+                    ${opt.text}
+                </button>
+            `;
+        });
+
+        const isLast = currentStep === totalQuestions - 1;
+        const hasSelected = selectedIdx !== -1;
+
+        app.innerHTML = `
+            <div class="question-wrapper">
+                <div class="q-header">
+                    <span class="q-title">${testData.icon} ${testData.title}</span>
+                    <span class="q-progress">${Math.round(progress)}%</span>
+                </div>
+                <div class="q-progress-bar">
+                    <div class="q-bar-fill" style="width:${progress}%"></div>
+                </div>
+                <div class="q-nav">
+                    <span class="q-step">第 ${currentStep + 1} / ${totalQuestions} 题</span>
+                    <button class="q-exit" onclick="showExitModal()">✕ 退出</button>
+                </div>
+                <div class="q-text">${q.q}</div>
+                <div class="q-options">${optionsHtml}</div>
+                <div class="q-controls">
+                    <button class="prev-btn" onclick="prevQuestion()" ${currentStep === 0 ? 'disabled' : ''}>⬅ 上一题</button>
+                    <button class="confirm-btn" onclick="confirmAnswer()" ${!hasSelected ? 'disabled' : ''}>
+                        ${isLast ? '📊 查看结果' : '✅ 确认'}
+                    </button>
+                    <button class="next-btn" onclick="nextQuestion()" ${currentStep === totalQuestions - 1 ? 'disabled' : ''}>下一题 ➡</button>
+                </div>
+            </div>
+        `;
+
+        // 选项点击事件
+        document.querySelectorAll('.opt-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const idx = parseInt(this.dataset.idx);
+                answers[currentStep] = idx;
+                renderTest();
+            });
+        });
+    }
+
+    // ===== 导航函数 =====
+    window.prevQuestion = function() {
+        if (currentStep > 0) {
+            currentStep--;
+            renderTest();
+        }
+    };
+
+    window.nextQuestion = function() {
+        if (currentStep < totalQuestions - 1 && answers[currentStep] !== -1) {
+            currentStep++;
+            renderTest();
+        } else if (answers[currentStep] === -1) {
+            showToast('请先选择一个选项');
+        }
+    };
+
+    window.confirmAnswer = function() {
+        if (answers[currentStep] === -1) {
+            showToast('请先选择一个选项');
+            return;
+        }
+        if (currentStep === totalQuestions - 1) {
+            const unanswered = answers.some(a => a === -1);
+            if (unanswered) {
+                const firstUnanswered = answers.indexOf(-1);
+                if (firstUnanswered !== -1) {
+                    currentStep = firstUnanswered;
+                    renderTest();
+                    showToast('还有题目未作答，请先完成所有题目');
+                }
+                return;
+            }
+            currentStep = totalQuestions;
+            renderTest();
+        } else {
+            if (currentStep < totalQuestions - 1) {
+                currentStep++;
+                renderTest();
+            }
+        }
+    };
+
+    // ===== 渲染结果 =====
+    function renderResult() {
+        if (!testData) return;
+
+        let scores = {};
+        let totalScore = 0;
+        let scoreType = '';
+
+        if (testData.id === 'mind-reader') {
+            let typeScores = {};
+            for (let i = 0; i < totalQuestions; i++) {
+                const idx = answers[i];
+                if (idx !== -1) {
+                    const scoreKey = testData.questions[i].options[idx].score;
+                    typeScores[scoreKey] = (typeScores[scoreKey] || 0) + 1;
+                }
+            }
+            let maxScore = 0;
+            let resultKey = '理性';
+            for (let key in typeScores) {
+                if (typeScores[key] > maxScore) {
+                    maxScore = typeScores[key];
+                    resultKey = key;
+                }
+            }
+            scoreType = resultKey;
+            scores = typeScores;
+        } else if (testData.id === 'stress-test' || testData.id === 'anxiety-test' || testData.id === 'sleep-quality' || testData.id === 'self-esteem' || testData.id === 'interpersonal' || testData.id === 'burnout') {
+            let sum = 0;
+            for (let i = 0; i < totalQuestions; i++) {
+                const idx = answers[i];
+                if (idx !== -1) {
+                    sum += parseInt(testData.questions[i].options[idx].score);
+                }
+            }
+            totalScore = sum;
+            const maxPossible = totalQuestions * 4;
+            const pct = totalScore / maxPossible;
+            if (pct >= 0.7) scoreType = 'high';
+            else if (pct >= 0.4) scoreType = 'medium';
+            else scoreType = 'low';
+        } else if (testData.id === 'optimism-test') {
+            let sum = 0;
+            for (let i = 0; i < totalQuestions; i++) {
+                const idx = answers[i];
+                if (idx !== -1) {
+                    sum += parseInt(testData.questions[i].options[idx].score);
+                }
+            }
+            totalScore = sum;
+            const maxPossible = totalQuestions * 4;
+            const pct = totalScore / maxPossible;
+            if (pct >= 0.7) scoreType = 'high';
+            else if (pct >= 0.4) scoreType = 'medium';
+            else scoreType = 'low';
+        } else if (testData.id === 'personality-quick' || testData.id === 'social-test') {
+            let typeScores = {};
+            for (let i = 0; i < totalQuestions; i++) {
+                const idx = answers[i];
+                if (idx !== -1) {
+                    const scoreKey = testData.questions[i].options[idx].score;
+                    typeScores[scoreKey] = (typeScores[scoreKey] || 0) + 1;
+                }
+            }
+            let sorted = Object.entries(typeScores).sort((a, b) => b[1] - a[1]);
+            if (sorted.length >= 2 && sorted[0][1] === sorted[1][1]) {
+                scoreType = '中性';
+            } else {
+                const topTypes = sorted.slice(0, 2).map(s => s[0]);
+                const combos = ['外向_理性_开放性', '内向_理性_保守', '外向_感性_开放性', '内向_感性_保守'];
+                let found = false;
+                for (let combo of combos) {
+                    const parts = combo.split('_');
+                    let match = true;
+                    for (let part of parts) {
+                        if (!topTypes.includes(part)) {
+                            match = false;
+                            break;
+                        }
+                    }
+                    if (match) {
+                        scoreType = combo;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    if (topTypes.includes('中性')) {
+                        scoreType = '中性';
+                    } else {
+                        scoreType = topTypes.join('_');
+                    }
+                }
+            }
+            scores = typeScores;
+        }
+
+        let result = testData.results[scoreType];
+        if (!result) {
+            for (let key in testData.results) {
+                if (scoreType.includes(key) || key.includes(scoreType)) {
+                    result = testData.results[key];
+                    break;
+                }
+            }
+            if (!result) {
+                result = testData.results[Object.keys(testData.results)[0]];
+            }
+        }
+
+        let scoreBars = '';
+        if (scores && Object.keys(scores).length > 0) {
+            const total = Object.values(scores).reduce((a, b) => a + b, 0);
+            for (let key in scores) {
+                const pct = Math.round((scores[key] / total) * 100);
+                const colors = {
+                    '理性': '#3B82F6',
+                    '感性': '#EC4899',
+                    '务实': '#F59E0B',
+                    '外向': '#8B5CF6',
+                    '内向': '#10B981',
+                    '中性': '#6366F1',
+                    '开放性': '#06B6D4',
+                    '保守': '#F97316',
+                    '有序': '#22D3EE',
+                    '灵活': '#A78BFA'
+                };
+                const color = colors[key] || '#999';
+                scoreBars += `
+                    <span>
+                        ${key}
+                        <span style="display:inline-block;width:40px;height:4px;background:rgba(0,0,0,0.06);border-radius:2px;overflow:hidden;vertical-align:middle;">
+                            <span style="display:block;height:100%;width:${pct}%;background:${color};border-radius:2px;transition:width 0.8s ease;"></span>
+                        </span>
+                        ${pct}%
+                    </span>
+                `;
+            }
+        }
+
+        const total = totalQuestions;
+
+        app.innerHTML = `
+            <div class="result-wrapper">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <span style="font-weight:700;color:#1a1a1a;font-size:1rem;">🔮 测评结果</span>
+                    <span style="color:rgba(0,0,0,0.2);font-size:0.75rem;">✅ 已完成</span>
+                </div>
+                <div style="text-align:center;padding:8px 0;">
+                    <div style="font-size:3.5rem;margin-bottom:6px;">${result.emoji}</div>
+                    <div style="font-size:1.3rem;font-weight:700;color:#216E39;">${result.title}</div>
+                    <div style="font-size:0.8rem;color:rgba(0,0,0,0.3);margin-bottom:10px;">${testData.title}</div>
+                    <div style="background:rgba(33,110,57,0.06);border-radius:16px;padding:14px;border:1px solid rgba(33,110,57,0.08);text-align:left;margin-bottom:10px;">
+                        <div style="font-size:0.9rem;color:#1a1a1a;line-height:1.8;">${result.desc}</div>
+                        ${scoreBars ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(0,0,0,0.04);font-size:0.7rem;color:rgba(0,0,0,0.25);display:flex;justify-content:space-around;flex-wrap:wrap;gap:6px;">${scoreBars}</div>` : ''}
+                        ${totalScore > 0 ? `<div style="margin-top:8px;font-size:0.7rem;color:rgba(0,0,0,0.15);text-align:center;">总评分: ${totalScore} / ${totalQuestions * 4}</div>` : ''}
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:6px;">
+                        <button onclick="resetTest()" style="padding:10px 24px;border:1.5px solid rgba(0,0,0,0.06);border-radius:40px;background:rgba(255,255,255,0.6);color:#1a1a1a;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;">🔄 重新测试</button>
+                        <button onclick="shareResult('${result.title}')" style="padding:10px 24px;border:1.5px solid #fbbf24;border-radius:40px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1a1a1a;font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;">📤 分享结果</button>
+                        <button onclick="exitToHome()" style="padding:10px 24px;border:1.5px solid rgba(0,0,0,0.06);border-radius:40px;background:rgba(255,255,255,0.6);color:rgba(0,0,0,0.4);font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s;">🏠 返回列表</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // ===== 重置 =====
+    window.resetTest = function() {
+        if (testData) {
+            currentStep = 0;
+            answers = new Array(totalQuestions).fill(-1);
+            renderTest();
+        }
+    };
+
+    // ===== 从结果页返回首页 =====
+    window.exitToHome = function() {
+        isInTest = false;
+        testData = null;
+        renderHome();
+    };
+
+    // ===== 分享 =====
+    window.shareResult = function(title) {
+        const url = window.location.href;
+        const text = `🧠 我做了"${testData ? testData.title : '心理测评'}"，结果是：${title}！\n快来试试吧！\n${url}`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 已复制到剪贴板！');
+            }).catch(() => {
+                fallbackShare(text);
+            });
+        } else {
+            fallbackShare(text);
+        }
+    };
+
+    function fallbackShare(text) {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+            document.execCommand('copy');
+            showToast('✅ 已复制到剪贴板！');
+        } catch (e) {
+            prompt('请手动复制以下内容：', text);
+        }
+        document.body.removeChild(textarea);
+    }
+
+    // ============================================================
+    //  导航栏菜单
+    // ============================================================
+    const menuToggle = document.getElementById('menuToggle');
+    const mobileMenu = document.getElementById('mobileMenu');
+
+    if (menuToggle && mobileMenu) {
+        menuToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            mobileMenu.classList.toggle('open');
+        });
+
+        document.querySelectorAll('.mobile-menu .mm-link').forEach(function(link) {
+            link.addEventListener('click', function() {
+                menuToggle.classList.remove('active');
+                mobileMenu.classList.remove('open');
+            });
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.navbar') && !e.target.closest('.mobile-menu')) {
+                menuToggle.classList.remove('active');
+                mobileMenu.classList.remove('open');
+            }
+        });
+    }
+
+    // ============================================================
+    //  启动
+    // ============================================================
+    renderHome();
+    </script>
+</body>
+</html>

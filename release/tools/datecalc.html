@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📅 日期计算器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:#15132b;
+            box-shadow:inset 0 0 60px rgba(0,0,0,0.3);
+            padding:20px 16px;
+            min-height:380px;
+        }
+
+        /* ===== 日期输入区域 ===== */
+        .date-group {
+            display:flex;
+            flex-direction:column;
+            gap:4px;
+            margin-bottom:12px;
+        }
+        .date-group label {
+            color:rgba(255,255,255,0.3);
+            font-size:0.65rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            font-weight:500;
+        }
+        .date-group input[type="date"] {
+            width:100%;
+            background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius:10px;
+            padding:10px 14px;
+            color:#fff;
+            font-size:0.9rem;
+            outline:none;
+            transition:border-color 0.3s;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .date-group input[type="date"]:focus {
+            border-color:rgba(64,196,99,0.4);
+        }
+        .date-group input[type="date"]::-webkit-calendar-picker-indicator {
+            filter:invert(1);
+            cursor:pointer;
+        }
+        .date-group input[type="date"]::-moz-calendar-picker-indicator {
+            filter:invert(1);
+            cursor:pointer;
+        }
+
+        /* ===== 结果网格 ===== */
+        .result-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+            margin-top:6px;
+        }
+        .result-item {
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:10px;
+            padding:10px 12px;
+            text-align:center;
+            transition:border-color 0.3s;
+        }
+        .result-item .number {
+            font-size:1.5rem;
+            font-weight:700;
+            color:#4ade80;
+            font-variant-numeric:tabular-nums;
+            font-family:'MiSans', 'Consolas', monospace;
+        }
+        .result-item .number.empty { color:rgba(255,255,255,0.15); }
+        .result-item .label {
+            color:rgba(255,255,255,0.2);
+            font-size:0.55rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+            margin-top:2px;
+        }
+
+        /* ===== 日期信息 ===== */
+        .date-info {
+            text-align:center;
+            color:rgba(255,255,255,0.15);
+            font-size:0.7rem;
+            margin-top:10px;
+            padding-top:10px;
+            border-top:1px solid rgba(255,255,255,0.04);
+            font-weight:400;
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-container { padding:16px 12px; min-height:340px; }
+            .date-group input[type="date"] { font-size:0.8rem; padding:8px 12px; }
+            .result-item .number { font-size:1.2rem; }
+            .result-item { padding:8px 10px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .date-info { font-size:0.6rem; }
+        }
+        @media (max-width: 380px) {
+            .result-item .number { font-size:1rem; }
+            .result-grid { gap:6px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">📅</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">📅 日期计算</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-container">
+            <div class="date-group">
+                <label>📅 开始日期</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="date-group">
+                <label>📅 结束日期</label>
+                <input type="date" id="endDate">
+            </div>
+
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="number" id="daysResult">0</div>
+                    <div class="label">天数</div>
+                </div>
+                <div class="result-item">
+                    <div class="number" id="weeksResult">0</div>
+                    <div class="label">周数</div>
+                </div>
+                <div class="result-item">
+                    <div class="number" id="monthsResult">0</div>
+                    <div class="label">月数</div>
+                </div>
+                <div class="result-item">
+                    <div class="number" id="yearsResult">0</div>
+                    <div class="label">年数</div>
+                </div>
+            </div>
+
+            <div class="date-info" id="dateInfo">请选择日期</div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>📅 日期计算器：</strong>
+            选择开始和结束日期，自动计算相差的天数、周数、月数和年数
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 日期计算 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        }
+
+        // ===== 以下为日期计算核心逻辑，完整保留，未作任何修改 =====
+        const startInput = document.getElementById('startDate');
+        const endInput = document.getElementById('endDate');
+        const daysResult = document.getElementById('daysResult');
+        const weeksResult = document.getElementById('weeksResult');
+        const monthsResult = document.getElementById('monthsResult');
+        const yearsResult = document.getElementById('yearsResult');
+        const dateInfo = document.getElementById('dateInfo');
+
+        // 设置默认日期：今天 和 7天后
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const future = new Date(today);
+        future.setDate(future.getDate() + 7);
+        const futureStr = future.toISOString().split('T')[0];
+
+        startInput.value = todayStr;
+        endInput.value = futureStr;
+
+        function calculate() {
+            const startVal = startInput.value;
+            const endVal = endInput.value;
+
+            if (!startVal || !endVal) {
+                daysResult.textContent = '—';
+                daysResult.className = 'number empty';
+                weeksResult.textContent = '—';
+                weeksResult.className = 'number empty';
+                monthsResult.textContent = '—';
+                monthsResult.className = 'number empty';
+                yearsResult.textContent = '—';
+                yearsResult.className = 'number empty';
+                dateInfo.textContent = '请选择两个日期';
+                return;
+            }
+
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                daysResult.textContent = '❌';
+                daysResult.className = 'number empty';
+                weeksResult.textContent = '❌';
+                weeksResult.className = 'number empty';
+                monthsResult.textContent = '❌';
+                monthsResult.className = 'number empty';
+                yearsResult.textContent = '❌';
+                yearsResult.className = 'number empty';
+                dateInfo.textContent = '无效日期';
+                return;
+            }
+
+            // 恢复样式
+            daysResult.className = 'number';
+            weeksResult.className = 'number';
+            monthsResult.className = 'number';
+            yearsResult.className = 'number';
+
+            // 确保开始日期 <= 结束日期
+            const isReverse = start > end;
+            const d1 = isReverse ? end : start;
+            const d2 = isReverse ? start : end;
+
+            const diffMs = d2.getTime() - d1.getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffWeeks = Math.floor(diffDays / 7);
+            const diffMonths = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+            const diffYears = d2.getFullYear() - d1.getFullYear();
+
+            daysResult.textContent = diffDays;
+            weeksResult.textContent = diffWeeks;
+            monthsResult.textContent = diffMonths;
+            yearsResult.textContent = diffYears;
+
+            const dir = isReverse ? '（倒序）' : '';
+            dateInfo.textContent =
+                `📆 ${d1.toLocaleDateString('zh-CN')} → ${d2.toLocaleDateString('zh-CN')} ${dir}`;
+        }
+
+        startInput.addEventListener('change', calculate);
+        endInput.addEventListener('change', calculate);
+
+        calculate();
+    </script>
+</body>
+</html>

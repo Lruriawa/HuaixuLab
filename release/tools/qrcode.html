@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📱 二维码生成器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js">
+    </script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:flex-start;
+            min-height:100vh;
+            padding:8px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+            margin:0 auto;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 4px 10px 4px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:0.85rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.85rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:14px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:12px;
+        }
+
+        /* ===== QR预览区 ===== */
+        .qr-preview {
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:rgba(255,255,255,0.8);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:10px;
+            margin-bottom:10px;
+            min-height:160px;
+        }
+        .qr-preview canvas {
+            display:block;
+            max-width:100%;
+            height:auto;
+            border-radius:6px;
+        }
+        .qr-preview .placeholder {
+            color:rgba(0,0,0,0.12);
+            text-align:center;
+            font-size:0.75rem;
+            padding:16px;
+        }
+        .qr-preview .placeholder .icon {
+            font-size:2.2rem;
+            display:block;
+            margin-bottom:4px;
+        }
+
+        /* ===== 输入行 ===== */
+        .input-row {
+            display:flex;
+            gap:6px;
+            margin-bottom:10px;
+            align-items:stretch;
+        }
+        .input-row textarea {
+            flex:1;
+            background:rgba(255,255,255,0.7);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:8px;
+            padding:8px 12px;
+            color:#1a1a1a;
+            font-size:0.75rem;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+            resize:vertical;
+            min-height:40px;
+            outline:none;
+            transition:border-color 0.3s;
+            line-height:1.4;
+        }
+        .input-row textarea:focus { border-color:#40C463; }
+        .input-row textarea::placeholder { color:rgba(0,0,0,0.2); }
+        .input-row button {
+            padding:0 14px;
+            border:none;
+            border-radius:8px;
+            font-size:0.75rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            box-shadow:0 4px 20px rgba(64,196,99,0.25);
+            white-space:nowrap;
+            min-height:40px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-shrink:0;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .input-row button:active { transform:scale(0.94); }
+        .input-row button:hover { opacity:0.9; }
+
+        /* ===== 设置项 ===== */
+        .settings {
+            display:flex;
+            flex-direction:column;
+            gap:5px;
+            margin-bottom:10px;
+        }
+        .setting-item {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            background:rgba(255,255,255,0.5);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:6px;
+            padding:4px 10px;
+            height:32px;
+        }
+        .setting-item .label {
+            color:rgba(0,0,0,0.3);
+            font-size:0.55rem;
+            font-weight:600;
+            flex-shrink:0;
+            min-width:28px;
+        }
+        .setting-item input[type="color"] {
+            width:22px;
+            height:22px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:4px;
+            background:transparent;
+            cursor:pointer;
+            padding:2px;
+            flex-shrink:0;
+        }
+        .setting-item input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+        .setting-item input[type="color"]::-webkit-color-swatch { border:none; border-radius:3px; }
+        .setting-item input[type="range"] {
+            flex:1;
+            -webkit-appearance:none;
+            appearance:none;
+            height:2px;
+            background:rgba(0,0,0,0.08);
+            border-radius:4px;
+            outline:none;
+            min-width:40px;
+        }
+        .setting-item input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance:none;
+            appearance:none;
+            width:12px;
+            height:12px;
+            border-radius:50%;
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            cursor:pointer;
+            box-shadow:0 2px 8px rgba(64,196,99,0.3);
+        }
+        .setting-item input[type="range"]::-moz-range-thumb {
+            width:12px;
+            height:12px;
+            border-radius:50%;
+            border:none;
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            cursor:pointer;
+        }
+        .setting-item .val {
+            color:rgba(0,0,0,0.3);
+            font-size:0.5rem;
+            min-width:20px;
+            text-align:center;
+            font-family:'MiSans', 'Consolas', monospace;
+            flex-shrink:0;
+            font-weight:500;
+        }
+        .setting-item select {
+            flex:1;
+            background:rgba(255,255,255,0.7);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:4px;
+            padding:2px 6px;
+            color:rgba(0,0,0,0.5);
+            font-size:0.55rem;
+            outline:none;
+            height:24px;
+            min-width:0;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .setting-item select:focus { border-color:#40C463; }
+        .setting-item select option { background:#fff; color:#1a1a1a; }
+        .setting-item .style-btns {
+            display:flex;
+            gap:3px;
+            flex:1;
+        }
+        .setting-item .style-btns button {
+            flex:1;
+            padding:2px 0;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:4px;
+            background:rgba(255,255,255,0.4);
+            color:rgba(0,0,0,0.3);
+            font-size:0.5rem;
+            cursor:pointer;
+            transition:all 0.2s;
+            font-weight:600;
+            text-align:center;
+            min-width:0;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .setting-item .style-btns button.active {
+            background:rgba(33,110,57,0.08);
+            border-color:rgba(33,110,57,0.12);
+            color:#216E39;
+        }
+        .setting-item .style-btns button:active { transform:scale(0.94); }
+        .setting-item .style-btns button:hover { background:rgba(0,0,0,0.04); }
+
+        /* ===== Logo上传 ===== */
+        .logo-upload {
+            display:flex;
+            align-items:center;
+            gap:6px;
+            flex:1;
+            min-width:0;
+        }
+        .logo-upload input[type="file"] { display:none; }
+        .logo-upload .upload-btn {
+            padding:2px 10px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:4px;
+            background:rgba(255,255,255,0.4);
+            color:rgba(0,0,0,0.4);
+            font-size:0.5rem;
+            cursor:pointer;
+            transition:all 0.2s;
+            white-space:nowrap;
+            font-weight:600;
+            height:22px;
+            display:flex;
+            align-items:center;
+            flex-shrink:0;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .logo-upload .upload-btn:hover { background:rgba(0,0,0,0.04); }
+        .logo-upload .logo-status {
+            color:rgba(0,0,0,0.2);
+            font-size:0.45rem;
+            flex:1;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+            min-width:0;
+        }
+        .logo-upload .logo-remove {
+            background:none;
+            border:none;
+            color:rgba(0,0,0,0.15);
+            cursor:pointer;
+            font-size:0.6rem;
+            padding:0 3px;
+            transition:color 0.2s;
+            flex-shrink:0;
+        }
+        .logo-upload .logo-remove:hover { color:#e74c3c; }
+
+        /* ===== 按钮组 ===== */
+        .btn-group {
+            display:flex;
+            gap:6px;
+        }
+        .btn-group button {
+            flex:1;
+            padding:6px 0;
+            border:none;
+            border-radius:8px;
+            font-size:0.7rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            min-height:32px;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+        .btn-group button:hover { opacity:0.9; }
+        .btn-group .btn-download {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            box-shadow:0 4px 20px rgba(64,196,99,0.25);
+        }
+        .btn-group .btn-download:disabled {
+            opacity:0.3;
+            cursor:not-allowed;
+        }
+        .btn-group .btn-copy {
+            background:rgba(33,110,57,0.08);
+            border:1px solid rgba(33,110,57,0.1);
+            color:#216E39;
+        }
+        .btn-group .btn-copy:hover { background:rgba(33,110,57,0.12); }
+        .btn-group .btn-copy:disabled {
+            opacity:0.3;
+            cursor:not-allowed;
+        }
+        .btn-group .btn-clear {
+            background:rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.06);
+            color:rgba(0,0,0,0.4);
+        }
+        .btn-group .btn-clear:hover { background:rgba(0,0,0,0.06); }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:6px 10px;
+            margin-top:8px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.6rem;
+            line-height:1.5;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position:fixed;
+            bottom:80px;
+            left:50%;
+            transform:translateX(-50%) translateY(80px);
+            background:rgba(0,0,0,0.8);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:8px 20px;
+            border-radius:30px;
+            font-size:0.75rem;
+            border:1px solid rgba(255,255,255,0.06);
+            opacity:0;
+            transition:all 0.4s ease;
+            pointer-events:none;
+            z-index:100;
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .toast.show {
+            opacity:1;
+            transform:translateX(-50%) translateY(0);
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 420px) {
+            .game-wrapper { padding:12px; border-radius:16px; }
+            .tool-header { font-size:0.75rem; padding:0 2px 8px 2px; }
+            .tool-container { padding:8px; border-radius:12px; }
+            .qr-preview { padding:8px; min-height:130px; margin-bottom:8px; }
+            .qr-preview canvas { max-height:160px; }
+            .qr-preview .placeholder { font-size:0.65rem; padding:12px; }
+            .qr-preview .placeholder .icon { font-size:1.8rem; }
+            .input-row textarea { min-height:34px; font-size:0.65rem; padding:6px 10px; }
+            .input-row button { min-height:34px; font-size:0.65rem; padding:0 10px; }
+            .settings { gap:4px; margin-bottom:8px; }
+            .setting-item { height:28px; padding:3px 8px; gap:5px; }
+            .setting-item .label { font-size:0.5rem; min-width:24px; }
+            .setting-item input[type="color"] { width:18px; height:18px; }
+            .setting-item input[type="range"]::-webkit-slider-thumb { width:10px; height:10px; }
+            .setting-item .val { font-size:0.45rem; min-width:16px; }
+            .setting-item select { font-size:0.5rem; height:20px; padding:1px 4px; }
+            .setting-item .style-btns button { font-size:0.45rem; padding:1px 0; }
+            .logo-upload .upload-btn { font-size:0.45rem; padding:1px 8px; height:18px; }
+            .logo-upload .logo-status { font-size:0.4rem; }
+            .btn-group button { font-size:0.6rem; padding:4px 0; min-height:28px; border-radius:6px; }
+            .btn-group { gap:4px; }
+            .how-to-play { font-size:0.55rem; padding:4px 8px; margin-top:6px; }
+            .toast { font-size:0.65rem; padding:6px 16px; bottom:70px; }
+        }
+
+        @media (max-width: 360px) {
+            .game-wrapper { padding:8px; border-radius:14px; }
+            .tool-header .title-tag { font-size:0.7rem; }
+            .tool-container { padding:6px; }
+            .setting-item { height:26px; padding:2px 6px; gap:3px; }
+            .setting-item .label { font-size:0.45rem; min-width:20px; }
+            .setting-item input[type="color"] { width:16px; height:16px; }
+            .setting-item .style-btns button { font-size:0.4rem; }
+            .setting-item select { font-size:0.45rem; height:18px; }
+            .input-row textarea { min-height:30px; font-size:0.6rem; padding:4px 8px; }
+            .input-row button { min-height:30px; font-size:0.6rem; padding:0 8px; }
+            .btn-group button { font-size:0.55rem; min-height:24px; }
+            .qr-preview { min-height:100px; padding:6px; }
+            .qr-preview canvas { max-height:120px; }
+            .how-to-play { font-size:0.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">📱</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">📱 二维码生成</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-header">
+            <span style="opacity:0.5;">📱</span>
+            <span class="title-tag">二维码生成器</span>
+        </div>
+
+        <div class="tool-container">
+            <div class="qr-preview">
+                <canvas id="qrCanvas" width="300" height="300"></canvas>
+            </div>
+
+            <div class="input-row">
+                <textarea id="qrInput" placeholder="输入文本、网址或任意内容..." rows="2">https://lab.lruriawa.top</textarea>
+                <button id="generateBtn">✨ 生成</button>
+            </div>
+
+            <div class="settings">
+                <div class="setting-item">
+                    <span class="label">样式</span>
+                    <div class="style-btns">
+                        <button class="active" data-style="rect">方块</button>
+                        <button data-style="round">圆角</button>
+                        <button data-style="dots">圆点</button>
+                        <button data-style="diamond">菱形</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">Logo</span>
+                    <div class="logo-upload">
+                        <input type="file" id="logoInput" accept="image/*">
+                        <label class="upload-btn" for="logoInput">📎 上传</label>
+                        <span class="logo-status" id="logoStatus">未上传</span>
+                        <button class="logo-remove" id="logoRemove" style="display:none;">✕</button>
+                    </div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">前景</span>
+                    <input type="color" id="colorDark" value="#1a1a2e">
+                </div>
+                <div class="setting-item">
+                    <span class="label">背景</span>
+                    <input type="color" id="colorLight" value="#ffffff">
+                </div>
+                <div class="setting-item">
+                    <span class="label">尺寸</span>
+                    <input type="range" id="qrSize" min="160" max="360" value="220" step="10">
+                    <span class="val" id="sizeVal">220</span>
+                </div>
+                <div class="setting-item">
+                    <span class="label">留白</span>
+                    <input type="range" id="qrPadding" min="8" max="40" value="16" step="2">
+                    <span class="val" id="paddingVal">16</span>
+                </div>
+                <div class="setting-item">
+                    <span class="label">纠错</span>
+                    <select id="errorLevel">
+                        <option value="L">低 (L) 7%</option>
+                        <option value="M" selected>中 (M) 15%</option>
+                        <option value="Q">较高 (Q) 25%</option>
+                        <option value="H">高 (H) 30%</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-download" id="downloadBtn" disabled>💾 下载</button>
+                <button class="btn-copy" id="copyBtn" disabled>📋 复制</button>
+                <button class="btn-clear" id="clearBtn">✕ 清空</button>
+            </div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>📱 二维码生成器：</strong>
+            方块/圆角/圆点/菱形 · 自定义Logo · 颜色/尺寸/留白 · 下载/复制
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 二维码生成器 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        }
+
+        // ===== 以下为二维码生成核心逻辑，完整保留 =====
+        const toast = document.getElementById('toast');
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        const canvas = document.getElementById('qrCanvas');
+        const ctx = canvas.getContext('2d');
+        const qrInput = document.getElementById('qrInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const colorDark = document.getElementById('colorDark');
+        const colorLight = document.getElementById('colorLight');
+        const qrSize = document.getElementById('qrSize');
+        const sizeVal = document.getElementById('sizeVal');
+        const qrPadding = document.getElementById('qrPadding');
+        const paddingVal = document.getElementById('paddingVal');
+        const errorLevel = document.getElementById('errorLevel');
+        const logoInput = document.getElementById('logoInput');
+        const logoStatus = document.getElementById('logoStatus');
+        const logoRemove = document.getElementById('logoRemove');
+
+        let currentImageData = null;
+        let logoDataURL = null;
+        let currentStyle = 'rect';
+        let canvasSize = 220;
+
+        document.querySelectorAll('.style-btns button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.style-btns button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStyle = this.dataset.style;
+                if (qrInput.value.trim()) generateQR();
+            });
+        });
+
+        logoInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                logoDataURL = ev.target.result;
+                logoStatus.textContent = '✅ ' + file.name;
+                logoRemove.style.display = 'inline-block';
+                if (qrInput.value.trim()) generateQR();
+                showToast('✅ Logo已上传');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        logoRemove.addEventListener('click', function() {
+            logoDataURL = null;
+            logoInput.value = '';
+            logoStatus.textContent = '未上传';
+            this.style.display = 'none';
+            if (qrInput.value.trim()) generateQR();
+            showToast('✕ Logo已移除');
+        });
+
+        qrSize.addEventListener('input', function() {
+            sizeVal.textContent = this.value;
+            canvasSize = parseInt(this.value);
+        });
+        qrPadding.addEventListener('input', function() {
+            paddingVal.textContent = this.value;
+        });
+
+        function generateQR() {
+            const text = qrInput.value.trim();
+            if (!text) {
+                showToast('⚠️ 请先输入内容');
+                return;
+            }
+
+            const size = parseInt(qrSize.value) || 220;
+            const padding = parseInt(qrPadding.value) || 16;
+            const dark = colorDark.value;
+            const light = colorLight.value;
+            const levelMap = { 'L': 'L', 'M': 'M', 'Q': 'Q', 'H': 'H' };
+            const level = levelMap[errorLevel.value] || 'M';
+
+            try {
+                const qr = qrcode(0, level);
+                qr.addData(text);
+                qr.make();
+
+                const moduleCount = qr.getModuleCount();
+                const cellSize = (size - padding * 2) / moduleCount;
+                const totalSize = size;
+
+                canvas.width = totalSize;
+                canvas.height = totalSize;
+
+                ctx.fillStyle = light;
+                ctx.fillRect(0, 0, totalSize, totalSize);
+
+                const style = currentStyle;
+
+                for (let row = 0; row < moduleCount; row++) {
+                    for (let col = 0; col < moduleCount; col++) {
+                        const isDark = qr.isDark(row, col);
+                        if (!isDark) continue;
+
+                        const x = padding + col * cellSize;
+                        const y = padding + row * cellSize;
+                        const cx = x + cellSize / 2;
+                        const cy = y + cellSize / 2;
+
+                        ctx.fillStyle = dark;
+
+                        switch (style) {
+                            case 'rect':
+                                ctx.fillRect(x, y, cellSize, cellSize);
+                                break;
+
+                            case 'round':
+                                const radius = cellSize * 0.25;
+                                ctx.beginPath();
+                                ctx.moveTo(x + radius, y);
+                                ctx.lineTo(x + cellSize - radius, y);
+                                ctx.quadraticCurveTo(x + cellSize, y, x + cellSize, y + radius);
+                                ctx.lineTo(x + cellSize, y + cellSize - radius);
+                                ctx.quadraticCurveTo(x + cellSize, y + cellSize, x + cellSize - radius, y + cellSize);
+                                ctx.lineTo(x + radius, y + cellSize);
+                                ctx.quadraticCurveTo(x, y + cellSize, x, y + cellSize - radius);
+                                ctx.lineTo(x, y + radius);
+                                ctx.quadraticCurveTo(x, y, x + radius, y);
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+
+                            case 'dots':
+                                const dotR = cellSize * 0.55;
+                                ctx.beginPath();
+                                ctx.arc(cx, cy, dotR, 0, Math.PI * 2);
+                                ctx.fill();
+                                break;
+
+                            case 'diamond':
+                                ctx.beginPath();
+                                ctx.moveTo(cx, y);
+                                ctx.lineTo(x + cellSize, cy);
+                                ctx.lineTo(cx, y + cellSize);
+                                ctx.lineTo(x, cy);
+                                ctx.closePath();
+                                ctx.fill();
+                                break;
+
+                            default:
+                                ctx.fillRect(x, y, cellSize, cellSize);
+                        }
+                    }
+                }
+
+                if (logoDataURL) {
+                    drawLogo(totalSize);
+                } else {
+                    currentImageData = canvas.toDataURL('image/png');
+                    downloadBtn.disabled = false;
+                    copyBtn.disabled = false;
+                    showToast('✅ 生成成功！');
+                }
+
+            } catch (e) {
+                console.error(e);
+                showToast('❌ 生成失败，请检查内容');
+                downloadBtn.disabled = true;
+                copyBtn.disabled = true;
+                currentImageData = null;
+            }
+        }
+
+        function drawLogo(totalSize) {
+            const logoSize = totalSize * 0.2;
+            const img = new Image();
+            img.onload = function() {
+                ctx.save();
+                const bgRadius = logoSize / 2 + 4;
+                ctx.shadowColor = 'rgba(0,0,0,0.08)';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(totalSize / 2, totalSize / 2, bgRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.beginPath();
+                ctx.arc(totalSize / 2, totalSize / 2, logoSize / 2, 0, Math.PI * 2);
+                ctx.clip();
+                const imgX = (totalSize - logoSize) / 2;
+                const imgY = (totalSize - logoSize) / 2;
+                ctx.drawImage(img, imgX, imgY, logoSize, logoSize);
+                ctx.restore();
+                currentImageData = canvas.toDataURL('image/png');
+                downloadBtn.disabled = false;
+                copyBtn.disabled = false;
+                showToast('✅ 生成成功！');
+            };
+            img.onerror = function() {
+                currentImageData = canvas.toDataURL('image/png');
+                downloadBtn.disabled = false;
+                copyBtn.disabled = false;
+                showToast('✅ 生成成功（Logo加载失败）');
+            };
+            img.src = logoDataURL;
+        }
+
+        function downloadQR() {
+            if (!currentImageData) {
+                showToast('⚠️ 请先生成');
+                return;
+            }
+            const link = document.createElement('a');
+            link.download = 'qrcode.png';
+            link.href = currentImageData;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('💾 下载成功！');
+        }
+
+        function copyQR() {
+            if (!currentImageData) {
+                showToast('⚠️ 请先生成');
+                return;
+            }
+            fetch(currentImageData)
+                .then(r => r.blob())
+                .then(blob => {
+                    if (navigator.clipboard && navigator.clipboard.write) {
+                        return navigator.clipboard.write([
+                            new ClipboardItem({ [blob.type]: blob })
+                        ]);
+                    }
+                    return navigator.clipboard.writeText(currentImageData);
+                })
+                .then(() => {
+                    showToast('📋 已复制图片');
+                })
+                .catch(() => {
+                    showToast('⚠️ 复制失败，请使用下载');
+                });
+        }
+
+        function clearAll() {
+            qrInput.value = '';
+            logoDataURL = null;
+            logoInput.value = '';
+            logoStatus.textContent = '未上传';
+            logoRemove.style.display = 'none';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.width = 220;
+            canvas.height = 220;
+            ctx.fillStyle = 'rgba(0,0,0,0.03)';
+            ctx.fillRect(0, 0, 220, 220);
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📷 输入内容后生成', 110, 110);
+            downloadBtn.disabled = true;
+            copyBtn.disabled = true;
+            currentImageData = null;
+            showToast('✕ 已清空');
+        }
+
+        generateBtn.addEventListener('click', generateQR);
+        downloadBtn.addEventListener('click', downloadQR);
+        copyBtn.addEventListener('click', copyQR);
+        clearBtn.addEventListener('click', clearAll);
+
+        qrInput.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                generateQR();
+            }
+        });
+
+        [colorDark, colorLight, qrSize, qrPadding, errorLevel].forEach(el => {
+            el.addEventListener('change', function() {
+                if (qrInput.value.trim()) generateQR();
+            });
+            if (el.type === 'range') {
+                el.addEventListener('input', function() {
+                    if (qrInput.value.trim()) generateQR();
+                });
+            }
+        });
+
+        canvas.width = 220;
+        canvas.height = 220;
+        ctx.fillStyle = 'rgba(0,0,0,0.03)';
+        ctx.fillRect(0, 0, 220, 220);
+        ctx.fillStyle = 'rgba(0,0,0,0.08)';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📷 输入内容后生成', 110, 110);
+
+        setTimeout(function() {
+            generateQR();
+        }, 500);
+    </script>
+</body>
+</html>

@@ -1,0 +1,1401 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>条形码生成器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <!-- JsBarcode 库 (生成) -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js">
+    </script>
+    <!-- html5-qrcode 库 (解码) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js">
+    </script>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'MiSans', 'Segoe UI', system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            padding-top: 70px;
+            padding-bottom: 70px;
+            position: relative;
+        }
+
+        /* ===== 加载动画 ===== */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #f5f7f5;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.6s ease-out;
+        }
+        #loader.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #loader .logo {
+            font-size: 5.5rem;
+            animation: loaderPulse 1.2s ease-in-out infinite;
+            margin-bottom: 14px;
+        }
+        #loader .loader-text {
+            color: rgba(0, 0, 0, 0.3);
+            font-size: 1.6rem;
+            letter-spacing: 4px;
+            font-weight: 400;
+            margin-bottom: 20px;
+        }
+        #loader .loader-text span {
+            color: #40C463;
+            font-weight: 600;
+        }
+        #loader .loading-status {
+            color: rgba(0, 0, 0, 0.15);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+            animation: loadingDot 1.6s ease-in-out infinite;
+        }
+        @keyframes loadingDot {
+            0%,
+            100% {
+                opacity: 0.3;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+        #loader .loader-bar {
+            width: 200px;
+            height: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+        #loader .loader-bar .fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #216E39, #40C463, #9BE9A8);
+            border-radius: 4px;
+            animation: loaderFill 2.5s ease-in-out forwards;
+        }
+        @keyframes loaderPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.08);
+            }
+        }
+        @keyframes loaderFill {
+            0% {
+                width: 0%;
+            }
+            30% {
+                width: 40%;
+            }
+            60% {
+                width: 75%;
+            }
+            100% {
+                width: 100%;
+            }
+        }
+
+        /* ===== 页眉 ===== */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 0 20px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .header .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #1a1a1a;
+            font-weight: 700;
+            font-size: 1.0rem;
+        }
+        .header .brand .logo-icon {
+            font-size: 1.4rem;
+        }
+        .header .brand .brand-text {
+            background: linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header .nav-link {
+            color: rgba(0, 0, 0, 0.45);
+            text-decoration: none;
+            font-size: 0.8rem;
+            padding: 4px 14px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .header .nav-link:hover {
+            background: rgba(0, 0, 0, 0.04);
+            color: #1a1a1a;
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+        .header .nav-link.primary {
+            background: linear-gradient(135deg, #40C463, #30A14E);
+            border: none;
+            color: #fff;
+        }
+        .header .nav-link.primary:hover {
+            opacity: 0.85;
+        }
+        .header .title {
+            color: #1a1a1a;
+            font-size: 0.95rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== 页脚 ===== */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.70);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .footer .text {
+            color: rgba(0, 0, 0, 0.25);
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+        .footer .text .love {
+            color: rgba(239, 68, 68, 0.15);
+        }
+        .footer .text .highlight {
+            color: #216E39;
+        }
+
+        /* ===== 主卡片 ===== */
+        .barcode-wrapper {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 24px 20px;
+            box-shadow: 0 4px 40px rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            max-width: 520px;
+            width: 100%;
+        }
+
+        .barcode-wrapper h2 {
+            color: #1a1a1a;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .barcode-wrapper h2 span {
+            font-size: 1.6rem;
+        }
+        .barcode-wrapper .sub {
+            color: rgba(0, 0, 0, 0.25);
+            font-size: 0.8rem;
+            margin-bottom: 14px;
+        }
+
+        /* ===== Tab 切换 ===== */
+        .tab-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 12px;
+            padding: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+        .tab-bar button {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: transparent;
+            color: rgba(0, 0, 0, 0.3);
+        }
+        .tab-bar button.active {
+            background: rgba(33, 110, 57, 0.12);
+            color: #216E39;
+            box-shadow: 0 2px 8px rgba(33, 110, 57, 0.06);
+        }
+        .tab-bar button:active {
+            transform: scale(0.95);
+        }
+        .tab-bar button .tab-icon {
+            margin-right: 4px;
+        }
+
+        /* ===== 输入区域 ===== */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            background: rgba(255, 255, 255, 0.6);
+            color: #1a1a1a;
+            outline: none;
+            transition: border-color 0.3s;
+            min-width: 140px;
+        }
+        .input-group input:focus {
+            border-color: #216E39;
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .input-group input::placeholder {
+            color: rgba(0, 0, 0, 0.15);
+        }
+
+        .input-group .btn-generate {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #216E39, #40C463);
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.2s, opacity 0.2s;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(33, 110, 57, 0.25);
+        }
+        .input-group .btn-generate:active {
+            transform: scale(0.95);
+        }
+        .input-group .btn-generate:hover {
+            opacity: 0.9;
+        }
+
+        /* ===== 格式下拉 ===== */
+        .format-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .format-row label {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.3);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        .format-row select {
+            flex: 1;
+            padding: 8px 14px;
+            border: 1.5px solid rgba(0, 0, 0, 0.06);
+            border-radius: 10px;
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.6);
+            color: #1a1a1a;
+            outline: none;
+            cursor: pointer;
+            transition: border-color 0.3s;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(0,0,0,0.2)' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+            min-width: 140px;
+        }
+        .format-row select:focus {
+            border-color: #216E39;
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        .format-row select option {
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+        .format-row .format-hint {
+            font-size: 0.65rem;
+            color: rgba(0, 0, 0, 0.15);
+            white-space: nowrap;
+        }
+
+        /* ===== 条形码展示 ===== */
+        .barcode-display {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 16px;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 160px;
+            border: 1.5px dashed rgba(0, 0, 0, 0.04);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .barcode-display.has-barcode {
+            border-style: solid;
+            border-color: rgba(33, 110, 57, 0.08);
+        }
+        .barcode-display svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .barcode-display .placeholder {
+            color: rgba(0, 0, 0, 0.1);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .barcode-display .placeholder .icon {
+            font-size: 3rem;
+        }
+        .barcode-display .barcode-text {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.2);
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            word-break: break-all;
+            text-align: center;
+        }
+        .barcode-display .format-tag {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            font-size: 0.5rem;
+            color: rgba(0, 0, 0, 0.08);
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            background: rgba(0, 0, 0, 0.02);
+            padding: 2px 10px;
+            border-radius: 10px;
+        }
+
+        /* ===== 解码区域 ===== */
+        .decode-area {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .decode-area.active {
+            display: flex;
+        }
+
+        .upload-zone {
+            border: 2px dashed rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            padding: 30px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+        .upload-zone:hover {
+            border-color: rgba(33, 110, 57, 0.2);
+            background: rgba(33, 110, 57, 0.02);
+        }
+        .upload-zone.dragover {
+            border-color: #216E39;
+            background: rgba(33, 110, 57, 0.06);
+        }
+        .upload-zone .icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 6px;
+        }
+        .upload-zone .title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: rgba(0, 0, 0, 0.3);
+        }
+        .upload-zone .desc {
+            font-size: 0.75rem;
+            color: rgba(0, 0, 0, 0.15);
+            margin-top: 4px;
+        }
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-zone .supported-formats {
+            font-size: 0.55rem;
+            color: rgba(0, 0, 0, 0.1);
+            margin-top: 8px;
+            letter-spacing: 0.3px;
+        }
+
+        .preview-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+        .preview-area.active {
+            display: flex;
+        }
+        .preview-area img {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            background: #fff;
+        }
+        .preview-area .preview-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .preview-area .preview-actions button {
+            padding: 6px 18px;
+            border: 1.5px solid rgba(0, 0, 0, 0.06);
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.5);
+            color: rgba(0, 0, 0, 0.3);
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .preview-area .preview-actions button:active {
+            transform: scale(0.95);
+        }
+        .preview-area .preview-actions button:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(33, 110, 57, 0.15);
+        }
+
+        /* ===== 解码结果 ===== */
+        .decode-result {
+            display: none;
+            background: rgba(33, 110, 57, 0.04);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid rgba(33, 110, 57, 0.06);
+        }
+        .decode-result.active {
+            display: block;
+        }
+        .decode-result .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        .decode-result .status.success {
+            color: #216E39;
+        }
+        .decode-result .status.error {
+            color: #e74c3c;
+        }
+        .decode-result .status.loading {
+            color: #f59e0b;
+        }
+        .decode-result .content {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: #1a1a1a;
+            word-break: break-all;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.5px;
+        }
+        .decode-result .meta {
+            font-size: 0.65rem;
+            color: rgba(0, 0, 0, 0.15);
+            margin-top: 6px;
+        }
+        .decode-result .copy-btn {
+            margin-top: 10px;
+            padding: 6px 18px;
+            border: none;
+            border-radius: 20px;
+            background: linear-gradient(135deg, #216E39, #40C463);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .decode-result .copy-btn:active {
+            transform: scale(0.95);
+        }
+        .decode-result .copy-btn:hover {
+            opacity: 0.85;
+        }
+
+        /* ===== 操作按钮组 ===== */
+        .action-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        .action-group button {
+            flex: 1;
+            padding: 10px 16px;
+            border: 1.5px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.5);
+            color: rgba(0, 0, 0, 0.4);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            min-width: 80px;
+        }
+        .action-group button:active {
+            transform: scale(0.95);
+        }
+        .action-group button:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(33, 110, 57, 0.15);
+            color: #1a1a1a;
+        }
+        .action-group button.download {
+            background: linear-gradient(135deg, #216E39, #40C463);
+            border-color: #216E39;
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(33, 110, 57, 0.2);
+        }
+        .action-group button.download:hover {
+            opacity: 0.85;
+            color: #fff;
+        }
+        .action-group button.download:active {
+            opacity: 0.7;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #fff;
+            padding: 10px 24px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 999;
+            opacity: 0;
+            transition: all 0.4s ease;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            body {
+                padding-top: 60px;
+                padding-bottom: 60px;
+            }
+            .barcode-wrapper {
+                padding: 16px 14px;
+                border-radius: 16px;
+            }
+            .barcode-wrapper h2 {
+                font-size: 1.2rem;
+            }
+            .input-group input {
+                font-size: 0.85rem;
+                padding: 8px 14px;
+            }
+            .input-group .btn-generate {
+                font-size: 0.85rem;
+                padding: 8px 20px;
+            }
+            .barcode-display {
+                min-height: 130px;
+                padding: 16px 12px;
+            }
+            .action-group button {
+                font-size: 0.75rem;
+                padding: 8px 12px;
+            }
+            .format-row select {
+                font-size: 0.8rem;
+                padding: 6px 12px;
+                padding-right: 32px;
+            }
+            .format-row label {
+                font-size: 0.7rem;
+            }
+            .format-row .format-hint {
+                display: none;
+            }
+            .upload-zone {
+                padding: 20px 12px;
+            }
+            .upload-zone .icon {
+                font-size: 2.4rem;
+            }
+            .upload-zone .title {
+                font-size: 0.85rem;
+            }
+            .toast {
+                font-size: 0.8rem;
+                padding: 8px 18px;
+                bottom: 72px;
+                white-space: normal;
+                max-width: 80%;
+            }
+            .tab-bar button {
+                font-size: 0.75rem;
+                padding: 6px 10px;
+            }
+        }
+        @media (max-width: 400px) {
+            .input-group {
+                flex-direction: column;
+            }
+            .input-group .btn-generate {
+                width: 100%;
+                justify-content: center;
+            }
+            .action-group button {
+                flex: 1 1 45%;
+            }
+            .format-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .format-row select {
+                width: 100%;
+            }
+            .preview-area img {
+                max-height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">📦</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <script>
+        setTimeout(function() {
+            var loader = document.getElementById('loader');
+            if (loader) loader.classList.add('hide');
+        }, 2500);
+    </script>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">📦 条形码</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ===== 主内容 ===== -->
+    <div class="barcode-wrapper">
+        <h2>
+            <span>📦</span> 条形码工具
+        </h2>
+        <p class="sub" id="mainSub">生成 · 解码 · 一站式条码工具</p>
+
+        <!-- Tab 切换 -->
+        <div class="tab-bar" id="tabBar">
+            <button class="active" data-tab="generate">
+                <span class="tab-icon">✨</span> 生成
+            </button>
+            <button data-tab="decode">
+                <span class="tab-icon">📷</span> 解码
+            </button>
+        </div>
+
+        <!-- ============================================================
+             生成模式
+             ============================================================ -->
+        <div id="tabGenerate" class="tab-content">
+            <!-- 输入 -->
+            <div class="input-group">
+                <input type="text" id="barcodeInput" placeholder="输入内容，如：1234567890" value="20260901">
+                <button class="btn-generate" id="generateBtn">✨ 生成</button>
+            </div>
+
+            <!-- 格式下拉 -->
+            <div class="format-row">
+                <label for="formatSelect">📐 格式</label>
+                <select id="formatSelect">
+                    <option value="CODE128">CODE128（通用）</option>
+                    <option value="EAN-13">EAN-13（国际商品）</option>
+                    <option value="EAN-8">EAN-8（国际商品缩短）</option>
+                    <option value="UPC-A">UPC-A（美国商品）</option>
+                    <option value="UPC-E">UPC-E（美国商品缩短）</option>
+                    <option value="CODE39">CODE39（工业）</option>
+                    <option value="ITF">ITF（包装箱）</option>
+                    <option value="MSI">MSI（仓储）</option>
+                    <option value="Pharmacode">药码（医药包装）</option>
+                    <option value="Codabar">Codabar（图书馆）</option>
+                </select>
+                <span class="format-hint" id="formatHint">通用条码，支持数字和字母</span>
+            </div>
+
+            <!-- 条形码展示 -->
+            <div class="barcode-display" id="barcodeDisplay">
+                <div class="placeholder" id="placeholder">
+                    <span class="icon">📐</span>
+                    <span>输入内容后点击「生成」</span>
+                </div>
+                <div id="barcodeContainer" style="display:none;width:100%;display:none;justify-content:center;"></div>
+                <div class="barcode-text" id="barcodeText"></div>
+                <div class="format-tag" id="formatTag">CODE128</div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="action-group">
+                <button id="downloadBtn" class="download">⬇️ 下载 PNG</button>
+                <button id="copyBtn">📋 复制内容</button>
+                <button id="clearBtn">🗑️ 清空</button>
+            </div>
+        </div>
+
+        <!-- ============================================================
+             解码模式
+             ============================================================ -->
+        <div id="tabDecode" class="tab-content" style="display:none;">
+            <div class="decode-area active">
+                <!-- 上传区域 -->
+                <div class="upload-zone" id="uploadZone">
+                    <span class="icon">📷</span>
+                    <div class="title">点击或拖拽上传图片</div>
+                    <div class="desc">支持 JPG, PNG, BMP 等常见格式</div>
+                    <div class="supported-formats">支持 CODE128 · EAN-13 · UPC · CODE39 · ITF · Codabar 等</div>
+                    <input type="file" id="fileInput" accept="image/*">
+                </div>
+
+                <!-- 预览区域 -->
+                <div class="preview-area" id="previewArea">
+                    <img id="previewImage" src="" alt="预览">
+                    <div class="preview-actions">
+                        <button id="reUploadBtn">🔄 重新上传</button>
+                        <button id="clearDecodeBtn">🗑️ 清空</button>
+                    </div>
+                </div>
+
+                <!-- 解码结果 -->
+                <div class="decode-result" id="decodeResult">
+                    <div class="status" id="decodeStatus">
+                        <span id="statusIcon">✅</span>
+                        <span id="statusText">解码成功</span>
+                    </div>
+                    <div class="content" id="decodeContent">1234567890</div>
+                    <div class="meta" id="decodeMeta">识别时间: 2024-01-01 12:00:00</div>
+                    <button class="copy-btn" id="decodeCopyBtn">📋 复制解码结果</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 条形码生成器 &nbsp;|&nbsp;
+            <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <!-- ===== 隐藏容器（html5-qrcode 需要） ===== -->
+    <div id="qr-reader" style="display:none;"></div>
+
+    <script>
+        // ============================================================
+        //  📦 条形码工具 - 生成 + 解码
+        // ============================================================
+
+        // ----- 格式映射 -----
+        const formatHints = {
+            'CODE128': '通用条码，支持数字和字母',
+            'EAN-13': '国际商品条码，13位数字',
+            'EAN-8': '国际商品条码，8位数字',
+            'UPC-A': '美国商品条码，12位数字',
+            'UPC-E': '美国商品条码缩短版',
+            'CODE39': '工业用条码，支持字母数字',
+            'ITF': '交错二五码，常用于包装箱',
+            'MSI': 'MSI条码，常用于仓储',
+            'Pharmacode': '药码，用于医药包装',
+            'Codabar': '库德巴码，常用于图书馆'
+        };
+
+        const formatNames = {
+            'CODE128': 'CODE128',
+            'EAN-13': 'EAN-13',
+            'EAN-8': 'EAN-8',
+            'UPC-A': 'UPC-A',
+            'UPC-E': 'UPC-E',
+            'CODE39': 'CODE39',
+            'ITF': 'ITF',
+            'MSI': 'MSI',
+            'Pharmacode': '药码',
+            'Codabar': 'Codabar'
+        };
+
+        // ============================================================
+        //  生成器逻辑
+        // ============================================================
+
+        let currentFormat = 'CODE128';
+        let currentData = '';
+
+        const inputEl = document.getElementById('barcodeInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const displayEl = document.getElementById('barcodeDisplay');
+        const containerEl = document.getElementById('barcodeContainer');
+        const placeholderEl = document.getElementById('placeholder');
+        const textEl = document.getElementById('barcodeText');
+        const formatTagEl = document.getElementById('formatTag');
+        const formatSelect = document.getElementById('formatSelect');
+        const formatHint = document.getElementById('formatHint');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const toastEl = document.getElementById('toast');
+
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toastEl.textContent = msg;
+            toastEl.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toastEl.classList.remove('show');
+            }, 2500);
+        }
+
+        // ----- 格式切换 -----
+        formatSelect.addEventListener('change', function() {
+            currentFormat = this.value;
+            formatTagEl.textContent = currentFormat;
+            formatHint.textContent = formatHints[currentFormat] || '';
+            if (currentData) {
+                generateBarcode();
+            }
+        });
+
+        // ----- 生成条形码 -----
+        function generateBarcode() {
+            const data = inputEl.value.trim();
+            if (!data) {
+                showToast('⚠️ 请输入内容');
+                return;
+            }
+
+            const fmt = currentFormat;
+
+            if (fmt === 'EAN-13' && !/^\d{12,13}$/.test(data)) {
+                showToast('⚠️ EAN-13 需要 12-13 位数字');
+                return;
+            }
+            if (fmt === 'EAN-8' && !/^\d{7,8}$/.test(data)) {
+                showToast('⚠️ EAN-8 需要 7-8 位数字');
+                return;
+            }
+            if (fmt === 'UPC-A' && !/^\d{11,12}$/.test(data)) {
+                showToast('⚠️ UPC-A 需要 11-12 位数字');
+                return;
+            }
+            if (fmt === 'UPC-E' && !/^\d{7,8}$/.test(data)) {
+                showToast('⚠️ UPC-E 需要 7-8 位数字');
+                return;
+            }
+            if (fmt === 'Pharmacode' && !/^\d+$/.test(data)) {
+                showToast('⚠️ 药码 仅支持数字');
+                return;
+            }
+
+            currentData = data;
+            containerEl.innerHTML = '';
+            containerEl.style.display = 'flex';
+            placeholderEl.style.display = 'none';
+            formatTagEl.textContent = currentFormat;
+
+            try {
+                let options = {
+                    format: fmt,
+                    width: fmt === 'Pharmacode' ? 3 : 2,
+                    height: fmt === 'Pharmacode' ? 60 : 80,
+                    displayValue: true,
+                    fontSize: 18,
+                    font: 'MiSans, sans-serif',
+                    textMargin: 6,
+                    margin: 10,
+                    background: '#ffffff',
+                    lineColor: '#1a1a1a',
+                };
+
+                if (fmt === 'CODE39') options.width = 2.2;
+                if (fmt === 'ITF') options.width = 2.5;
+                if (fmt === 'MSI') options.width = 2.2;
+                if (fmt === 'Codabar') options.width = 2.2;
+                if (fmt === 'Pharmacode') {
+                    options.width = 3;
+                    options.height = 60;
+                    options.fontSize = 14;
+                }
+
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('id', 'barcodeSvg');
+                containerEl.appendChild(svg);
+
+                JsBarcode('#barcodeSvg', data, options);
+
+                textEl.textContent = data;
+                displayEl.classList.add('has-barcode');
+                showToast('✅ 条形码已生成 (' + formatNames[fmt] + ')');
+
+            } catch (e) {
+                console.error(e);
+                showToast('❌ 生成失败：' + e.message);
+                containerEl.style.display = 'none';
+                placeholderEl.style.display = 'flex';
+                displayEl.classList.remove('has-barcode');
+            }
+        }
+
+        // ----- 下载 PNG -----
+        function downloadPNG() {
+            const svg = document.querySelector('#barcodeSvg');
+            if (!svg) {
+                showToast('⚠️ 请先生成条形码');
+                return;
+            }
+
+            try {
+                const svgData = new XMLSerializer().serializeToString(svg);
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                const svgRect = svg.getBoundingClientRect();
+                const width = svgRect.width || 400;
+                const height = svgRect.height || 120;
+
+                canvas.width = width * 2;
+                canvas.height = height * 2;
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const img = new Image();
+                const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    URL.revokeObjectURL(url);
+                    const link = document.createElement('a');
+                    link.download = 'barcode_' + (currentData || 'barcode') + '.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                    showToast('✅ 下载成功');
+                };
+
+                img.onerror = function() {
+                    const link = document.createElement('a');
+                    link.download = 'barcode_' + (currentData || 'barcode') + '.svg';
+                    link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+                    link.click();
+                    showToast('✅ 已下载 SVG 格式');
+                };
+
+                img.src = url;
+
+            } catch (e) {
+                console.error(e);
+                const svg = document.querySelector('#barcodeSvg');
+                if (svg) {
+                    const svgData = new XMLSerializer().serializeToString(svg);
+                    const link = document.createElement('a');
+                    link.download = 'barcode_' + (currentData || 'barcode') + '.svg';
+                    link.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+                    link.click();
+                    showToast('✅ 已下载 SVG 格式');
+                } else {
+                    showToast('❌ 下载失败，请重试');
+                }
+            }
+        }
+
+        // ----- 复制 -----
+        function copyContent() {
+            if (!currentData) {
+                showToast('⚠️ 请先生成条形码');
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(currentData).then(() => {
+                    showToast('✅ 已复制：' + currentData);
+                }).catch(() => {
+                    fallbackCopy(currentData);
+                });
+            } else {
+                fallbackCopy(currentData);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('✅ 已复制：' + text);
+            } catch (e) {
+                prompt('请手动复制：', text);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ----- 清空 -----
+        function clearAll() {
+            inputEl.value = '';
+            currentData = '';
+            containerEl.innerHTML = '';
+            containerEl.style.display = 'none';
+            placeholderEl.style.display = 'flex';
+            textEl.textContent = '';
+            displayEl.classList.remove('has-barcode');
+            formatTagEl.textContent = currentFormat;
+            formatHint.textContent = formatHints[currentFormat] || '';
+            showToast('🗑️ 已清空');
+        }
+
+        // ----- 生成器事件绑定 -----
+        generateBtn.addEventListener('click', generateBarcode);
+        inputEl.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                generateBarcode();
+            }
+        });
+        downloadBtn.addEventListener('click', downloadPNG);
+        copyBtn.addEventListener('click', copyContent);
+        clearBtn.addEventListener('click', clearAll);
+
+        // ============================================================
+        //  解码器逻辑 (html5-qrcode)
+        // ============================================================
+
+        let html5QrCode = null;
+        let isDecoding = false;
+
+        const fileInput = document.getElementById('fileInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const previewArea = document.getElementById('previewArea');
+        const previewImage = document.getElementById('previewImage');
+        const decodeResult = document.getElementById('decodeResult');
+        const decodeStatus = document.getElementById('decodeStatus');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const decodeContent = document.getElementById('decodeContent');
+        const decodeMeta = document.getElementById('decodeMeta');
+        const decodeCopyBtn = document.getElementById('decodeCopyBtn');
+        const reUploadBtn = document.getElementById('reUploadBtn');
+        const clearDecodeBtn = document.getElementById('clearDecodeBtn');
+
+        // ----- 初始化 Html5Qrcode -----
+        function initDecoder() {
+            if (!html5QrCode) {
+                try {
+                    html5QrCode = new Html5Qrcode('qr-reader');
+                } catch (e) {
+                    console.warn('Html5Qrcode 初始化失败:', e);
+                }
+            }
+        }
+
+        // ----- 解码图片 -----
+        function decodeImage(file) {
+            if (isDecoding) return;
+            if (!file) return;
+
+            // 显示预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImage.src = e.target.result;
+                previewArea.classList.add('active');
+                uploadZone.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+
+            // 开始解码
+            isDecoding = true;
+            decodeResult.classList.add('active');
+            decodeStatus.className = 'status loading';
+            statusIcon.textContent = '⏳';
+            statusText.textContent = '解码中...';
+            decodeContent.textContent = '正在识别条形码...';
+            decodeMeta.textContent = '请稍候';
+
+            initDecoder();
+
+            if (!html5QrCode) {
+                decodeStatus.className = 'status error';
+                statusIcon.textContent = '❌';
+                statusText.textContent = '解码器初始化失败';
+                decodeContent.textContent = '请刷新页面后重试';
+                isDecoding = false;
+                return;
+            }
+
+            html5QrCode.scanFile(file, true)
+                .then(function(decodedText) {
+                    // 解码成功
+                    decodeStatus.className = 'status success';
+                    statusIcon.textContent = '✅';
+                    statusText.textContent = '解码成功';
+                    decodeContent.textContent = decodedText;
+                    decodeMeta.textContent = '识别时间: ' + new Date().toLocaleString();
+                    showToast('✅ 解码成功！');
+                    isDecoding = false;
+                })
+                .catch(function(err) {
+                    // 解码失败
+                    console.warn('解码失败:', err);
+                    decodeStatus.className = 'status error';
+                    statusIcon.textContent = '❌';
+                    statusText.textContent = '无法识别条形码';
+                    decodeContent.textContent = '未能从图片中识别出条形码，请尝试其他图片';
+                    decodeMeta.textContent = '提示: 确保图片清晰，条形码完整';
+                    showToast('❌ 未识别到条形码');
+                    isDecoding = false;
+                });
+        }
+
+        // ----- 文件选择 -----
+        fileInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (file) {
+                decodeImage(file);
+            }
+            this.value = '';
+        });
+
+        // ----- 拖拽上传 -----
+        uploadZone.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    decodeImage(file);
+                } else {
+                    showToast('⚠️ 请上传图片文件');
+                }
+            }
+        });
+
+        // ----- 重新上传 -----
+        reUploadBtn.addEventListener('click', function() {
+            previewArea.classList.remove('active');
+            decodeResult.classList.remove('active');
+            uploadZone.style.display = 'block';
+            fileInput.click();
+        });
+
+        // ----- 清空解码 -----
+        clearDecodeBtn.addEventListener('click', function() {
+            previewArea.classList.remove('active');
+            decodeResult.classList.remove('active');
+            uploadZone.style.display = 'block';
+            previewImage.src = '';
+            fileInput.value = '';
+            showToast('🗑️ 已清空');
+        });
+
+        // ----- 复制解码结果 -----
+        decodeCopyBtn.addEventListener('click', function() {
+            const text = decodeContent.textContent;
+            if (!text || text === '正在识别条形码...' || text === '未能从图片中识别出条形码，请尝试其他图片') {
+                showToast('⚠️ 没有可复制的内容');
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('✅ 已复制：' + text);
+                }).catch(() => {
+                    fallbackCopyDecode(text);
+                });
+            } else {
+                fallbackCopyDecode(text);
+            }
+        });
+
+        function fallbackCopyDecode(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            textarea.style.top = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('✅ 已复制：' + text);
+            } catch (e) {
+                prompt('请手动复制：', text);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // ============================================================
+        //  Tab 切换
+        // ============================================================
+
+        const tabBar = document.getElementById('tabBar');
+        const tabGenerate = document.getElementById('tabGenerate');
+        const tabDecode = document.getElementById('tabDecode');
+        const mainSub = document.getElementById('mainSub');
+
+        tabBar.addEventListener('click', function(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            const tab = btn.dataset.tab;
+
+            // 更新按钮状态
+            tabBar.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // 切换内容
+            if (tab === 'generate') {
+                tabGenerate.style.display = 'block';
+                tabDecode.style.display = 'none';
+                mainSub.textContent = '生成 · 10种条码格式 · 一键下载';
+            } else {
+                tabGenerate.style.display = 'none';
+                tabDecode.style.display = 'block';
+                mainSub.textContent = '解码 · 上传图片识别条形码';
+                // 初始化解码器
+                setTimeout(initDecoder, 100);
+            }
+        });
+
+        // ============================================================
+        //  初始化
+        // ============================================================
+
+        // 生成器默认
+        formatHint.textContent = formatHints['CODE128'] || '';
+        setTimeout(generateBarcode, 300);
+
+        // 预初始化解码器
+        setTimeout(initDecoder, 500);
+
+        console.log('📦 条形码工具已启动 (生成 + 解码)');
+        console.log('📌 生成格式: ' + Object.keys(formatHints).join(', '));
+        console.log('📷 解码支持: CODE128, EAN-13, UPC, CODE39, ITF, Codabar 等');
+    </script>
+
+</body>
+</html>

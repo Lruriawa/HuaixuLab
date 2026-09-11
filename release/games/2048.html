@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔢 2048-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 游戏容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.2rem;
+  }
+  .game-header .score {
+    background:rgba(0,0,0,0.06);
+    padding:4px 16px;
+    border-radius:30px;
+    font-size:1.1rem;
+    color:#1a1a1a;
+  }
+  .game-header .pause-btn {
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:#1a1a1a;
+    padding:4px 12px;
+    border-radius:30px;
+    font-size:0.9rem;
+    cursor:pointer;
+    transition:background 0.2s;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .game-header .pause-btn:active { background:rgba(0,0,0,0.1); }
+
+  .canvas-wrap {
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:16px;
+    overflow:hidden;
+    background:#ffffff;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.02);
+  }
+  canvas { display:block; width:100%; height:100%; touch-action:none; }
+
+  .countdown-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.4); backdrop-filter:blur(2px);
+    display:flex; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.2s;
+    border-radius:16px; z-index:6;
+  }
+  .countdown-overlay.show { opacity:1; pointer-events:auto; }
+  .countdown-overlay .number {
+    font-size:8rem; font-weight:900; text-shadow:0 0 60px rgba(255,255,255,0.3);
+    animation: countPop 0.6s ease-out;
+  }
+  @keyframes countPop {
+    0% { transform:scale(1.8); opacity:0; }
+    50% { transform:scale(1); opacity:1; }
+    100% { transform:scale(1); opacity:1; }
+  }
+
+  .pause-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.3s;
+    border-radius:16px; z-index:5;
+  }
+  .pause-overlay.show { opacity:1; pointer-events:auto; }
+  .pause-overlay .big-icon { font-size:3.5rem; margin-bottom:8px; }
+  .pause-overlay h2 { font-size:2rem; font-weight:700; margin-bottom:4px; }
+  .pause-overlay .sub { font-size:1.1rem; opacity:0.5; }
+  .pause-overlay .key-hint {
+    margin-top:12px; font-size:0.9rem; opacity:0.3;
+    background:rgba(255,255,255,0.05); padding:4px 16px;
+    border-radius:20px; border:1px solid rgba(255,255,255,0.05);
+  }
+
+  .overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s;
+    border-radius:16px; z-index:10;
+  }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button {
+    padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700;
+    cursor:pointer; transition:transform 0.2s;
+  }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    line-height:1.6;
+    text-align:center;
+  }
+  .how-to-play strong { color:#1a1a1a; }
+
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:1rem; }
+    .game-header .score { font-size:0.9rem; padding:2px 12px; }
+    .game-header .pause-btn { font-size:0.8rem; padding:3px 10px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🔢</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🔢 2048</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.5;">🏆</span>
+    <span class="score">得分 <span id="scoreDisplay">0</span></span>
+    <button class="pause-btn" id="pauseBtn">⏸️ <span id="pauseLabel">暂停</span></button>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="number" id="countdownNumber">3</div>
+    </div>
+    <div class="pause-overlay" id="pauseOverlay">
+      <div class="big-icon">⏸️</div>
+      <h2>已暂停</h2>
+      <p class="sub">按 ESC 或点击按钮继续</p>
+      <div class="key-hint">⌨️ ESC 切换暂停</div>
+    </div>
+    <div class="overlay show" id="startOverlay">
+      <h2>🔢 2048</h2>
+      <p class="sub-text">方向键滑动 · 合并数字</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-home" id="homeBtn">🏠 返回首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2>💔 游戏结束</h2>
+      <p class="sub-text">得分：<span id="finalScore">0</span></p>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-home" id="homeBtn2">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    方向键 ↑ ↓ ← → 滑动方块，相同数字合并相加，
+    不断合并冲到 <strong>2048</strong> 就赢啦！
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 2048 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，统一风格） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+}
+
+// ===== 以下为游戏核心逻辑，仅修改画布背景适配白色 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countdownNumber = document.getElementById('countdownNumber');
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseLabel = document.getElementById('pauseLabel');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+
+let W, H, SIZE;
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  W = canvas.width;
+  H = canvas.height;
+  SIZE = W / 4;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let board = Array(4).fill().map(() => Array(4).fill(0));
+let score = 0;
+let gameOver = false;
+let started = false;
+let paused = false;
+let countdownActive = false;
+
+function reset() {
+  board = Array(4).fill().map(() => Array(4).fill(0));
+  score = 0;
+  gameOver = false;
+  started = false;
+  paused = false;
+  countdownActive = false;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  gameOverOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  updateUI();
+  addRandom(); addRandom();
+}
+
+function startGame() {
+  board = Array(4).fill().map(() => Array(4).fill(0));
+  score = 0;
+  gameOver = false;
+  started = false;
+  paused = false;
+  countdownActive = false;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  gameOverOverlay.classList.remove('show');
+  updateUI();
+  addRandom(); addRandom();
+  
+  startOverlay.classList.remove('show');
+  
+  startCountdown(function() {
+    started = true;
+  });
+}
+
+function togglePause() {
+  if (!started || gameOver || countdownActive) return;
+  paused = !paused;
+  if (paused) {
+    pauseOverlay.classList.add('show');
+    pauseLabel.textContent = '继续';
+  } else {
+    startCountdown(function() {
+      paused = false;
+    });
+  }
+}
+
+function startCountdown(callback) {
+  if (countdownActive) return;
+  countdownActive = true;
+  pauseOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  
+  let count = 3;
+  countdownNumber.textContent = count;
+  countdownOverlay.classList.add('show');
+  countdownNumber.style.animation = 'none';
+  void countdownNumber.offsetWidth;
+  countdownNumber.style.animation = 'countPop 0.6s ease-out';
+
+  const interval = setInterval(function() {
+    count--;
+    if (count > 0) {
+      countdownNumber.textContent = count;
+      countdownNumber.style.animation = 'none';
+      void countdownNumber.offsetWidth;
+      countdownNumber.style.animation = 'countPop 0.6s ease-out';
+    } else {
+      clearInterval(interval);
+      countdownOverlay.classList.remove('show');
+      countdownActive = false;
+      if (callback) callback();
+    }
+  }, 1000);
+}
+
+function addRandom() {
+  let empty = [];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) if (board[r][c] === 0) empty.push([r, c]);
+  if (empty.length === 0) return;
+  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
+  board[r][c] = Math.random() < 0.9 ? 2 : 4;
+}
+
+function updateUI() { scoreSpan.textContent = score; }
+
+function gameOverFn() {
+  gameOver = true;
+  finalScoreSpan.textContent = score;
+  gameOverOverlay.classList.add('show');
+}
+
+function slide(row) {
+  let arr = row.filter(v => v !== 0);
+  let newArr = [];
+  let i = 0;
+  while (i < arr.length) {
+    if (i + 1 < arr.length && arr[i] === arr[i+1]) {
+      newArr.push(arr[i] * 2);
+      score += arr[i] * 2;
+      i += 2;
+    } else {
+      newArr.push(arr[i]);
+      i++;
+    }
+  }
+  while (newArr.length < 4) newArr.push(0);
+  return newArr;
+}
+
+function move(direction) {
+  if (gameOver || !started || paused || countdownActive) return;
+  let old = JSON.stringify(board);
+  if (direction === 'left') {
+    for (let r = 0; r < 4; r++) board[r] = slide(board[r]);
+  } else if (direction === 'right') {
+    for (let r = 0; r < 4; r++) { let rev = [...board[r]].reverse(); rev = slide(rev); board[r] = rev.reverse(); }
+  } else if (direction === 'up') {
+    for (let c = 0; c < 4; c++) { let col = [board[0][c], board[1][c], board[2][c], board[3][c]]; col = slide(col); for (let r = 0; r < 4; r++) board[r][c] = col[r]; }
+  } else if (direction === 'down') {
+    for (let c = 0; c < 4; c++) { let col = [board[3][c], board[2][c], board[1][c], board[0][c]]; col = slide(col); for (let r = 0; r < 4; r++) board[3-r][c] = col[r]; }
+  }
+  if (JSON.stringify(board) !== old) {
+    addRandom();
+    updateUI();
+    let empty = board.some(row => row.some(v => v === 0));
+    if (!empty) {
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+        if (c < 3 && board[r][c] === board[r][c+1]) empty = true;
+        if (r < 3 && board[r][c] === board[r+1][c]) empty = true;
+      }
+    }
+    if (!empty) gameOverFn();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  // 白色背景
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, W, H);
+  
+  // 颜色配置 - 空格子使用浅灰色，在白色背景下可见
+  const colors = { 
+    0: 'rgba(0,0,0,0.04)', 
+    2: '#eee4da', 
+    4: '#ede0c8', 
+    8: '#f2b179', 
+    16: '#f59563', 
+    32: '#f67c5f', 
+    64: '#f65e3b', 
+    128: '#edcf72', 
+    256: '#edcc61', 
+    512: '#edc850', 
+    1024: '#edc53f', 
+    2048: '#edc22e' 
+  };
+  
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const val = board[r][c];
+      const x = c * SIZE + 6, y = r * SIZE + 6;
+      
+      // 绘制圆角矩形格子
+      ctx.shadowBlur = val > 0 ? 4 : 0;
+      ctx.shadowColor = 'rgba(0,0,0,0.04)';
+      ctx.fillStyle = colors[val] || '#3c3a32';
+      ctx.beginPath();
+      ctx.roundRect(x, y, SIZE - 12, SIZE - 12, 6);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      if (val > 0) {
+        // 数字颜色：值 > 4 用白色，值 <= 4 用深色
+        ctx.fillStyle = val > 4 ? '#ffffff' : '#776e65';
+        ctx.font = `bold ${SIZE * 0.4}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(val, x + (SIZE-12)/2, y + (SIZE-12)/2 + 2);
+      }
+    }
+  }
+  
+  // 绘制微弱的网格线，让格子边界更清晰
+  ctx.strokeStyle = 'rgba(0,0,0,0.02)';
+  ctx.lineWidth = 0.5;
+  for (let i = 1; i < 4; i++) {
+    ctx.beginPath();
+    ctx.moveTo(i * SIZE, 0);
+    ctx.lineTo(i * SIZE, H);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, i * SIZE);
+    ctx.lineTo(W, i * SIZE);
+    ctx.stroke();
+  }
+}
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    const r = typeof radii === 'number' ? radii : (radii || 0);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    return this;
+  };
+}
+
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    togglePause();
+    return;
+  }
+  if (!started || gameOver || paused || countdownActive) return;
+  if (e.key === 'ArrowUp') { e.preventDefault(); move('up'); }
+  else if (e.key === 'ArrowDown') { e.preventDefault(); move('down'); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); move('left'); }
+  else if (e.key === 'ArrowRight') { e.preventDefault(); move('right'); }
+});
+
+let touchStartX = 0, touchStartY = 0;
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+}, { passive: false });
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (!touchStartX || paused || countdownActive) return;
+  const touch = e.touches[0];
+  const dx = touch.clientX - touchStartX;
+  const dy = touch.clientY - touchStartY;
+  if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    move(dx > 0 ? 'right' : 'left');
+  } else {
+    move(dy > 0 ? 'down' : 'up');
+  }
+  touchStartX = touch.clientX;
+  touchStartY = touch.clientY;
+}, { passive: false });
+
+pauseBtn.addEventListener('click', togglePause);
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+homeBtns.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    window.location.href = 'https://lab.lruriawa.top/release/home.html';
+  });
+});
+
+reset();
+loop();
+</script>
+</body>
+</html>

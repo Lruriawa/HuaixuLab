@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🖋️ 炫彩涂鸦-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 涂鸦容器（毛玻璃卡片） ===== */
+  .doodle-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:700px;
+    width:100%;
+  }
+  .doodle-wrapper canvas {
+    display:block;
+    width:100%;
+    height:auto;
+    aspect-ratio:700/500;
+    background:#0d0d1a;
+    border-radius:16px;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.1);
+    cursor:crosshair;
+    touch-action:none;
+  }
+
+  /* ===== 控制栏 ===== */
+  .controls {
+    margin-top:14px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+  }
+  .controls label {
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight:500;
+  }
+  .controls input[type="range"] {
+    width:120px;
+    height:4px;
+    -webkit-appearance:none;
+    appearance:none;
+    background:rgba(0,0,0,0.1);
+    border-radius:4px;
+    outline:none;
+    accent-color:#40C463;
+  }
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    appearance:none;
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(64,196,99,0.3);
+  }
+  .controls input[type="range"]::-moz-range-thumb {
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    cursor:pointer;
+  }
+  .controls button {
+    padding:8px 24px;
+    border:none;
+    border-radius:30px;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:0.95rem;
+    transition:opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .controls button:active { transform:scale(0.95); }
+  .controls button:hover { opacity:0.85; }
+  .controls .btn-clear {
+    background:linear-gradient(135deg, #e74c3c, #c0392b);
+    box-shadow:0 4px 20px rgba(231,76,60,0.3);
+  }
+  .controls .btn-clear:hover { opacity:0.85; }
+  .controls .size-value {
+    color:#216E39;
+    font-weight:700;
+    min-width:28px;
+    text-align:center;
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .doodle-wrapper { padding:12px; }
+    .controls { gap:10px; }
+    .controls label { font-size:0.85rem; }
+    .controls input[type="range"] { width:80px; }
+    .controls button { font-size:0.85rem; padding:6px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🖋️</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🖋️ 炫彩涂鸦</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 涂鸦主体 ===== -->
+<div class="doodle-wrapper">
+  <canvas id="canvas"></canvas>
+  <div class="controls">
+    <label>
+      ✏️ 粗细
+      <input type="range" id="sizeSlider" min="2" max="30" value="8">
+      <span class="size-value" id="sizeDisplay">8</span>
+    </label>
+    <button id="clearBtn" class="btn-clear">🗑️ 清空</button>
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 炫彩涂鸦 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为涂鸦核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const sizeSlider = document.getElementById('sizeSlider');
+const sizeDisplay = document.getElementById('sizeDisplay');
+const clearBtn = document.getElementById('clearBtn');
+
+let W, H;
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  W = canvas.width = rect.width || 700;
+  H = canvas.height = rect.height || 500;
+  // 保持宽高比
+  if (W / H > 700 / 500) {
+    canvas.width = 700;
+    canvas.height = 500;
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
+    W = 700;
+    H = 500;
+  }
+}
+resize();
+window.addEventListener('resize', resize);
+
+// 显示当前粗细值
+sizeSlider.addEventListener('input', function() {
+  sizeDisplay.textContent = this.value;
+});
+
+let isDown = false, lastX = 0, lastY = 0, hue = 0;
+
+function getCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * (W / rect.width),
+    y: (clientY - rect.top) * (H / rect.height)
+  };
+}
+
+function drawLine(x1, y1, x2, y2, size) {
+  const d = Math.hypot(x2 - x1, y2 - y1);
+  if (d < 1) return;
+  const steps = Math.max(5, Math.floor(d / 1.5));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = x1 + (x2 - x1) * t;
+    const y = y1 + (y2 - y1) * t;
+    hue = (hue + 1.2) % 360;
+    const color = `hsl(${hue}, 90%, 60%)`;
+    ctx.shadowBlur = 25;
+    ctx.shadowColor = color;
+    ctx.fillStyle = color;
+    const r = size * (0.5 + 0.5 * Math.sin(t * Math.PI));
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  isDown = true;
+  const p = getCoords(e);
+  lastX = p.x;
+  lastY = p.y;
+  const s = parseInt(sizeSlider.value);
+  drawLine(p.x, p.y, p.x + 1, p.y, s);
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  if (!isDown) return;
+  const p = getCoords(e);
+  const s = parseInt(sizeSlider.value);
+  drawLine(lastX, lastY, p.x, p.y, s);
+  lastX = p.x;
+  lastY = p.y;
+});
+
+canvas.addEventListener('mouseup', function() { isDown = false; });
+canvas.addEventListener('mouseleave', function() { isDown = false; });
+
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  isDown = true;
+  const p = getCoords(e);
+  lastX = p.x;
+  lastY = p.y;
+  const s = parseInt(sizeSlider.value);
+  drawLine(p.x, p.y, p.x + 1, p.y, s);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (!isDown) return;
+  const p = getCoords(e);
+  const s = parseInt(sizeSlider.value);
+  drawLine(lastX, lastY, p.x, p.y, s);
+  lastX = p.x;
+  lastY = p.y;
+}, { passive: false });
+
+canvas.addEventListener('touchend', function() { isDown = false; });
+
+clearBtn.addEventListener('click', function() {
+  ctx.clearRect(0, 0, W, H);
+});
+</script>
+</body>
+</html>

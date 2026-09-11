@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔨 打地鼠-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 游戏容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+    flex-wrap:wrap;
+    gap:4px;
+  }
+  .game-header .score {
+    background:rgba(0,0,0,0.06);
+    padding:4px 14px;
+    border-radius:30px;
+    font-size:0.9rem;
+    color:#1a1a1a;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .game-header .score .timer-num { color:#e74c3c; font-weight:700; }
+  .game-header .score .score-num { color:#216E39; font-weight:700; }
+  .game-header .pause-btn {
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:#1a1a1a;
+    padding:4px 12px;
+    border-radius:30px;
+    font-size:0.8rem;
+    cursor:pointer;
+    transition:background 0.2s;
+    display:flex;
+    align-items:center;
+    gap:4px;
+    font-weight:500;
+  }
+  .game-header .pause-btn:active { background:rgba(0,0,0,0.1); }
+
+  .canvas-wrap {
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:16px;
+    overflow:hidden;
+    background:#2d5a27;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.1);
+  }
+  canvas { display:block; width:100%; height:100%; cursor:pointer; touch-action:none; }
+
+  .countdown-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.4); backdrop-filter:blur(2px);
+    display:flex; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.2s;
+    border-radius:16px; z-index:6;
+  }
+  .countdown-overlay.show { opacity:1; pointer-events:auto; }
+  .countdown-overlay .number {
+    font-size:8rem; font-weight:900; text-shadow:0 0 60px rgba(255,255,255,0.3);
+    animation: countPop 0.6s ease-out;
+  }
+  @keyframes countPop {
+    0% { transform:scale(1.8); opacity:0; }
+    50% { transform:scale(1); opacity:1; }
+    100% { transform:scale(1); opacity:1; }
+  }
+
+  .pause-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.3s;
+    border-radius:16px; z-index:5;
+  }
+  .pause-overlay.show { opacity:1; pointer-events:auto; }
+  .pause-overlay .big-icon { font-size:3.5rem; margin-bottom:8px; }
+  .pause-overlay h2 { font-size:2rem; font-weight:700; margin-bottom:4px; }
+  .pause-overlay .sub { font-size:1.1rem; opacity:0.5; }
+  .pause-overlay .key-hint {
+    margin-top:12px; font-size:0.9rem; opacity:0.3;
+    background:rgba(255,255,255,0.05); padding:4px 16px;
+    border-radius:20px; border:1px solid rgba(255,255,255,0.05);
+  }
+
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    line-height:1.6;
+    text-align:center;
+  }
+  .how-to-play strong { color:#1a1a1a; }
+
+  .overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s; border-radius:16px;
+    z-index:10;
+  }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button {
+    padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700;
+    cursor:pointer; transition:transform 0.2s;
+  }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:0.85rem; }
+    .game-header .score { font-size:0.75rem; padding:2px 10px; gap:4px; }
+    .game-header .pause-btn { font-size:0.7rem; padding:3px 10px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+    .overlay h2 { font-size:2rem; }
+    .overlay .sub-text { font-size:1rem; }
+    .overlay button { padding:10px 24px; font-size:1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🔨</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🔨 打地鼠</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.5;">🎯</span>
+    <span class="score">⏱️ <span class="timer-num" id="timerDisplay">30</span>s &nbsp;💥 <span class="score-num" id="scoreDisplay">0</span></span>
+    <button class="pause-btn" id="pauseBtn">⏸️ <span id="pauseLabel">暂停</span></button>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="number" id="countdownNumber">3</div>
+    </div>
+    <div class="pause-overlay" id="pauseOverlay">
+      <div class="big-icon">⏸️</div>
+      <h2>已暂停</h2>
+      <p class="sub">按 ESC 或点击按钮继续</p>
+      <div class="key-hint">⌨️ ESC 切换暂停</div>
+    </div>
+    <div class="overlay show" id="startOverlay">
+      <h2>🔨 打地鼠</h2>
+      <p class="sub-text">点击地鼠得分 · 限时30秒</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-home" id="homeBtn">🏠 返回首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2>⏰ 时间到！</h2>
+      <p class="sub-text">得分：<span id="finalScore">0</span></p>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-home" id="homeBtn2">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    👆 点击从洞里冒出来的 🐭 地鼠，
+    限时30秒，打中越多得分越高！按 ESC 暂停
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 打地鼠 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+}
+
+// ===== 以下为游戏核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const timerSpan = document.getElementById('timerDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countdownNumber = document.getElementById('countdownNumber');
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseLabel = document.getElementById('pauseLabel');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+
+let W, H, COLS, ROWS, HOLE_SIZE;
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  W = canvas.width;
+  H = canvas.height;
+  COLS = 3;
+  ROWS = 3;
+  HOLE_SIZE = W / 3;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let score = 0, timeLeft = 30;
+let activeHole = null;
+let gameRunning = false;
+let paused = false;
+let countdownActive = false;
+let timerInterval = null;
+let moleInterval = null;
+
+function resetGameState() {
+  score = 0;
+  timeLeft = 30;
+  gameRunning = false;
+  paused = false;
+  countdownActive = false;
+  activeHole = null;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  if (timerInterval) clearInterval(timerInterval);
+  if (moleInterval) clearInterval(moleInterval);
+  timerInterval = null;
+  moleInterval = null;
+  gameOverOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  updateUI();
+}
+
+function startGame() {
+  score = 0;
+  timeLeft = 30;
+  gameRunning = false;
+  paused = false;
+  countdownActive = false;
+  activeHole = null;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  if (timerInterval) clearInterval(timerInterval);
+  if (moleInterval) clearInterval(moleInterval);
+  timerInterval = null;
+  moleInterval = null;
+  gameOverOverlay.classList.remove('show');
+  updateUI();
+  
+  startOverlay.classList.remove('show');
+  
+  startCountdown(function() {
+    gameRunning = true;
+    spawnMole();
+    moleInterval = setInterval(spawnMole, 800);
+    timerInterval = setInterval(function() {
+      if (paused) return;
+      timeLeft--;
+      timerSpan.textContent = timeLeft;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        clearInterval(moleInterval);
+        gameRunning = false;
+        finalScoreSpan.textContent = score;
+        gameOverOverlay.classList.add('show');
+      }
+    }, 1000);
+  });
+}
+
+function togglePause() {
+  if (!gameRunning || countdownActive) return;
+  paused = !paused;
+  if (paused) {
+    pauseOverlay.classList.add('show');
+    pauseLabel.textContent = '继续';
+  } else {
+    startCountdown(function() {
+      paused = false;
+    });
+  }
+}
+
+function startCountdown(callback) {
+  if (countdownActive) return;
+  countdownActive = true;
+  pauseOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  
+  let count = 3;
+  countdownNumber.textContent = count;
+  countdownOverlay.classList.add('show');
+  countdownNumber.style.animation = 'none';
+  void countdownNumber.offsetWidth;
+  countdownNumber.style.animation = 'countPop 0.6s ease-out';
+
+  const interval = setInterval(function() {
+    count--;
+    if (count > 0) {
+      countdownNumber.textContent = count;
+      countdownNumber.style.animation = 'none';
+      void countdownNumber.offsetWidth;
+      countdownNumber.style.animation = 'countPop 0.6s ease-out';
+    } else {
+      clearInterval(interval);
+      countdownOverlay.classList.remove('show');
+      countdownActive = false;
+      if (callback) callback();
+    }
+  }, 1000);
+}
+
+function spawnMole() {
+  if (!gameRunning || paused || countdownActive) return;
+  activeHole = Math.floor(Math.random() * 9);
+}
+
+function getHolePos(idx) {
+  const r = Math.floor(idx / 3);
+  const c = idx % 3;
+  return { x: c * HOLE_SIZE + HOLE_SIZE/2, y: r * HOLE_SIZE + HOLE_SIZE/2 };
+}
+
+function updateUI() {
+  scoreSpan.textContent = score;
+  timerSpan.textContent = timeLeft;
+}
+
+function whack(idx) {
+  if (!gameRunning || paused || countdownActive) return;
+  if (idx === activeHole) {
+    score++;
+    updateUI();
+    activeHole = null;
+  }
+}
+
+function getHoleIndex(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+  const c = Math.floor(x / HOLE_SIZE);
+  const r = Math.floor(y / HOLE_SIZE);
+  if (c >= 0 && c < 3 && r >= 0 && r < 3) {
+    return r * 3 + c;
+  }
+  return -1;
+}
+
+canvas.addEventListener('click', function(e) {
+  const idx = getHoleIndex(e.clientX, e.clientY);
+  if (idx >= 0) whack(idx);
+});
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const idx = getHoleIndex(touch.clientX, touch.clientY);
+  if (idx >= 0) whack(idx);
+}, { passive: false });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    togglePause();
+  }
+});
+
+pauseBtn.addEventListener('click', togglePause);
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+homeBtns.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    window.location.href = 'index.html';
+  });
+});
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#2d5a27';
+  ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 9; i++) {
+    const pos = getHolePos(i);
+    ctx.fillStyle = '#1d3a17';
+    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(0,0,0,0.3)';
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, HOLE_SIZE * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    if (i === activeHole && !paused && !countdownActive) {
+      ctx.font = `${HOLE_SIZE * 0.5}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#d4a373';
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#ffcc00';
+      ctx.fillText('🐭', pos.x, pos.y + 4);
+      ctx.shadowBlur = 0;
+    }
+  }
+}
+
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+
+resetGameState();
+loop();
+</script>
+</body>
+</html>

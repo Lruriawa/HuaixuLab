@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🕒 世界时钟-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:16px;
+        }
+
+        /* ===== 本地时钟 ===== */
+        .clock-local {
+            text-align:center;
+            padding:12px;
+            background:rgba(255,255,255,0.5);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:12px;
+            margin-bottom:14px;
+        }
+        .clock-local .label {
+            color:rgba(0,0,0,0.25);
+            font-size:0.6rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            font-weight:500;
+        }
+        .clock-local .time {
+            font-size:2.6rem;
+            font-weight:300;
+            color:#1a1a1a;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            font-variant-numeric:tabular-nums;
+            letter-spacing:2px;
+        }
+        .clock-local .date {
+            color:rgba(0,0,0,0.25);
+            font-size:0.8rem;
+            margin-top:2px;
+        }
+
+        /* ===== 城市时钟网格 ===== */
+        .clock-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+            margin-bottom:10px;
+        }
+        .clock-item {
+            background:rgba(255,255,255,0.5);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:10px 8px;
+            text-align:center;
+            transition:all 0.3s;
+        }
+        .clock-item:hover {
+            background:rgba(255,255,255,0.7);
+            border-color:rgba(0,0,0,0.06);
+        }
+        .clock-item .city {
+            color:rgba(0,0,0,0.3);
+            font-size:0.65rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+            font-weight:500;
+        }
+        .clock-item .time {
+            color:#1a1a1a;
+            font-size:1.1rem;
+            font-weight:600;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            font-variant-numeric:tabular-nums;
+            margin-top:2px;
+        }
+        .clock-item .time .ampm {
+            color:rgba(0,0,0,0.2);
+            font-size:0.65rem;
+            margin-left:2px;
+            font-weight:400;
+        }
+        .clock-item .offset {
+            color:rgba(0,0,0,0.15);
+            font-size:0.55rem;
+        }
+
+        /* ===== 区域切换按钮 ===== */
+        .btn-group {
+            display:flex;
+            gap:6px;
+            flex-wrap:wrap;
+        }
+        .btn-group button {
+            padding:6px 14px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:20px;
+            background:rgba(255,255,255,0.4);
+            color:rgba(0,0,0,0.3);
+            font-size:0.65rem;
+            cursor:pointer;
+            transition:all 0.3s;
+            font-weight:600;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:hover {
+            background:rgba(255,255,255,0.7);
+            color:rgba(0,0,0,0.5);
+        }
+        .btn-group button.active {
+            background:rgba(33,110,57,0.08);
+            border-color:rgba(33,110,57,0.12);
+            color:#216E39;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; }
+            .clock-local .time { font-size:2rem; }
+            .clock-local .date { font-size:0.7rem; }
+            .clock-item .time { font-size:0.95rem; }
+            .clock-item .city { font-size:0.55rem; }
+            .btn-group button { font-size:0.55rem; padding:4px 10px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+        }
+        @media (max-width: 380px) {
+            .clock-grid { gap:4px; }
+            .clock-item { padding:8px 4px; }
+            .clock-item .time { font-size:0.8rem; }
+            .clock-local .time { font-size:1.6rem; }
+            .btn-group button { font-size:0.5rem; padding:3px 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+    <div class="logo">🕒</div>
+    <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+    <div class="loading-status">加载中...</div>
+    <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+    <a href="https://lab.lruriawa.top/" class="brand">
+        <span class="logo-icon">🧪</span>
+        <span class="brand-text">槐序Lab实验室</span>
+    </a>
+    <span class="title">🕒 世界时钟</span>
+    <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+    <div class="tool-header">
+        <span style="opacity:0.5;">🕒</span>
+        <span class="title-tag">世界时钟</span>
+    </div>
+
+    <div class="tool-container">
+        <div class="clock-local">
+            <div class="label">📍 本地时间</div>
+            <div class="time" id="localTime">--:--:--</div>
+            <div class="date" id="localDate">----年--月--日</div>
+        </div>
+
+        <div class="clock-grid" id="clockGrid">
+            <!-- 由 JS 生成 -->
+        </div>
+
+        <div class="btn-group" id="cityTabs">
+            <button class="active" data-view="default">🌍 默认</button>
+            <button data-view="asia">🌏 亚洲</button>
+            <button data-view="europe">🌍 欧洲</button>
+            <button data-view="america">🌎 美洲</button>
+        </div>
+    </div>
+
+    <div class="how-to-play">
+        <strong>🕒 世界时钟：</strong>
+        显示全球主要城市时间 · 切换区域查看 · 实时更新
+    </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+    <span class="text">
+        🧪 槐序Lab实验室 · 世界时钟 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+        &nbsp;&nbsp;<span class="love">❤️</span>
+    </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+}
+
+// ===== 以下为世界时钟核心逻辑，完整保留 =====
+// ===== 城市数据 =====
+const cities = {
+    default: [
+        { name: '北京', offset: 8 },
+        { name: '东京', offset: 9 },
+        { name: '纽约', offset: -4 },
+        { name: '伦敦', offset: 1 },
+        { name: '巴黎', offset: 2 },
+        { name: '悉尼', offset: 10 },
+        { name: '迪拜', offset: 4 },
+        { name: '新加坡', offset: 8 },
+    ],
+    asia: [
+        { name: '北京', offset: 8 },
+        { name: '东京', offset: 9 },
+        { name: '首尔', offset: 9 },
+        { name: '新加坡', offset: 8 },
+        { name: '曼谷', offset: 7 },
+        { name: '迪拜', offset: 4 },
+        { name: '孟买', offset: 5.5 },
+        { name: '香港', offset: 8 },
+    ],
+    europe: [
+        { name: '伦敦', offset: 1 },
+        { name: '巴黎', offset: 2 },
+        { name: '柏林', offset: 2 },
+        { name: '莫斯科', offset: 3 },
+        { name: '罗马', offset: 2 },
+        { name: '马德里', offset: 2 },
+        { name: '雅典', offset: 3 },
+        { name: '斯德哥尔摩', offset: 2 },
+    ],
+    america: [
+        { name: '纽约', offset: -4 },
+        { name: '洛杉矶', offset: -7 },
+        { name: '芝加哥', offset: -5 },
+        { name: '多伦多', offset: -4 },
+        { name: '墨西哥城', offset: -6 },
+        { name: '里约', offset: -3 },
+        { name: '布宜诺斯', offset: -3 },
+        { name: '温哥华', offset: -7 },
+    ]
+};
+
+let currentView = 'default';
+
+function formatTime(offset) {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const local = new Date(utc + offset * 3600000);
+    const h = String(local.getHours()).padStart(2, '0');
+    const m = String(local.getMinutes()).padStart(2, '0');
+    const s = String(local.getSeconds()).padStart(2, '0');
+    const ampm = local.getHours() >= 12 ? 'PM' : 'AM';
+    return { time: `${h}:${m}:${s}`, ampm, hours: local.getHours() };
+}
+
+function formatDate(offset) {
+    const now = new Date();
+    const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+    const local = new Date(utc + offset * 3600000);
+    const y = local.getFullYear();
+    const m = String(local.getMonth() + 1).padStart(2, '0');
+    const d = String(local.getDate()).padStart(2, '0');
+    const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+    const w = weekdays[local.getDay()];
+    return `${y}年${m}月${d}日 周${w}`;
+}
+
+function updateClocks() {
+    // 本地时间
+    const now = new Date();
+    const localTimeStr = now.toTimeString().split(' ')[0];
+    document.getElementById('localTime').textContent = localTimeStr;
+    document.getElementById('localDate').textContent =
+        `${now.getFullYear()}年${String(now.getMonth()+1).padStart(2,'0')}月${String(now.getDate()).padStart(2,'0')}日 周${['日','一','二','三','四','五','六'][now.getDay()]}`;
+
+    // 城市时间
+    const citiesList = cities[currentView] || cities.default;
+    const grid = document.getElementById('clockGrid');
+    let html = '';
+    for (const city of citiesList) {
+        const { time, ampm, hours } = formatTime(city.offset);
+        const isNight = hours < 6 || hours >= 18;
+        const color = isNight ? '#2563eb' : '#b8860b';
+        const lightColor = isNight ? 'rgba(37,99,235,0.08)' : 'rgba(184,134,11,0.08)';
+        html += `
+            <div class="clock-item" style="border-color: ${lightColor}">
+                <div class="city">${city.name}</div>
+                <div class="time" style="color:${color}">${time} <span class="ampm">${ampm}</span></div>
+                <div class="offset">UTC${city.offset >= 0 ? '+' : ''}${city.offset}</div>
+            </div>
+        `;
+    }
+    grid.innerHTML = html;
+}
+
+// 切换视图
+document.querySelectorAll('#cityTabs button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('#cityTabs button').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+        currentView = this.dataset.view;
+        updateClocks();
+    });
+});
+
+// 每秒更新
+updateClocks();
+setInterval(updateClocks, 1000);
+</script>
+</body>
+</html>

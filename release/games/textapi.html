@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>API 测试</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { font-family: sans-serif; padding: 20px; background: #f5f7f5; }
+button { padding: 12px 24px; background: #216E39; color: #fff; border: none; border-radius: 30px; font-size: 1.1rem; cursor: pointer; }
+pre { background: #fff; padding: 15px; border-radius: 12px; margin-top: 20px; white-space: pre-wrap; word-break: break-all; }
+</style>
+</head>
+<body>
+<h2>📡 排行榜 API 测试</h2>
+<button onclick="testGet()">1. 测试 GET</button>
+<button onclick="testPost()">2. 测试 POST</button>
+<pre id="result">点击按钮查看结果</pre>
+
+<script>
+const API_URL = 'https://api.lruriawa.top/';
+
+async function testGet() {
+  const result = document.getElementById('result');
+  result.textContent = '⏳ GET 请求中...';
+  try {
+    const resp = await fetch(API_URL);
+    const text = await resp.text();
+    result.textContent = `状态码: ${resp.status}\n响应内容: ${text}`;
+  } catch(e) {
+    result.textContent = '❌ 错误: ' + e.message;
+  }
+}
+
+async function testPost() {
+  const result = document.getElementById('result');
+  result.textContent = '⏳ POST 请求中...';
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: '测试', score: 888 })
+    });
+    const text = await resp.text();
+    result.textContent = `状态码: ${resp.status}\n响应内容: ${text}`;
+  } catch(e) {
+    result.textContent = '❌ 错误: ' + e.message;
+  }
+}
+</script>
+</body>
+</html>

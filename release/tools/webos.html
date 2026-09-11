@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>webOS - 槐序Lab</title>
+    <link rel="icon" type="image/png" href="./tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        /* ===== 全局重置 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'MiSans', 'Segoe UI', system-ui, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a2e;
+        }
+
+        /* ===== 桌面 ===== */
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(145deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .desktop::before {
+            content: '';
+            position: absolute;
+            top: -30%;
+            left: -20%;
+            width: 70%;
+            height: 70%;
+            background: radial-gradient(ellipse, rgba(64, 196, 99, 0.08), transparent 70%);
+            pointer-events: none;
+            animation: glowA 20s ease-in-out infinite alternate;
+        }
+        .desktop::after {
+            content: '';
+            position: absolute;
+            bottom: -20%;
+            right: -20%;
+            width: 60%;
+            height: 60%;
+            background: radial-gradient(ellipse, rgba(48, 161, 78, 0.05), transparent 70%);
+            pointer-events: none;
+            animation: glowB 25s ease-in-out infinite alternate;
+        }
+        @keyframes glowA {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, 10%) scale(1.2); }
+        }
+        @keyframes glowB {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-10%, -10%) scale(1.3); }
+        }
+
+        /* ===== 桌面图标 ===== */
+        .desktop-icons {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            padding: 16px;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+            overflow-y: auto;
+            height: calc(100% - 52px);
+        }
+        .desktop-icons::-webkit-scrollbar {
+            width: 3px;
+        }
+        .desktop-icons::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .desktop-icon {
+            width: 76px;
+            padding: 8px 4px 6px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(255, 255, 255, 0.9);
+            text-decoration: none;
+        }
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.06);
+        }
+        .desktop-icon:active {
+            transform: scale(0.92);
+        }
+        .desktop-icon .icon {
+            font-size: 2.8rem;
+            line-height: 1.2;
+            filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+        }
+        .desktop-icon .label {
+            font-size: 0.65rem;
+            text-align: center;
+            line-height: 1.2;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+            max-width: 72px;
+            word-break: break-word;
+        }
+
+        /* ===== 任务栏 ===== */
+        .taskbar {
+            height: 52px;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            gap: 6px;
+            flex-shrink: 0;
+            z-index: 100;
+            position: relative;
+        }
+        .taskbar .start-btn {
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border: none;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+            white-space: nowrap;
+            min-width: 48px;
+            justify-content: center;
+        }
+        .taskbar .start-btn:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .taskbar .start-btn:active {
+            transform: scale(0.95);
+        }
+        .taskbar .start-btn .logo-text {
+            font-size: 0.75rem;
+            letter-spacing: 0.3px;
+        }
+        @media (max-width: 480px) {
+            .taskbar .start-btn .logo-text {
+                display: none;
+            }
+        }
+
+        .taskbar .task-items {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow-x: auto;
+            padding: 0 4px;
+            height: 100%;
+            scrollbar-width: none;
+        }
+        .taskbar .task-items::-webkit-scrollbar {
+            display: none;
+        }
+
+        .taskbar .task-item {
+            padding: 4px 14px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .taskbar .task-item.active {
+            background: rgba(64, 196, 99, 0.15);
+            border-color: rgba(64, 196, 99, 0.2);
+            color: #fff;
+        }
+        .taskbar .task-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+        }
+        .taskbar .task-item .close-btn {
+            font-size: 0.6rem;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: inherit;
+            padding: 0 2px;
+        }
+        .taskbar .task-item .close-btn:hover {
+            opacity: 1;
+        }
+
+        .taskbar .clock {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.75rem;
+            padding: 0 6px;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+            min-width: 55px;
+            text-align: right;
+        }
+
+        /* ===== 窗口 ===== */
+        .window {
+            position: absolute;
+            min-width: 260px;
+            min-height: 180px;
+            max-width: 92vw;
+            max-height: 82vh;
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 14px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            animation: winOpen 0.25s ease;
+            z-index: 50;
+        }
+        .window.active {
+            display: flex;
+        }
+        .window.focused {
+            z-index: 80;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+        }
+        @keyframes winOpen {
+            0% { transform: scale(0.92) translateY(12px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .window .titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            cursor: grab;
+            flex-shrink: 0;
+            min-height: 40px;
+        }
+        .window .titlebar:active {
+            cursor: grabbing;
+        }
+        .window .titlebar .title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .window .titlebar .title .icon {
+            font-size: 1.1rem;
+        }
+        .window .titlebar .controls {
+            display: flex;
+            gap: 5px;
+        }
+        .window .titlebar .controls button {
+            width: 26px;
+            height: 26px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.04);
+            color: rgba(0, 0, 0, 0.3);
+        }
+        .window .titlebar .controls button:hover {
+            background: rgba(0, 0, 0, 0.08);
+            color: #1a1a1a;
+        }
+        .window .titlebar .controls button.close:hover {
+            background: #e74c3c;
+            color: #fff;
+        }
+        .window .titlebar .controls button.maximize:hover {
+            background: #216E39;
+            color: #fff;
+        }
+        .window .titlebar .controls button.minimize:hover {
+            background: #f59e0b;
+            color: #fff;
+        }
+
+        /* 窗口右下角拖拽柄 */
+        .window .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nwse-resize;
+            z-index: 10;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+        .window .resize-handle:hover {
+            opacity: 0.8;
+        }
+        .window .resize-handle::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid rgba(0, 0, 0, 0.2);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+            border-radius: 0 0 4px 0;
+        }
+
+        .window .content {
+            flex: 1;
+            padding: 14px;
+            overflow: auto;
+            color: #1a1a1a;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .window .content::-webkit-scrollbar {
+            width: 4px;
+        }
+        .window .content::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+        }
+
+        /* ===== 应用样式 ===== */
+        .app-notepad textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            background: transparent;
+            color: #1a1a1a;
+            font-family: 'MiSans', sans-serif;
+            min-height: 120px;
+        }
+        .app-notepad textarea::placeholder {
+            color: rgba(0, 0, 0, 0.2);
+        }
+
+        .app-calculator .calc-display {
+            padding: 10px 14px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-align: right;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+            min-height: 54px;
+            word-break: break-all;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .app-calculator .calc-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        .app-calculator .calc-grid button {
+            padding: 12px 0;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: rgba(0, 0, 0, 0.04);
+            color: #1a1a1a;
+        }
+        .app-calculator .calc-grid button:active {
+            transform: scale(0.92);
+        }
+        .app-calculator .calc-grid button.op {
+            background: rgba(33, 110, 57, 0.08);
+            color: #216E39;
+        }
+        .app-calculator .calc-grid button.op:hover {
+            background: rgba(33, 110, 57, 0.14);
+        }
+        .app-calculator .calc-grid button.equals {
+            background: linear-gradient(135deg, #216E39, #40C463);
+            color: #fff;
+            grid-column: span 4;
+        }
+        .app-calculator .calc-grid button.equals:hover {
+            opacity: 0.85;
+        }
+
+        .app-settings .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+        }
+        .app-settings .setting-item:last-child {
+            border-bottom: none;
+        }
+        .app-settings .setting-item .label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .app-settings .setting-item .value {
+            color: rgba(0, 0, 0, 0.4);
+            font-size: 0.85rem;
+        }
+        .app-settings .toggle {
+            width: 40px;
+            height: 22px;
+            border-radius: 11px;
+            background: rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .app-settings .toggle.active {
+            background: #216E39;
+        }
+        .app-settings .toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #fff;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .app-settings .toggle.active::after {
+            left: 20px;
+        }
+
+        .app-browser .browser-bar {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            flex-shrink: 0;
+            align-items: center;
+        }
+        .app-browser .browser-bar input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.85rem;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 8px;
+            padding: 6px 14px;
+            color: #1a1a1a;
+            min-width: 0;
+        }
+        .app-browser .browser-bar button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 0 4px;
+            color: rgba(0, 0, 0, 0.3);
+            transition: color 0.2s;
+        }
+        .app-browser .browser-bar button:hover {
+            color: #216E39;
+        }
+        .app-browser iframe {
+            flex: 1;
+            border: none;
+            width: 100%;
+            background: #fff;
+        }
+
+        .app-about {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 20px 10px;
+        }
+        .app-about .big-icon {
+            font-size: 4rem;
+        }
+        .app-about .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .app-about .version {
+            color: rgba(0, 0, 0, 0.3);
+            font-size: 0.9rem;
+        }
+        .app-about .desc {
+            color: rgba(0, 0, 0, 0.2);
+            font-size: 0.8rem;
+            max-width: 280px;
+            line-height: 1.8;
+        }
+
+        /* ===== 开始菜单（默认关闭） ===== */
+        .start-menu {
+            position: absolute;
+            bottom: 54px;
+            left: 8px;
+            width: 300px;
+            max-height: 380px;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 14px 10px;
+            display: none;
+            z-index: 200;
+            overflow-y: auto;
+            animation: menuOpen 0.2s ease;
+        }
+        .start-menu.open {
+            display: block;
+        }
+        @keyframes menuOpen {
+            0% { transform: translateY(8px) scale(0.96); opacity: 0; }
+            100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        .start-menu::-webkit-scrollbar {
+            width: 3px;
+        }
+        .start-menu::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.08);
+            border-radius: 10px;
+        }
+
+        .start-menu .menu-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+            margin-bottom: 10px;
+        }
+        .start-menu .menu-header .avatar {
+            font-size: 2.2rem;
+        }
+        .start-menu .menu-header .user-info {
+            flex: 1;
+        }
+        .start-menu .menu-header .user-info .name {
+            font-weight: 600;
+            color: #1a1a1a;
+            font-size: 0.95rem;
+        }
+        .start-menu .menu-header .user-info .status {
+            font-size: 0.7rem;
+            color: rgba(0, 0, 0, 0.25);
+        }
+
+        .start-menu .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+        .start-menu .menu-item:hover {
+            background: rgba(33, 110, 57, 0.06);
+        }
+        .start-menu .menu-item .icon {
+            font-size: 1.3rem;
+        }
+        .start-menu .menu-item .name {
+            font-size: 0.85rem;
+            font-weight: 500;
+            flex: 1;
+        }
+        .start-menu .menu-item .desc {
+            font-size: 0.65rem;
+            color: rgba(0, 0, 0, 0.25);
+        }
+        .start-menu .menu-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.04);
+            margin: 6px 0;
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 640px) {
+            .desktop-icons {
+                padding: 10px;
+                gap: 8px;
+            }
+            .desktop-icon {
+                width: 64px;
+                padding: 6px 2px 4px;
+            }
+            .desktop-icon .icon {
+                font-size: 2.2rem;
+            }
+            .desktop-icon .label {
+                font-size: 0.55rem;
+            }
+            .window {
+                min-width: 200px;
+                min-height: 140px;
+                max-width: 96vw;
+                max-height: 80vh;
+                border-radius: 12px;
+            }
+            .window .titlebar {
+                padding: 6px 10px;
+                min-height: 34px;
+            }
+            .window .titlebar .title {
+                font-size: 0.75rem;
+            }
+            .window .titlebar .controls button {
+                width: 22px;
+                height: 22px;
+                font-size: 0.6rem;
+            }
+            .window .content {
+                padding: 10px;
+                font-size: 0.8rem;
+            }
+            .start-menu {
+                width: 260px;
+                max-height: 320px;
+                left: 4px;
+                bottom: 50px;
+                padding: 10px 8px;
+            }
+            .taskbar {
+                height: 46px;
+                padding: 0 6px;
+            }
+            .taskbar .start-btn {
+                padding: 4px 10px;
+                font-size: 0.9rem;
+                min-width: 40px;
+            }
+            .taskbar .task-item {
+                padding: 2px 10px;
+                font-size: 0.7rem;
+                height: 26px;
+            }
+            .taskbar .clock {
+                font-size: 0.65rem;
+                min-width: 44px;
+            }
+            .app-calculator .calc-grid {
+                max-width: 220px;
+                gap: 4px;
+            }
+            .app-calculator .calc-grid button {
+                padding: 10px 0;
+                font-size: 0.95rem;
+            }
+            .app-calculator .calc-display {
+                font-size: 1.4rem;
+                min-height: 44px;
+                padding: 8px 12px;
+            }
+        }
+        @media (max-width: 400px) {
+            .desktop-icons {
+                padding: 6px;
+                gap: 4px;
+            }
+            .desktop-icon {
+                width: 56px;
+                padding: 4px 2px 4px;
+            }
+            .desktop-icon .icon {
+                font-size: 1.8rem;
+            }
+            .desktop-icon .label {
+                font-size: 0.45rem;
+                max-width: 52px;
+            }
+            .taskbar {
+                height: 40px;
+            }
+            .taskbar .start-btn {
+                padding: 2px 8px;
+                font-size: 0.8rem;
+                min-width: 32px;
+            }
+            .taskbar .task-item {
+                padding: 0 8px;
+                font-size: 0.6rem;
+                height: 22px;
+            }
+            .taskbar .clock {
+                font-size: 0.55rem;
+                min-width: 36px;
+            }
+            .window .titlebar .controls button {
+                width: 18px;
+                height: 18px;
+                font-size: 0.5rem;
+            }
+            .app-calculator .calc-grid {
+                max-width: 180px;
+                gap: 3px;
+            }
+            .app-calculator .calc-grid button {
+                padding: 8px 0;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="desktop" id="desktop">
+
+        <!-- ===== 桌面图标 ===== -->
+        <div class="desktop-icons">
+            <div class="desktop-icon" data-app="notepad">
+                <span class="icon">📝</span>
+                <span class="label">记事本</span>
+            </div>
+            <div class="desktop-icon" data-app="calculator">
+                <span class="icon">🧮</span>
+                <span class="label">计算器</span>
+            </div>
+            <div class="desktop-icon" data-app="settings">
+                <span class="icon">⚙️</span>
+                <span class="label">设置</span>
+            </div>
+            <div class="desktop-icon" data-app="browser">
+                <span class="icon">🌐</span>
+                <span class="label">浏览器</span>
+            </div>
+            <div class="desktop-icon" data-app="about">
+                <span class="icon">ℹ️</span>
+                <span class="label">关于</span>
+            </div>
+        </div>
+
+        <!-- ===== 窗口：记事本 ===== -->
+        <div class="window" id="win-notepad" style="width:380px;height:300px;top:60px;left:60px;display:none;">
+            <div class="titlebar" data-app="notepad">
+                <span class="title"><span class="icon">📝</span> 记事本</span>
+                <div class="controls">
+                    <button class="minimize">─</button>
+                    <button class="maximize">☐</button>
+                    <button class="close">✕</button>
+                </div>
+            </div>
+            <div class="content app-notepad">
+                <textarea placeholder="写点什么..."></textarea>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <!-- ===== 窗口：计算器 ===== -->
+        <div class="window" id="win-calculator" style="width:320px;height:400px;top:80px;left:120px;display:none;">
+            <div class="titlebar" data-app="calculator">
+                <span class="title"><span class="icon">🧮</span> 计算器</span>
+                <div class="controls">
+                    <button class="minimize">─</button>
+                    <button class="maximize">☐</button>
+                    <button class="close">✕</button>
+                </div>
+            </div>
+            <div class="content app-calculator">
+                <div class="calc-display" id="calcDisplay">0</div>
+                <div class="calc-grid">
+                    <button data-calc="7">7</button>
+                    <button data-calc="8">8</button>
+                    <button data-calc="9">9</button>
+                    <button class="op" data-calc="+">+</button>
+                    <button data-calc="4">4</button>
+                    <button data-calc="5">5</button>
+                    <button data-calc="6">6</button>
+                    <button class="op" data-calc="-">−</button>
+                    <button data-calc="1">1</button>
+                    <button data-calc="2">2</button>
+                    <button data-calc="3">3</button>
+                    <button class="op" data-calc="*">×</button>
+                    <button data-calc="0">0</button>
+                    <button data-calc=".">.</button>
+                    <button data-calc="C">C</button>
+                    <button class="op" data-calc="/">÷</button>
+                    <button class="equals" data-calc="=">=</button>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <!-- ===== 窗口：设置 ===== -->
+        <div class="window" id="win-settings" style="width:360px;height:330px;top:100px;left:160px;display:none;">
+            <div class="titlebar" data-app="settings">
+                <span class="title"><span class="icon">⚙️</span> 设置</span>
+                <div class="controls">
+                    <button class="minimize">─</button>
+                    <button class="maximize">☐</button>
+                    <button class="close">✕</button>
+                </div>
+            </div>
+            <div class="content app-settings">
+                <div class="setting-item">
+                    <span class="label">🌙 深色模式</span>
+                    <div class="toggle" data-toggle></div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">🔔 通知</span>
+                    <div class="toggle active" data-toggle></div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">📶 自动更新</span>
+                    <div class="toggle" data-toggle></div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">🔒 隐私模式</span>
+                    <div class="toggle active" data-toggle></div>
+                </div>
+                <div class="setting-item">
+                    <span class="label">📝 版本</span>
+                    <span class="value">webOS 1.0.0</span>
+                </div>
+                <div class="setting-item">
+                    <span class="label">🧪 实验功能</span>
+                    <div class="toggle" data-toggle></div>
+                </div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <!-- ===== 窗口：浏览器 ===== -->
+        <div class="window" id="win-browser" style="width:500px;height:360px;top:50px;left:80px;display:none;">
+            <div class="titlebar" data-app="browser">
+                <span class="title"><span class="icon">🌐</span> 浏览器</span>
+                <div class="controls">
+                    <button class="minimize">─</button>
+                    <button class="maximize">☐</button>
+                    <button class="close">✕</button>
+                </div>
+            </div>
+            <div class="content app-browser" style="padding:0;display:flex;flex-direction:column;">
+                <div class="browser-bar">
+                    <span style="color:rgba(0,0,0,0.15);font-size:0.8rem;">🔒</span>
+                    <input type="text" id="browserUrl" value="https://lab.lruriawa.top/" placeholder="输入网址...">
+                    <button id="browserGo">➡️</button>
+                </div>
+                <iframe id="browserFrame" src="https://lab.lruriawa.top/"></iframe>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <!-- ===== 窗口：关于 ===== -->
+        <div class="window" id="win-about" style="width:340px;height:260px;top:120px;left:140px;display:none;">
+            <div class="titlebar" data-app="about">
+                <span class="title"><span class="icon">ℹ️</span> 关于</span>
+                <div class="controls">
+                    <button class="minimize">─</button>
+                    <button class="maximize">☐</button>
+                    <button class="close">✕</button>
+                </div>
+            </div>
+            <div class="content app-about">
+                <div class="big-icon">🧪</div>
+                <div class="title">webOS</div>
+                <div class="version">版本 1.0.0</div>
+                <div class="desc">
+                    槐序Lab 实验室出品<br>
+                    基于 HTML + CSS + JavaScript 构建
+                </div>
+                <div style="color:rgba(0,0,0,0.08);font-size:0.65rem;margin-top:4px;">❤️ Design by DeepSeek</div>
+            </div>
+            <div class="resize-handle"></div>
+        </div>
+
+        <!-- ===== 任务栏 ===== -->
+        <div class="taskbar">
+            <button class="start-btn" id="startBtn">
+                <span>🧪</span>
+                <span class="logo-text">webOS</span>
+            </button>
+            <div class="task-items" id="taskItems"></div>
+            <div class="clock" id="clock">--:--</div>
+        </div>
+
+        <!-- ===== 开始菜单（默认关闭） ===== -->
+        <div class="start-menu" id="startMenu">
+            <div class="menu-header">
+                <span class="avatar">🧑‍💻</span>
+                <div class="user-info">
+                    <div class="name">槐序用户</div>
+                    <div class="status">● 在线</div>
+                </div>
+            </div>
+            <div class="menu-item" data-app="notepad">
+                <span class="icon">📝</span>
+                <span class="name">记事本</span>
+                <span class="desc">记录灵感</span>
+            </div>
+            <div class="menu-item" data-app="calculator">
+                <span class="icon">🧮</span>
+                <span class="name">计算器</span>
+                <span class="desc">快速计算</span>
+            </div>
+            <div class="menu-item" data-app="settings">
+                <span class="icon">⚙️</span>
+                <span class="name">设置</span>
+                <span class="desc">系统偏好</span>
+            </div>
+            <div class="menu-item" data-app="browser">
+                <span class="icon">🌐</span>
+                <span class="name">浏览器</span>
+                <span class="desc">探索网络</span>
+            </div>
+            <div class="menu-item" data-app="about">
+                <span class="icon">ℹ️</span>
+                <span class="name">关于</span>
+                <span class="desc">版本信息</span>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item" onclick="window.open('https://lab.lruriawa.top/release/home.html','_blank')">
+                <span class="icon">🚀</span>
+                <span class="name">返回槐序Lab</span>
+                <span class="desc">项目列表</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        //  🖥️ webOS 核心逻辑
+        // ============================================================
+
+        // ----- 状态管理 -----
+        const state = {
+            windows: {},
+            nextZIndex: 50,
+            startMenuOpen: false, // 开始菜单默认关闭
+            drag: null,
+            resize: null,
+        };
+
+        const appList = ['notepad', 'calculator', 'settings', 'browser', 'about'];
+
+        // ----- 工具函数 -----
+        function getWin(appId) {
+            return document.getElementById('win-' + appId);
+        }
+
+        // ===== 窗口管理 =====
+        function openApp(appId) {
+            if (!appList.includes(appId)) return;
+            const win = getWin(appId);
+            if (!win) return;
+
+            // 如果窗口最小化，取消最小化状态
+            if (state.windows[appId] && state.windows[appId].minimized) {
+                state.windows[appId].minimized = false;
+            }
+
+            // 显示窗口
+            if (win.style.display === 'none') {
+                win.style.display = 'flex';
+                // 如果没有记录位置，设置默认偏移
+                if (!state.windows[appId] || !state.windows[appId].hasPosition) {
+                    const offset = Object.keys(state.windows).length * 20;
+                    win.style.top = (50 + offset) + 'px';
+                    win.style.left = (60 + offset) + 'px';
+                    if (!state.windows[appId]) state.windows[appId] = {};
+                    state.windows[appId].hasPosition = true;
+                }
+            }
+
+            focusApp(appId);
+            updateTaskbar();
+        }
+
+        function closeApp(appId) {
+            const win = getWin(appId);
+            if (!win) return;
+            win.style.display = 'none';
+            if (state.windows[appId]) {
+                state.windows[appId].display = false;
+                state.windows[appId].minimized = false;
+            }
+            updateTaskbar();
+        }
+
+        function minimizeApp(appId) {
+            const win = getWin(appId);
+            if (!win) return;
+            win.style.display = 'none';
+            if (!state.windows[appId]) state.windows[appId] = {};
+            state.windows[appId].minimized = true;
+            state.windows[appId].display = false;
+            updateTaskbar();
+        }
+
+        function maximizeApp(appId) {
+            const win = getWin(appId);
+            if (!win) return;
+            if (!state.windows[appId]) state.windows[appId] = {};
+            if (state.windows[appId].maximized) {
+                // 还原
+                win.style.width = state.windows[appId].prevWidth || '380px';
+                win.style.height = state.windows[appId].prevHeight || '300px';
+                win.style.top = state.windows[appId].prevTop || '60px';
+                win.style.left = state.windows[appId].prevLeft || '60px';
+                state.windows[appId].maximized = false;
+                win.querySelector('.maximize').textContent = '☐';
+            } else {
+                // 最大化
+                state.windows[appId].prevWidth = win.style.width;
+                state.windows[appId].prevHeight = win.style.height;
+                state.windows[appId].prevTop = win.style.top;
+                state.windows[appId].prevLeft = win.style.left;
+                win.style.width = 'calc(100vw - 32px)';
+                win.style.height = 'calc(100vh - 100px)';
+                win.style.top = '16px';
+                win.style.left = '16px';
+                state.windows[appId].maximized = true;
+                win.querySelector('.maximize').textContent = '❐';
+            }
+            win.style.display = 'flex';
+            focusApp(appId);
+            updateTaskbar();
+        }
+
+        function focusApp(appId) {
+            const win = getWin(appId);
+            if (!win) return;
+            state.nextZIndex++;
+            win.style.zIndex = state.nextZIndex;
+            document.querySelectorAll('.window').forEach(w => w.classList.remove('focused'));
+            win.classList.add('focused');
+            // 如果最小化，恢复
+            if (state.windows[appId] && state.windows[appId].minimized) {
+                state.windows[appId].minimized = false;
+                win.style.display = 'flex';
+            }
+            updateTaskbar();
+        }
+
+        // ===== 任务栏更新 =====
+        function updateTaskbar() {
+            const container = document.getElementById('taskItems');
+            let html = '';
+            appList.forEach(appId => {
+                const win = getWin(appId);
+                if (!win) return;
+                const isVisible = win.style.display !== 'none';
+                const isMinimized = state.windows[appId] && state.windows[appId].minimized;
+                // 只有可见或最小化的才显示在任务栏
+                if (!isVisible && !isMinimized) return;
+
+                const title = win.querySelector('.title .icon').textContent + ' ' + win.querySelector('.title')
+                .textContent.replace(/[📝🧮⚙️🌐ℹ️]\s*/, '');
+                const isActive = win.classList.contains('focused') && isVisible;
+
+                html += `
+                    <div class="task-item ${isActive ? 'active' : ''}" data-app="${appId}">
+                        ${title}
+                        <button class="close-btn" data-app="${appId}">✕</button>
+                    </div>
+                `;
+            });
+            // 如果没有任何打开的程序，任务栏为空（只保留开始菜单和时钟）
+            container.innerHTML = html || '';
+
+            // 绑定任务栏点击事件
+            container.querySelectorAll('.task-item').forEach(item => {
+                const app = item.dataset.app;
+                item.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('close-btn')) return;
+                    focusApp(app);
+                });
+                const closeBtn = item.querySelector('.close-btn');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeApp(app);
+                    });
+                }
+            });
+        }
+
+        // ===== 开始菜单 =====
+        function toggleStartMenu() {
+            const menu = document.getElementById('startMenu');
+            state.startMenuOpen = !state.startMenuOpen;
+            menu.classList.toggle('open', state.startMenuOpen);
+            document.getElementById('startBtn').style.background = state.startMenuOpen ? 'rgba(64,196,99,0.2)' :
+                'rgba(255,255,255,0.06)';
+        }
+
+        function closeStartMenu() {
+            document.getElementById('startMenu').classList.remove('open');
+            state.startMenuOpen = false;
+            document.getElementById('startBtn').style.background = 'rgba(255,255,255,0.06)';
+        }
+
+        // ===== 时钟 =====
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('clock').textContent = h + ':' + m;
+        }
+        updateClock();
+        setInterval(updateClock, 10000);
+
+        // ============================================================
+        //  事件绑定
+        // ============================================================
+
+        // 1. 桌面图标点击
+        document.querySelectorAll('.desktop-icon[data-app]').forEach(el => {
+            el.addEventListener('click', function() {
+                const app = this.dataset.app;
+                openApp(app);
+            });
+        });
+
+        // 2. 开始菜单按钮
+        document.getElementById('startBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleStartMenu();
+        });
+
+        // 3. 开始菜单项点击
+        document.querySelectorAll('.start-menu .menu-item[data-app]').forEach(el => {
+            el.addEventListener('click', function() {
+                const app = this.dataset.app;
+                openApp(app);
+                closeStartMenu();
+            });
+        });
+
+        // 4. 窗口控制按钮 (关闭/最小化/最大化)
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('.window .titlebar .controls button');
+            if (!btn) return;
+            const titlebar = btn.closest('.titlebar');
+            const win = titlebar.closest('.window');
+            const appId = win.id.replace('win-', '');
+            if (btn.classList.contains('close')) {
+                closeApp(appId);
+            } else if (btn.classList.contains('minimize')) {
+                minimizeApp(appId);
+            } else if (btn.classList.contains('maximize')) {
+                maximizeApp(appId);
+            }
+        });
+
+        // 5. 窗口拖拽 (鼠标)
+        document.addEventListener('mousedown', function(e) {
+            if (e.target.closest('.resize-handle')) return;
+            const titlebar = e.target.closest('.window .titlebar');
+            if (!titlebar) return;
+            const win = titlebar.closest('.window');
+            if (!win || win.style.display === 'none') return;
+            const appId = win.id.replace('win-', '');
+            if (state.windows[appId] && state.windows[appId].maximized) return;
+            focusApp(appId);
+            const rect = win.getBoundingClientRect();
+            state.drag = {
+                win: win,
+                offsetX: e.clientX - rect.left,
+                offsetY: e.clientY - rect.top,
+            };
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', function(e) {
+            if (state.drag) {
+                const newX = e.clientX - state.drag.offsetX;
+                const newY = e.clientY - state.drag.offsetY;
+                const maxX = window.innerWidth - 200;
+                const maxY = window.innerHeight - 80;
+                state.drag.win.style.left = Math.max(0, Math.min(maxX, newX)) + 'px';
+                state.drag.win.style.top = Math.max(0, Math.min(maxY, newY)) + 'px';
+                e.preventDefault();
+            }
+            if (state.resize) {
+                const dx = e.clientX - state.resize.startX;
+                const dy = e.clientY - state.resize.startY;
+                let newWidth = Math.max(260, state.resize.startWidth + dx);
+                let newHeight = Math.max(180, state.resize.startHeight + dy);
+                const maxW = window.innerWidth - 40;
+                const maxH = window.innerHeight - 80;
+                newWidth = Math.min(maxW, newWidth);
+                newHeight = Math.min(maxH, newHeight);
+                state.resize.win.style.width = newWidth + 'px';
+                state.resize.win.style.height = newHeight + 'px';
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('mouseup', function() {
+            state.drag = null;
+            state.resize = null;
+        });
+
+        // 6. 窗口拖拽和调整大小 (触摸)
+        document.addEventListener('touchstart', function(e) {
+            const handle = e.target.closest('.resize-handle');
+            if (handle) {
+                const win = handle.closest('.window');
+                if (!win || win.style.display === 'none') return;
+                const appId = win.id.replace('win-', '');
+                if (state.windows[appId] && state.windows[appId].maximized) return;
+                const rect = win.getBoundingClientRect();
+                const touch = e.touches[0];
+                state.resize = {
+                    win: win,
+                    startX: touch.clientX,
+                    startY: touch.clientY,
+                    startWidth: rect.width,
+                    startHeight: rect.height,
+                };
+                e.preventDefault();
+                return;
+            }
+
+            const titlebar = e.target.closest('.window .titlebar');
+            if (!titlebar) return;
+            const win = titlebar.closest('.window');
+            if (!win || win.style.display === 'none') return;
+            const appId = win.id.replace('win-', '');
+            if (state.windows[appId] && state.windows[appId].maximized) return;
+            focusApp(appId);
+            const touch = e.touches[0];
+            const rect = win.getBoundingClientRect();
+            state.drag = {
+                win: win,
+                offsetX: touch.clientX - rect.left,
+                offsetY: touch.clientY - rect.top,
+            };
+            e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('touchmove', function(e) {
+            if (state.drag) {
+                const touch = e.touches[0];
+                const newX = touch.clientX - state.drag.offsetX;
+                const newY = touch.clientY - state.drag.offsetY;
+                const maxX = window.innerWidth - 200;
+                const maxY = window.innerHeight - 80;
+                state.drag.win.style.left = Math.max(0, Math.min(maxX, newX)) + 'px';
+                state.drag.win.style.top = Math.max(0, Math.min(maxY, newY)) + 'px';
+                e.preventDefault();
+            }
+            if (state.resize) {
+                const touch = e.touches[0];
+                const dx = touch.clientX - state.resize.startX;
+                const dy = touch.clientY - state.resize.startY;
+                let newWidth = Math.max(260, state.resize.startWidth + dx);
+                let newHeight = Math.max(180, state.resize.startHeight + dy);
+                const maxW = window.innerWidth - 40;
+                const maxH = window.innerHeight - 80;
+                newWidth = Math.min(maxW, newWidth);
+                newHeight = Math.min(maxH, newHeight);
+                state.resize.win.style.width = newWidth + 'px';
+                state.resize.win.style.height = newHeight + 'px';
+                e.preventDefault();
+            }
+        }, { passive: false });
+
+        document.addEventListener('touchend', function() {
+            state.drag = null;
+            state.resize = null;
+        });
+
+        // 7. 点击窗口聚焦
+        document.querySelectorAll('.window').forEach(win => {
+            win.addEventListener('mousedown', function() {
+                const appId = this.id.replace('win-', '');
+                if (this.style.display !== 'none') {
+                    focusApp(appId);
+                }
+            });
+            win.addEventListener('touchstart', function() {
+                const appId = this.id.replace('win-', '');
+                if (this.style.display !== 'none') {
+                    focusApp(appId);
+                }
+            });
+        });
+
+        // 8. 点击空白关闭开始菜单
+        document.addEventListener('click', function(e) {
+            if (state.startMenuOpen && !e.target.closest('.start-menu') && !e.target.closest('.start-btn')) {
+                closeStartMenu();
+            }
+        });
+
+        // 9. 计算器
+        let calcExpr = '';
+        const calcDisplay = document.getElementById('calcDisplay');
+
+        document.querySelectorAll('.app-calculator .calc-grid button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const val = this.dataset.calc;
+                if (!val) return;
+                if (val === 'C') {
+                    calcExpr = '';
+                    calcDisplay.textContent = '0';
+                    return;
+                }
+                if (val === '=') {
+                    try {
+                        const result = Function('"use strict"; return (' + calcExpr + ')')();
+                        calcDisplay.textContent = result;
+                        calcExpr = String(result);
+                    } catch (e) {
+                        calcDisplay.textContent = '错误';
+                        calcExpr = '';
+                    }
+                    return;
+                }
+                const last = calcExpr.slice(-1);
+                if ('+-*/'.includes(last) && '+-*/'.includes(val)) {
+                    calcExpr = calcExpr.slice(0, -1) + val;
+                } else {
+                    calcExpr += val;
+                }
+                calcDisplay.textContent = calcExpr || '0';
+            });
+        });
+
+        // 10. 浏览器
+        const browserUrlInput = document.getElementById('browserUrl');
+        const browserFrame = document.getElementById('browserFrame');
+        const browserGo = document.getElementById('browserGo');
+
+        function browseTo() {
+            let url = browserUrlInput.value.trim();
+            if (!url) return;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            browserFrame.src = url;
+            browserUrlInput.value = url;
+        }
+
+        browserGo.addEventListener('click', browseTo);
+        browserUrlInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') browseTo();
+        });
+
+        // 11. 设置开关
+        document.querySelectorAll('.app-settings .toggle[data-toggle]').forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+            });
+        });
+
+        // 12. 快捷键 (Alt + 数字)
+        document.addEventListener('keydown', function(e) {
+            if (e.altKey) {
+                const idx = parseInt(e.key) - 1;
+                if (idx >= 0 && idx < appList.length) {
+                    e.preventDefault();
+                    openApp(appList[idx]);
+                }
+            }
+            if (e.key === 'Escape' && state.startMenuOpen) {
+                closeStartMenu();
+            }
+        });
+
+        // 13. 双击标题栏切换最大化
+        document.querySelectorAll('.window .titlebar .title').forEach(title => {
+            title.addEventListener('dblclick', function() {
+                const win = this.closest('.window');
+                const appId = win.id.replace('win-', '');
+                maximizeApp(appId);
+            });
+        });
+
+        // ============================================================
+        //  初始化 - 不打开任何窗口，开始菜单默认关闭
+        // ============================================================
+        updateTaskbar();
+
+        console.log('🖥️ webOS 已启动 (空桌面)');
+        console.log('📝 快捷键: Alt+1~5 快速打开应用');
+        console.log('🔄 双击标题栏最大化/还原，右下角拖拽调整大小');
+        console.log('📌 开始菜单默认关闭，点击左下角 🧪 webOS 打开');
+    </script>
+
+</body>
+</html>

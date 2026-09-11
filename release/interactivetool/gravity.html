@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌊 重力画板-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 重力画板容器（毛玻璃卡片） ===== */
+  .gravity-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:700px;
+    width:100%;
+    position:relative;
+  }
+  .gravity-wrapper canvas {
+    display:block;
+    width:100%;
+    height:auto;
+    aspect-ratio:700/500;
+    background:#0a0818;
+    border-radius:16px;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.3);
+    cursor:pointer;
+    touch-action:none;
+  }
+
+  /* ===== 提示文字 ===== */
+  .gravity-hint {
+    text-align:center;
+    margin-top:12px;
+    color:rgba(0,0,0,0.3);
+    font-size:0.85rem;
+    letter-spacing:1px;
+    font-weight:400;
+  }
+  .gravity-hint span { color:#216E39; font-weight:500; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .gravity-wrapper { padding:12px; }
+    .gravity-hint { font-size:0.75rem; margin-top:8px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🌊</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌊 重力画板</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 重力画板主体 ===== -->
+<div class="gravity-wrapper">
+  <canvas id="canvas"></canvas>
+  <div class="gravity-hint">👆 拖动绘制粒子 <span>·</span> 双击清空画板</div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 重力画板 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为重力画板核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+// 固定宽高比，适配容器
+let W, H;
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const containerW = rect.width - 32; // padding
+  const aspectRatio = 700 / 500;
+  let w = containerW;
+  let h = w / aspectRatio;
+  // 限制最大尺寸
+  if (h > window.innerHeight * 0.6) {
+    h = window.innerHeight * 0.6;
+    w = h * aspectRatio;
+  }
+  canvas.width = Math.floor(w);
+  canvas.height = Math.floor(h);
+  canvas.style.width = '100%';
+  canvas.style.height = 'auto';
+  W = canvas.width;
+  H = canvas.height;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const particles = [];
+const MAX = 1500;
+const GRAVITY = 0.08;
+
+class Particle {
+  constructor(x, y) {
+    this.x = x + (Math.random() - 0.5) * 6;
+    this.y = y + (Math.random() - 0.5) * 6;
+    this.vx = (Math.random() - 0.5) * 4;
+    this.vy = (Math.random() - 0.5) * 4 - 2;
+    this.size = Math.random() * 5 + 2;
+    this.life = 1;
+    this.decay = 0.005 + Math.random() * 0.01;
+    this.hue = Math.random() * 360;
+  }
+  update() {
+    this.vy += GRAVITY;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vx *= 0.99;
+    this.vy *= 0.99;
+    this.life -= this.decay;
+    this.size *= 0.998;
+    if (this.y > H - this.size) { this.y = H - this.size; this.vy *= -0.3; this.vx *= 0.9; }
+    if (this.x < 0 || this.x > W) this.vx *= -0.5;
+    return this.life > 0 && this.size > 0.3;
+  }
+  draw() {
+    ctx.globalAlpha = this.life * 0.8;
+    ctx.fillStyle = `hsl(${this.hue},80%,60%)`;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = `hsl(${this.hue},80%,60%)`;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+let isDown = false,
+  lastX = 0,
+  lastY = 0;
+
+function burst(x, y, c = 15) {
+  for (let i = 0; i < c; i++) {
+    if (particles.length > MAX) particles.splice(0, 10);
+    particles.push(new Particle(x, y));
+  }
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  isDown = true;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W / rect.width);
+  const y = (e.clientY - rect.top) * (H / rect.height);
+  burst(x, y, 25);
+  lastX = x;
+  lastY = y;
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  if (!isDown) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = (e.clientX - rect.left) * (W / rect.width);
+  const y = (e.clientY - rect.top) * (H / rect.height);
+  const d = Math.hypot(x - lastX, y - lastY);
+  if (d > 2) {
+    burst(x, y, Math.min(15, Math.floor(d * 1.2)));
+    lastX = x;
+    lastY = y;
+  }
+});
+
+canvas.addEventListener('mouseup', function() { isDown = false; });
+canvas.addEventListener('mouseleave', function() { isDown = false; });
+
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (t.clientX - rect.left) * (W / rect.width);
+  const y = (t.clientY - rect.top) * (H / rect.height);
+  burst(x, y, 30);
+  lastX = x;
+  lastY = y;
+  isDown = true;
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (!isDown) return;
+  const t = e.touches[0];
+  const rect = canvas.getBoundingClientRect();
+  const x = (t.clientX - rect.left) * (W / rect.width);
+  const y = (t.clientY - rect.top) * (H / rect.height);
+  const d = Math.hypot(x - lastX, y - lastY);
+  if (d > 2) {
+    burst(x, y, Math.min(18, Math.floor(d * 1.5)));
+    lastX = x;
+    lastY = y;
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', function() { isDown = false; });
+
+let clickCount = 0;
+canvas.addEventListener('click', function() {
+  clickCount++;
+  setTimeout(() => clickCount = 0, 500);
+  if (clickCount === 2) {
+    particles.length = 0;
+    clickCount = 0;
+  }
+});
+
+function animate() {
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    if (!particles[i].update()) {
+      particles.splice(i, 1);
+      continue;
+    }
+    particles[i].draw();
+  }
+
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>

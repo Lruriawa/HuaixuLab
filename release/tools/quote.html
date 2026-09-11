@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧠 随机名言-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:30px 20px;
+            text-align:center;
+            min-height:280px;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+        }
+
+        /* ===== 名言显示 ===== */
+        .quote-icon {
+            font-size:2.6rem;
+            opacity:0.15;
+            margin-bottom:8px;
+        }
+        .quote-text {
+            font-size:1.2rem;
+            font-weight:400;
+            color:#1a1a1a;
+            line-height:1.8;
+            margin-bottom:10px;
+            font-style:italic;
+        }
+        .quote-author {
+            font-size:0.9rem;
+            color:rgba(0,0,0,0.3);
+            font-weight:300;
+        }
+        .quote-author::before {
+            content:'— ';
+        }
+
+        /* ===== 按钮组 ===== */
+        .btn-group {
+            display:flex;
+            gap:8px;
+            margin-top:18px;
+            width:100%;
+        }
+        .btn-group button {
+            padding:10px 20px;
+            border:none;
+            border-radius:10px;
+            font-size:0.9rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            flex:1;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+        .btn-group button:hover { opacity:0.9; }
+        .btn-group .btn-next {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            box-shadow:0 4px 20px rgba(64,196,99,0.25);
+        }
+        .btn-group .btn-copy {
+            background:rgba(33,110,57,0.08);
+            border:1px solid rgba(33,110,57,0.1);
+            color:#216E39;
+        }
+        .btn-group .btn-copy:hover { background:rgba(33,110,57,0.12); }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position:fixed;
+            bottom:80px;
+            left:50%;
+            transform:translateX(-50%) translateY(80px);
+            background:rgba(0,0,0,0.8);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:10px 24px;
+            border-radius:30px;
+            font-size:0.85rem;
+            border:1px solid rgba(255,255,255,0.06);
+            opacity:0;
+            transition:all 0.4s ease;
+            pointer-events:none;
+            z-index:100;
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .toast.show {
+            opacity:1;
+            transform:translateX(-50%) translateY(0);
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:22px 16px; min-height:240px; }
+            .quote-text { font-size:1rem; }
+            .quote-author { font-size:0.8rem; }
+            .quote-icon { font-size:2.2rem; }
+            .btn-group button { font-size:0.8rem; padding:8px 14px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .toast { font-size:0.75rem; padding:8px 18px; bottom:70px; }
+        }
+        @media (max-width: 380px) {
+            .tool-container { padding:16px 12px; min-height:200px; }
+            .quote-text { font-size:0.9rem; }
+            .btn-group { gap:4px; }
+            .btn-group button { font-size:0.7rem; padding:6px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">🧠</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">🧠 随机名言</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-header">
+            <span style="opacity:0.5;">🧠</span>
+            <span class="title-tag">随机名言</span>
+        </div>
+
+        <div class="tool-container">
+            <div class="quote-icon">💭</div>
+            <div class="quote-text" id="quoteText">加载中...</div>
+            <div class="quote-author" id="quoteAuthor"></div>
+
+            <div class="btn-group">
+                <button class="btn-next" id="nextBtn">✨ 下一条</button>
+                <button class="btn-copy" id="copyBtn">📋 复制</button>
+            </div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>🧠 随机名言：</strong>
+            每次随机展示一条名言警句 · 点击「下一条」更换 · 支持复制
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 随机名言 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        }
+
+        // ===== 以下为名言核心逻辑，完整保留 =====
+        const quotes = [
+            { text: '生活就像一盒巧克力，你永远不知道你会得到什么。', author: '《阿甘正传》' },
+            { text: '不要问你的国家能为你做什么，要问你能为你的国家做什么。', author: '肯尼迪' },
+            { text: '成功不是终点，失败也并非末日，最重要的是继续前进的勇气。', author: '丘吉尔' },
+            { text: '要么你主宰生活，要么你被生活主宰。', author: '吉姆·罗恩' },
+            { text: '人生最大的冒险是不敢去冒险。', author: '凯瑟琳·赫本' },
+            { text: '生活不是等待暴风雨过去，而是学会在雨中跳舞。', author: '维维安·格林' },
+            { text: '创新区分了领导者和追随者。', author: '史蒂夫·乔布斯' },
+            { text: '在这个世界上，唯一不变的就是变化本身。', author: '赫拉克利特' },
+            { text: '千里之行，始于足下。', author: '老子' },
+            { text: '学而不思则罔，思而不学则殆。', author: '孔子' },
+            { text: '要么读书，要么旅行，身体和灵魂总有一个在路上。', author: '佚名' },
+            { text: '生活就是面对现实微笑，越过障碍注视未来。', author: '雨果' },
+            { text: '梦想还是要有的，万一实现了呢？', author: '马云' },
+            { text: '世上无难事，只怕有心人。', author: '中国谚语' },
+            { text: '行动是治愈恐惧的良药。', author: '威廉·詹姆斯' },
+            { text: '幸福不是拥有的多，而是计较的少。', author: '佚名' },
+            { text: '人生最重要的不是你所处的位置，而是你所朝的方向。', author: '奥利弗·温德尔·霍姆斯' },
+            { text: '时间是最好的医生，也是最差的整容师。', author: '佚名' },
+            { text: '所谓天才，就是耐得住寂寞的人。', author: '佚名' },
+            { text: '生命的意义在于不断探索和体验。', author: '佚名' },
+            { text: '做正确的事情，而不是容易的事情。', author: '佚名' },
+            { text: '每一天都是一个新的开始。', author: '佚名' },
+            { text: '知识就是力量。', author: '培根' },
+            { text: '热爱是最好的老师。', author: '爱因斯坦' },
+            { text: '坚持就是胜利。', author: '佚名' },
+        ];
+
+        let currentQuote = 0;
+        const quoteText = document.getElementById('quoteText');
+        const quoteAuthor = document.getElementById('quoteAuthor');
+
+        function showQuote(index) {
+            const q = quotes[index];
+            quoteText.textContent = q.text;
+            quoteAuthor.textContent = q.author;
+        }
+
+        function randomQuote() {
+            let newIndex;
+            do {
+                newIndex = Math.floor(Math.random() * quotes.length);
+            } while (newIndex === currentQuote && quotes.length > 1);
+            currentQuote = newIndex;
+            showQuote(currentQuote);
+        }
+
+        document.getElementById('nextBtn').addEventListener('click', randomQuote);
+
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const text = quoteText.textContent + ' —— ' + quoteAuthor.textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 已复制名言');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = text;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('✅ 已复制');
+            });
+        });
+
+        // Toast
+        const toast = document.getElementById('toast');
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // 初始化
+        randomQuote();
+    </script>
+</body>
+</html>

@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🧩 滑动拼图-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 游戏容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .game-header .score {
+    background:rgba(0,0,0,0.06);
+    padding:4px 14px;
+    border-radius:30px;
+    font-size:0.95rem;
+    color:#1a1a1a;
+  }
+
+  .canvas-wrap {
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:16px;
+    overflow:hidden;
+    background:#1a1a2e;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.3);
+  }
+  canvas { display:block; width:100%; height:100%; cursor:pointer; touch-action:none; background:#1a1a2e; }
+
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    line-height:1.6;
+    text-align:center;
+  }
+  .how-to-play strong { color:#1a1a1a; }
+
+  .overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s; border-radius:16px;
+    z-index:10;
+  }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button {
+    padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700;
+    cursor:pointer; transition:transform 0.2s;
+  }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+
+  .info-bar {
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    padding:10px 0 0 0;
+    flex-wrap:wrap;
+  }
+  .info-bar button {
+    padding:6px 16px;
+    border:none;
+    border-radius:20px;
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    font-size:0.9rem;
+    cursor:pointer;
+    transition:background 0.2s;
+    font-weight:500;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .info-bar button:active { background:rgba(0,0,0,0.1); transform:scale(0.95); }
+  .info-bar button:hover { background:rgba(0,0,0,0.06); }
+
+  .theme-selector {
+    display:flex;
+    gap:8px;
+    padding:8px 0 0 0;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .theme-btn {
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    border:2px solid rgba(0,0,0,0.06);
+    cursor:pointer;
+    transition:border 0.2s;
+    font-size:1.2rem;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,0.02);
+  }
+  .theme-btn:active { transform:scale(0.9); }
+  .theme-btn.active {
+    border-color:#216E39;
+    background:rgba(33,110,57,0.08);
+    box-shadow:0 0 0 3px rgba(33,110,57,0.1);
+  }
+  .theme-btn:hover { border-color:rgba(0,0,0,0.15); }
+
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:0.85rem; }
+    .game-header .score { font-size:0.8rem; padding:2px 10px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+    .overlay h2 { font-size:2rem; }
+    .overlay .sub-text { font-size:1rem; }
+    .overlay button { padding:10px 24px; font-size:1rem; }
+    .info-bar button { font-size:0.8rem; padding:4px 12px; }
+    .theme-btn { width:34px; height:34px; font-size:1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🧩</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🧩 滑动拼图</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.5;">🧩</span>
+    <span class="score">步数 <span id="scoreDisplay">0</span></span>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="overlay show" id="startOverlay">
+      <h2>🧩 滑动拼图</h2>
+      <p class="sub-text">点击相邻块滑动拼图</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-home" id="homeBtn">🏠 返回首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2>🎉 拼图完成！</h2>
+      <p class="sub-text">步数：<span id="finalScore">0</span></p>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-home" id="homeBtn2">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-bar">
+    <button id="hintBtn">💡 预览</button>
+    <button id="shuffleBtn">🔀 打乱</button>
+  </div>
+
+  <div class="theme-selector">
+    <button class="theme-btn active" data-theme="0">🌺</button>
+    <button class="theme-btn" data-theme="1">🌅</button>
+    <button class="theme-btn" data-theme="2">🏔️</button>
+    <button class="theme-btn" data-theme="3">🎆</button>
+    <button class="theme-btn" data-theme="4">🌈</button>
+  </div>
+
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    点击 <span style="font-size:1.1rem;">⬜</span> 空格旁边的水果，它就会滑入空格。
+    把打乱的水果排成完整图案就赢啦！
+    <span style="display:block;margin-top:4px;opacity:0.5;">💡 点「预览」看完整图案长啥样</span>
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 滑动拼图 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为游戏核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const hintBtn = document.getElementById('hintBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+
+// ==================== 尺寸 ====================
+let W, H, SIZE, COLS = 4, ROWS = 4;
+
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  W = canvas.width;
+  H = canvas.height;
+  SIZE = W / COLS;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+// ==================== 主题 ====================
+const THEMES = [
+  { name: '🌺 花朵', icons: ['🌸','🌺','🌻','🌹','🌷','🌼','💐','🌿','🍀','🌴','🌵','🌾','🌱','🍃','🌺','💮'] },
+  { name: '🌅 风景', icons: ['🌅','🌄','🏔️','🌊','🏝️','🌴','🌺','🐠','🐬','🦋','🌈','☀️','🌙','⭐','🌿','🌸'] },
+  { name: '🏔️ 自然', icons: ['🏔️','🌲','🌳','🌿','🍀','🌴','🌵','🌾','🌱','🍃','🌸','🌺','🌻','🌹','🌷','🌼'] },
+  { name: '🎆 节日', icons: ['🎆','🎇','🧨','🎉','🎊','🎈','🎁','🎀','🎄','🌟','✨','🎆','🎇','🧨','🎉','🎊'] },
+  { name: '🌈 彩虹', icons: ['🌈','☀️','🌙','⭐','🌟','✨','☁️','⛅','🌤️','🌦️','🌧️','🌨️','⛄','🌊','🏝️','🌺'] }
+];
+
+let currentTheme = 0;
+let board = [];
+let solution = [];
+let emptyR = 3, emptyC = 3;
+let moves = 0;
+let started = false;
+let gameFinished = false;
+let showPreview = false;
+
+// ==================== 生成拼图 ====================
+function generatePuzzle() {
+  let arr = [];
+  for (let i = 0; i < 15; i++) arr.push(i);
+  arr.push(-1);
+
+  let inversions = 0;
+  for (let i = 0; i < 15; i++) {
+    for (let j = i + 1; j < 15; j++) {
+      if (arr[i] > arr[j]) inversions++;
+    }
+  }
+  if (inversions % 2 !== 0) { [arr[0], arr[1]] = [arr[1], arr[0]]; }
+
+  board = [];
+  for (let r = 0; r < 4; r++) {
+    board[r] = [];
+    for (let c = 0; c < 4; c++) {
+      board[r][c] = arr[r * 4 + c];
+    }
+  }
+
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if (board[r][c] === -1) { emptyR = r; emptyC = c; }
+    }
+  }
+
+  for (let i = 0; i < 150; i++) {
+    let dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    let d = dirs[Math.floor(Math.random() * dirs.length)];
+    let nr = emptyR + d[0], nc = emptyC + d[1];
+    if (nr >= 0 && nr < 4 && nc >= 0 && nc < 4) {
+      board[emptyR][emptyC] = board[nr][nc];
+      board[nr][nc] = -1;
+      emptyR = nr; emptyC = nc;
+    }
+  }
+
+  solution = [
+    [0,1,2,3],
+    [4,5,6,7],
+    [8,9,10,11],
+    [12,13,14,-1]
+  ];
+
+  moves = 0;
+  gameFinished = false;
+  showPreview = false;
+  hintBtn.textContent = '💡 预览';
+  updateUI();
+}
+
+// ==================== 交互 ====================
+function onTileClick(r, c) {
+  if (gameFinished || !started) return;
+
+  const dr = Math.abs(r - emptyR);
+  const dc = Math.abs(c - emptyC);
+
+  if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+    board[emptyR][emptyC] = board[r][c];
+    board[r][c] = -1;
+    emptyR = r;
+    emptyC = c;
+    moves++;
+    updateUI();
+
+    let win = true;
+    for (let i = 0; i < 4; i++) {
+      for (let j = 0; j < 4; j++) {
+        if (board[i][j] !== solution[i][j]) { win = false; break; }
+      }
+      if (!win) break;
+    }
+    if (win) {
+      gameFinished = true;
+      finalScoreSpan.textContent = moves;
+      gameOverOverlay.classList.add('show');
+    }
+  }
+}
+
+function shufflePuzzle() {
+  if (!started) return;
+  for (let i = 0; i < 200; i++) {
+    let dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+    let d = dirs[Math.floor(Math.random() * dirs.length)];
+    let nr = emptyR + d[0], nc = emptyC + d[1];
+    if (nr >= 0 && nr < 4 && nc >= 0 && nc < 4) {
+      board[emptyR][emptyC] = board[nr][nc];
+      board[nr][nc] = -1;
+      emptyR = nr; emptyC = nc;
+    }
+  }
+  moves = 0;
+  gameFinished = false;
+  gameOverOverlay.classList.remove('show');
+  updateUI();
+}
+
+function togglePreview() {
+  if (!started) return;
+  showPreview = !showPreview;
+  hintBtn.textContent = showPreview ? '🔒 隐藏' : '💡 预览';
+}
+
+// ==================== 事件绑定 ====================
+function getPos(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+  return { r: Math.floor(y / SIZE), c: Math.floor(x / SIZE) };
+}
+
+canvas.addEventListener('click', function(e) {
+  const p = getPos(e.clientX, e.clientY);
+  if (p.r >= 0 && p.r < 4 && p.c >= 0 && p.c < 4) onTileClick(p.r, p.c);
+});
+
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const p = getPos(touch.clientX, touch.clientY);
+  if (p.r >= 0 && p.r < 4 && p.c >= 0 && p.c < 4) onTileClick(p.r, p.c);
+}, {passive: false});
+
+hintBtn.addEventListener('click', togglePreview);
+shuffleBtn.addEventListener('click', shufflePuzzle);
+
+// ==================== 主题切换 ====================
+document.querySelectorAll('.theme-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentTheme = parseInt(this.dataset.theme);
+    if (started) {
+      generatePuzzle();
+      updateUI();
+    }
+  });
+});
+
+// ==================== UI ====================
+function updateUI() {
+  scoreSpan.textContent = moves;
+}
+
+function resetGame() {
+  board = [];
+  moves = 0;
+  started = false;
+  gameFinished = false;
+  showPreview = false;
+  hintBtn.textContent = '💡 预览';
+  gameOverOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  updateUI();
+}
+
+function startGame() {
+  resetGame();
+  started = true;
+  startOverlay.classList.remove('show');
+  generatePuzzle();
+  updateUI();
+}
+
+// ==================== 绘制 ====================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#1a1a2e';
+  ctx.fillRect(0, 0, W, H);
+
+  const theme = THEMES[currentTheme];
+
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const x = c * SIZE;
+      const y = r * SIZE;
+      const val = board[r]?.[c];
+
+      if (val === -1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.05)';
+        ctx.fillRect(x + 4, y + 4, SIZE - 8, SIZE - 8);
+        ctx.font = `${SIZE * 0.25}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillText('⬜', x + SIZE/2, y + SIZE/2 + 2);
+        continue;
+      }
+
+      const hue = (val * 45 + currentTheme * 30) % 360;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = `hsla(${hue}, 70%, 60%, 0.3)`;
+      ctx.fillStyle = `hsl(${hue}, 70%, 55%)`;
+      ctx.beginPath();
+      ctx.roundRect(x + 3, y + 3, SIZE - 6, SIZE - 6, 10);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      ctx.font = `${SIZE * 0.45}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#fff';
+      ctx.shadowBlur = 5;
+      ctx.shadowColor = 'rgba(0,0,0,0.3)';
+      ctx.fillText(theme.icons[val], x + SIZE/2, y + SIZE/2 + 2);
+      ctx.shadowBlur = 0;
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x + 2, y + 2, SIZE - 4, SIZE - 4);
+    }
+  }
+
+  // 预览模式
+  if (showPreview && !gameFinished) {
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold 20px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText('🎯 完整图案', W/2, 20);
+
+    const ps = SIZE * 0.6;
+    const ox = (W - ps * 4) / 2;
+    const oy = 60;
+
+    for (let r = 0; r < 4; r++) {
+      for (let c = 0; c < 4; c++) {
+        const idx = r * 4 + c;
+        if (idx === 15) {
+          ctx.fillStyle = 'rgba(255,255,255,0.05)';
+          ctx.fillRect(ox + c * ps, oy + r * ps, ps, ps);
+          continue;
+        }
+        const hue = (idx * 45 + currentTheme * 30) % 360;
+        ctx.fillStyle = `hsl(${hue}, 70%, 55%)`;
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = `hsla(${hue}, 70%, 60%, 0.3)`;
+        ctx.beginPath();
+        ctx.roundRect(ox + c * ps + 2, oy + r * ps + 2, ps - 4, ps - 4, 6);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.font = `${ps * 0.4}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff';
+        ctx.fillText(theme.icons[idx], ox + c * ps + ps/2, oy + r * ps + ps/2 + 2);
+      }
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.font = '14px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText('👆 点击"隐藏"关闭预览', W/2, H - 10);
+  }
+}
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    const r = typeof radii === 'number' ? radii : (radii || 0);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    return this;
+  };
+}
+
+function loop() {
+  draw();
+  requestAnimationFrame(loop);
+}
+
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+homeBtns.forEach(btn => btn.addEventListener('click', function() {
+  window.location.href = 'https://lab.lruriawa.top/release/home.html';
+}));
+
+resetGame();
+loop();
+</script>
+</body>
+</html>

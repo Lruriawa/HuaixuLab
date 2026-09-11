@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔢 猜数字-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 游戏容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.2rem;
+  }
+  .game-header .score {
+    background:rgba(0,0,0,0.06);
+    padding:4px 16px;
+    border-radius:30px;
+    font-size:1.1rem;
+    color:#1a1a1a;
+  }
+
+  .canvas-wrap {
+    position:relative;
+    width:100%;
+    aspect-ratio:3/4;
+    border-radius:16px;
+    overflow:hidden;
+    background:#ffffff;
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.02);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  canvas { display:block; width:100%; height:100%; }
+
+  .guess-input {
+    display:flex;
+    gap:10px;
+    margin-top:15px;
+    width:100%;
+    justify-content:center;
+    position:relative;
+    z-index:2;
+  }
+  .guess-input input {
+    padding:10px 16px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.06);
+    background:rgba(255,255,255,0.8);
+    color:#1a1a1a;
+    font-size:1.2rem;
+    width:80px;
+    text-align:center;
+    outline:none;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .guess-input input:focus { border-color:#40C463; background:rgba(255,255,255,0.95); }
+  .guess-input input::placeholder { color:rgba(0,0,0,0.2); }
+  .guess-input button {
+    padding:10px 24px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:1rem;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    transition:opacity 0.2s;
+  }
+  .guess-input button:active { transform:scale(0.95); }
+  .guess-input button:hover { opacity:0.85; }
+
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    line-height:1.6;
+    text-align:center;
+  }
+  .how-to-play strong { color:#1a1a1a; }
+
+  .overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s; border-radius:16px;
+    z-index:10;
+  }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button {
+    padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700;
+    cursor:pointer; transition:transform 0.2s;
+  }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:1rem; }
+    .game-header .score { font-size:0.9rem; padding:2px 12px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+    .guess-input input { font-size:1rem; width:64px; padding:8px 12px; }
+    .guess-input button { font-size:0.9rem; padding:8px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🔢</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🔢 猜数字</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.5;">🎯</span>
+    <span class="score">次数 <span id="scoreDisplay">0</span></span>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="guess-input">
+      <input type="number" id="guessInput" min="1" max="100" placeholder="1-100">
+      <button id="guessBtn">猜</button>
+    </div>
+    <div class="overlay show" id="startOverlay">
+      <h2>🔢 猜数字</h2>
+      <p class="sub-text">猜1-100之间的数字</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-home" id="homeBtn">🏠 返回首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2 id="resultTitle">🎉 猜对了！</h2>
+      <p class="sub-text">用了 <span id="finalScore">0</span> 次</p>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-home" id="homeBtn2">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    💻 输入1-100之间的数字，系统会提示 🔼 高了或 🔽 低了，
+    猜中数字就赢啦！
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 猜数字 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2500);
+}
+
+// ===== 以下为游戏核心逻辑，仅修改画布适配白色背景 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const resultTitle = document.getElementById('resultTitle');
+const guessInput = document.getElementById('guessInput');
+const guessBtn = document.getElementById('guessBtn');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+
+let W,H;
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = canvas.width = rect.width;
+  H = canvas.height = rect.height;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let target = 0;
+let attempts = 0;
+let low = 1, high = 100;
+let gameOver = false;
+let started = false;
+
+function reset() {
+  target = Math.floor(Math.random() * 100) + 1;
+  attempts = 0;
+  low = 1; high = 100;
+  gameOver = false;
+  started = false;
+  guessInput.value = '';
+  gameOverOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  updateUI();
+}
+
+function startGame() { reset(); started = true; startOverlay.classList.remove('show'); }
+
+function updateUI() { scoreSpan.textContent = attempts; }
+
+function makeGuess() {
+  if (gameOver || !started) return;
+  const val = parseInt(guessInput.value);
+  if (isNaN(val) || val < 1 || val > 100) { guessInput.value = ''; return; }
+  attempts++;
+  updateUI();
+  if (val === target) {
+    gameOver = true;
+    finalScoreSpan.textContent = attempts;
+    resultTitle.textContent = '🎉 猜对了！';
+    gameOverOverlay.classList.add('show');
+  } else if (val < target) {
+    low = Math.max(low, val + 1);
+    guessInput.value = '';
+    guessInput.placeholder = `${low}-${high}`;
+  } else {
+    high = Math.min(high, val - 1);
+    guessInput.value = '';
+    guessInput.placeholder = `${low}-${high}`;
+  }
+}
+
+guessBtn.addEventListener('click', makeGuess);
+guessInput.addEventListener('keydown', e => { if(e.key === 'Enter') makeGuess(); });
+
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  // 白色背景
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0,0,W,H);
+  
+  // 主标题 - 范围
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.font = '22px "MiSans", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`范围: ${low} - ${high}`, W/2, H/2 - 20);
+  
+  // 提示文字
+  ctx.fillStyle = 'rgba(0,0,0,0.12)';
+  ctx.font = '14px "MiSans", Arial, sans-serif';
+  ctx.fillText('输入数字后点击"猜"', W/2, H - 30);
+  
+  if (attempts > 0) {
+    ctx.fillStyle = 'rgba(0,0,0,0.15)';
+    ctx.font = '16px "MiSans", Arial, sans-serif';
+    ctx.fillText(`已猜 ${attempts} 次`, W/2, H - 60);
+  }
+}
+
+function loop() { draw(); requestAnimationFrame(loop); }
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+homeBtns.forEach(btn => btn.addEventListener('click', ()=>window.location.href='https://lab.lruriawa.top/release/home.html'));
+reset(); loop();
+</script>
+</body>
+</html>

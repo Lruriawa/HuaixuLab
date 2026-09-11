@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📝 Markdown预览器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js">
+    </script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画 ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉 ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚 ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器 ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:600px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器 ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:#ffffff;
+            box-shadow:inset 0 0 40px rgba(0,0,0,0.02);
+            padding:16px;
+            min-height:440px;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+
+        /* ===== 编辑器区域 - 左右等高分栏 ===== */
+        .editor-wrapper {
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+            height:100%;
+        }
+        @media (min-width: 520px) {
+            .editor-wrapper {
+                flex-direction:row;
+                gap:12px;
+                align-items:stretch;
+            }
+            .editor-wrapper .editor-col {
+                flex:1;
+                min-width:0;
+                display:flex;
+                flex-direction:column;
+                height:auto;
+            }
+        }
+
+        .editor-col .col-label {
+            color:rgba(0,0,0,0.2);
+            font-size:0.6rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            margin-bottom:4px;
+            flex-shrink:0;
+        }
+
+        /* ===== 编辑器文本域 ===== */
+        .editor-col .textarea-wrap {
+            flex:1;
+            display:flex;
+            min-height:220px;
+        }
+        .editor-col .textarea-wrap textarea {
+            width:100%;
+            height:100%;
+            min-height:220px;
+            background:#f8faf8;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:10px;
+            padding:12px;
+            color:#1a1a1a;
+            font-size:0.8rem;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            resize:vertical;
+            outline:none;
+            transition:border-color 0.3s;
+            line-height:1.7;
+            flex:1;
+        }
+        .editor-col .textarea-wrap textarea:focus {
+            border-color:rgba(33,110,57,0.25);
+            background:#fafffa;
+        }
+        .editor-col .textarea-wrap textarea::placeholder {
+            color:rgba(0,0,0,0.15);
+        }
+
+        /* ===== 预览区（与编辑器等高） ===== */
+        .editor-col .preview-wrap {
+            flex:1;
+            display:flex;
+            min-height:220px;
+        }
+        .editor-col .preview-box {
+            width:100%;
+            height:100%;
+            min-height:220px;
+            background:#fafcfa;
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:12px 14px;
+            overflow-y:auto;
+            color:#1a1a1a;
+            font-size:0.85rem;
+            line-height:1.8;
+            flex:1;
+        }
+        .editor-col .preview-box::-webkit-scrollbar { width:4px; }
+        .editor-col .preview-box::-webkit-scrollbar-track { background:rgba(0,0,0,0.02); border-radius:4px; }
+        .editor-col .preview-box::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.08); border-radius:4px; }
+        .editor-col .preview-box .empty {
+            color:rgba(0,0,0,0.12);
+            font-style:italic;
+            font-size:0.85rem;
+        }
+
+        /* ===== Markdown 渲染样式 ===== */
+        .preview-box h1,
+        .preview-box h2,
+        .preview-box h3,
+        .preview-box h4,
+        .preview-box h5,
+        .preview-box h6 {
+            color:#1a1a1a;
+            margin:12px 0 6px 0;
+            font-weight:700;
+        }
+        .preview-box h1 { font-size:1.5rem; border-bottom:1px solid rgba(0,0,0,0.06); padding-bottom:6px; }
+        .preview-box h2 { font-size:1.25rem; }
+        .preview-box h3 { font-size:1.05rem; }
+        .preview-box h4 { font-size:0.95rem; }
+        .preview-box p { margin:4px 0; }
+        .preview-box ul,
+        .preview-box ol { padding-left:22px; margin:4px 0; }
+        .preview-box li { margin:2px 0; }
+        .preview-box code {
+            background:rgba(33,110,57,0.06);
+            padding:1px 6px;
+            border-radius:4px;
+            font-size:0.78rem;
+            color:#216E39;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+        }
+        .preview-box pre {
+            background:rgba(0,0,0,0.02);
+            padding:10px 12px;
+            border-radius:8px;
+            overflow-x:auto;
+            font-size:0.75rem;
+            border:1px solid rgba(0,0,0,0.04);
+            margin:6px 0;
+        }
+        .preview-box pre code {
+            background:transparent;
+            color:#216E39;
+            padding:0;
+            font-size:0.75rem;
+        }
+        .preview-box blockquote {
+            border-left:3px solid rgba(33,110,57,0.2);
+            padding-left:14px;
+            margin:6px 0;
+            color:rgba(0,0,0,0.4);
+        }
+        .preview-box a { color:#3b82f6; text-decoration:none; }
+        .preview-box a:hover { text-decoration:underline; }
+        .preview-box table {
+            border-collapse:collapse;
+            width:100%;
+            font-size:0.8rem;
+            margin:6px 0;
+        }
+        .preview-box table th,
+        .preview-box table td {
+            border:1px solid rgba(0,0,0,0.06);
+            padding:4px 10px;
+            text-align:left;
+        }
+        .preview-box table th {
+            background:rgba(0,0,0,0.02);
+            color:#1a1a1a;
+        }
+        .preview-box hr { border:none; border-top:1px solid rgba(0,0,0,0.06); margin:10px 0; }
+        .preview-box img { max-width:100%; border-radius:8px; }
+        .preview-box strong { color:#1a1a1a; }
+        .preview-box em { color:rgba(0,0,0,0.5); }
+
+        /* ===== 按钮组 ===== */
+        .btn-group {
+            display:flex;
+            gap:8px;
+            margin-top:10px;
+            flex-wrap:wrap;
+        }
+        .btn-group button {
+            padding:8px 16px;
+            border:none;
+            border-radius:10px;
+            font-size:0.75rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            flex:1;
+            min-width:60px;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+        .btn-group button:hover { opacity:0.85; }
+        .btn-group .btn-example {
+            background:linear-gradient(135deg, #7c3aed, #a29bfe);
+            color:#fff;
+            box-shadow:0 4px 20px rgba(108,92,231,0.2);
+        }
+        .btn-group .btn-copy {
+            background:rgba(33,110,57,0.08);
+            border:1px solid rgba(33,110,57,0.1);
+            color:#216E39;
+        }
+        .btn-group .btn-copy:hover { background:rgba(33,110,57,0.12); }
+        .btn-group .btn-clear {
+            background:rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            color:rgba(0,0,0,0.35);
+        }
+        .btn-group .btn-clear:hover { background:rgba(0,0,0,0.06); }
+        .btn-group .btn-fullscreen {
+            background:rgba(59,130,246,0.08);
+            border:1px solid rgba(59,130,246,0.1);
+            color:#3b82f6;
+        }
+        .btn-group .btn-fullscreen:hover { background:rgba(59,130,246,0.14); }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.35);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.55); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position:fixed;
+            bottom:80px;
+            left:50%;
+            transform:translateX(-50%) translateY(80px);
+            background:rgba(0,0,0,0.8);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:10px 24px;
+            border-radius:30px;
+            font-size:0.85rem;
+            border:1px solid rgba(255,255,255,0.06);
+            opacity:0;
+            transition:all 0.4s ease;
+            pointer-events:none;
+            z-index:100;
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .toast.show {
+            opacity:1;
+            transform:translateX(-50%) translateY(0);
+        }
+
+        /* ============================================================
+           全屏预览 - 直接铺满整个屏幕
+           ============================================================ */
+        .fullscreen-overlay {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            bottom:0;
+            background:#fafcfa;
+            z-index:999;
+            opacity:0;
+            pointer-events:none;
+            transition:opacity 0.4s ease;
+            display:flex;
+            flex-direction:column;
+        }
+        .fullscreen-overlay.show {
+            opacity:1;
+            pointer-events:auto;
+        }
+
+        .fullscreen-overlay .fs-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:12px 20px;
+            background:rgba(255,255,255,0.92);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+            flex-shrink:0;
+            z-index:10;
+        }
+        .fullscreen-overlay .fs-header .fs-title {
+            font-size:0.9rem;
+            font-weight:600;
+            color:#1a1a1a;
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .fullscreen-overlay .fs-header .fs-title .icon {
+            font-size:1.2rem;
+        }
+        .fullscreen-overlay .fs-header .fs-close {
+            width:36px;
+            height:36px;
+            border:none;
+            border-radius:50%;
+            background:rgba(0,0,0,0.04);
+            color:rgba(0,0,0,0.3);
+            font-size:1.2rem;
+            cursor:pointer;
+            transition:all 0.2s;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .fullscreen-overlay .fs-header .fs-close:hover {
+            background:#e74c3c;
+            color:#fff;
+        }
+
+        .fullscreen-overlay .fs-body {
+            flex:1;
+            padding:30px 40px;
+            overflow-y:auto;
+            color:#1a1a1a;
+            font-size:1rem;
+            line-height:2;
+            background:#fafcfa;
+        }
+        .fullscreen-overlay .fs-body::-webkit-scrollbar { width:6px; }
+        .fullscreen-overlay .fs-body::-webkit-scrollbar-track { background:rgba(0,0,0,0.02); border-radius:4px; }
+        .fullscreen-overlay .fs-body::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.08); border-radius:4px; }
+
+        /* 全屏下的 Markdown 样式（放大舒适阅读） */
+        .fullscreen-overlay .fs-body h1 {
+            font-size:2.2rem;
+            border-bottom:2px solid rgba(0,0,0,0.06);
+            padding-bottom:12px;
+            margin:20px 0 14px 0;
+            color:#1a1a1a;
+        }
+        .fullscreen-overlay .fs-body h2 { font-size:1.8rem; margin:18px 0 10px 0; color:#1a1a1a; }
+        .fullscreen-overlay .fs-body h3 { font-size:1.4rem; margin:14px 0 8px 0; color:#1a1a1a; }
+        .fullscreen-overlay .fs-body h4 { font-size:1.15rem; color:#1a1a1a; }
+        .fullscreen-overlay .fs-body h5 { font-size:1rem; color:#1a1a1a; }
+        .fullscreen-overlay .fs-body h6 { font-size:0.9rem; color:#1a1a1a; }
+        .fullscreen-overlay .fs-body p { margin:8px 0; line-height:2; }
+        .fullscreen-overlay .fs-body ul,
+        .fullscreen-overlay .fs-body ol { padding-left:30px; margin:8px 0; }
+        .fullscreen-overlay .fs-body li { margin:4px 0; }
+        .fullscreen-overlay .fs-body code {
+            background:rgba(33,110,57,0.06);
+            padding:2px 8px;
+            border-radius:4px;
+            font-size:0.88rem;
+            color:#216E39;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+        }
+        .fullscreen-overlay .fs-body pre {
+            background:rgba(0,0,0,0.02);
+            padding:16px 20px;
+            border-radius:10px;
+            overflow-x:auto;
+            font-size:0.85rem;
+            border:1px solid rgba(0,0,0,0.04);
+            margin:10px 0;
+        }
+        .fullscreen-overlay .fs-body pre code {
+            background:transparent;
+            color:#216E39;
+            padding:0;
+            font-size:0.85rem;
+        }
+        .fullscreen-overlay .fs-body blockquote {
+            border-left:4px solid rgba(33,110,57,0.2);
+            padding-left:20px;
+            margin:10px 0;
+            color:rgba(0,0,0,0.45);
+        }
+        .fullscreen-overlay .fs-body a { color:#3b82f6; text-decoration:none; }
+        .fullscreen-overlay .fs-body a:hover { text-decoration:underline; }
+        .fullscreen-overlay .fs-body table {
+            border-collapse:collapse;
+            width:100%;
+            font-size:0.9rem;
+            margin:10px 0;
+        }
+        .fullscreen-overlay .fs-body table th,
+        .fullscreen-overlay .fs-body table td {
+            border:1px solid rgba(0,0,0,0.06);
+            padding:8px 14px;
+            text-align:left;
+        }
+        .fullscreen-overlay .fs-body table th {
+            background:rgba(0,0,0,0.02);
+            color:#1a1a1a;
+        }
+        .fullscreen-overlay .fs-body hr { border:none; border-top:2px solid rgba(0,0,0,0.06); margin:18px 0; }
+        .fullscreen-overlay .fs-body img { max-width:100%; border-radius:10px; margin:6px 0; }
+        .fullscreen-overlay .fs-body strong { color:#1a1a1a; }
+        .fullscreen-overlay .fs-body em { color:rgba(0,0,0,0.5); }
+        .fullscreen-overlay .fs-body .empty {
+            color:rgba(0,0,0,0.12);
+            font-style:italic;
+            font-size:1rem;
+            text-align:center;
+            padding:60px 0;
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; min-height:380px; }
+            .editor-col .textarea-wrap { min-height:140px; }
+            .editor-col .textarea-wrap textarea { min-height:140px; font-size:0.7rem; padding:10px; }
+            .editor-col .preview-wrap { min-height:140px; }
+            .editor-col .preview-box { min-height:140px; font-size:0.75rem; padding:10px; max-height:300px; }
+            .btn-group button { font-size:0.65rem; padding:6px 12px; min-width:50px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .toast { font-size:0.75rem; padding:8px 18px; bottom:70px; }
+            .fullscreen-overlay .fs-body { padding:16px 18px; font-size:0.9rem; }
+            .fullscreen-overlay .fs-body h1 { font-size:1.6rem; }
+            .fullscreen-overlay .fs-body h2 { font-size:1.3rem; }
+            .fullscreen-overlay .fs-body h3 { font-size:1.1rem; }
+            .fullscreen-overlay .fs-header { padding:8px 14px; }
+            .fullscreen-overlay .fs-header .fs-title { font-size:0.8rem; }
+            .fullscreen-overlay .fs-header .fs-close { width:30px; height:30px; font-size:1rem; }
+        }
+        @media (max-width: 400px) {
+            .editor-wrapper { gap:8px; }
+            .editor-col .textarea-wrap { min-height:110px; }
+            .editor-col .textarea-wrap textarea { min-height:110px; }
+            .editor-col .preview-wrap { min-height:110px; }
+            .editor-col .preview-box { min-height:110px; max-height:220px; }
+            .btn-group { gap:4px; }
+            .btn-group button { font-size:0.6rem; padding:4px 8px; min-width:40px; }
+            .fullscreen-overlay .fs-body { padding:12px 14px; font-size:0.85rem; }
+        }
+        @media (min-width: 521px) {
+            .editor-col .textarea-wrap,
+            .editor-col .preview-wrap {
+                min-height:280px;
+            }
+            .editor-col .textarea-wrap textarea,
+            .editor-col .preview-box {
+                min-height:280px;
+            }
+            .editor-col .preview-box {
+                max-height:500px;
+            }
+        }
+        @media (min-width: 700px) {
+            .editor-col .textarea-wrap,
+            .editor-col .preview-wrap {
+                min-height:350px;
+            }
+            .editor-col .textarea-wrap textarea,
+            .editor-col .preview-box {
+                min-height:350px;
+            }
+            .editor-col .preview-box {
+                max-height:600px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">📝</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">📝 Markdown预览</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-header">
+            <span style="opacity:0.5;">📝</span>
+            <span class="title-tag">Markdown预览器</span>
+        </div>
+
+        <div class="tool-container">
+            <div class="editor-wrapper">
+                <div class="editor-col">
+                    <div class="col-label">✏️ 编辑器</div>
+                    <div class="textarea-wrap">
+                        <textarea id="markdownInput" placeholder="输入 Markdown 内容..."></textarea>
+                    </div>
+                </div>
+                <div class="editor-col">
+                    <div class="col-label">👁️ 预览</div>
+                    <div class="preview-wrap">
+                        <div class="preview-box" id="previewBox">
+                            <span class="empty">输入 Markdown 后自动预览</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-example" id="exampleBtn">📄 示例</button>
+                <button class="btn-copy" id="copyBtn">📋 复制</button>
+                <button class="btn-clear" id="clearBtn">✕ 清空</button>
+                <button class="btn-fullscreen" id="fullscreenBtn">⛶ 全屏</button>
+            </div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>📝 Markdown预览器：</strong>
+            左侧输入 Markdown，右侧实时渲染 · 支持标题、列表、代码、表格、引用等
+        </div>
+    </div>
+
+    <!-- ===== 全屏预览（直接铺满屏幕） ===== -->
+    <div class="fullscreen-overlay" id="fullscreenOverlay">
+        <div class="fs-header">
+            <span class="fs-title">
+                <span class="icon">📝</span> Markdown 全屏预览
+            </span>
+            <button class="fs-close" id="fsClose">✕</button>
+        </div>
+        <div class="fs-body" id="fsBody">
+            <span class="empty">暂无内容</span>
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · Markdown预览器 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 加载动画隐藏 =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        }
+
+        // ===== Markdown 预览核心逻辑 =====
+        const input = document.getElementById('markdownInput');
+        const preview = document.getElementById('previewBox');
+        const toast = document.getElementById('toast');
+        const fullscreenOverlay = document.getElementById('fullscreenOverlay');
+        const fsBody = document.getElementById('fsBody');
+        const fsClose = document.getElementById('fsClose');
+
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        function getRenderedHTML() {
+            const text = input.value.trim();
+            if (!text) return null;
+            try {
+                return marked.parse(text);
+            } catch (e) {
+                return `<span style="color:#e74c3c;">❌ 渲染错误: ${e.message}</span>`;
+            }
+        }
+
+        function renderMarkdown() {
+            const text = input.value.trim();
+            if (!text) {
+                preview.innerHTML = '<span class="empty">输入 Markdown 后自动预览</span>';
+                return;
+            }
+            try {
+                const html = marked.parse(text);
+                preview.innerHTML = html;
+            } catch (e) {
+                preview.innerHTML = `<span style="color:#e74c3c;">❌ 渲染错误: ${e.message}</span>`;
+            }
+        }
+
+        // 实时预览
+        input.addEventListener('input', renderMarkdown);
+
+        // ===== 全屏预览功能（直接铺满屏幕） =====
+        function openFullscreen() {
+            const html = getRenderedHTML();
+            if (!html) {
+                fsBody.innerHTML = '<span class="empty">暂无内容，请先输入 Markdown</span>';
+            } else {
+                fsBody.innerHTML = html;
+            }
+            fullscreenOverlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            // 将滚动重置到顶部
+            fsBody.scrollTop = 0;
+        }
+
+        function closeFullscreen() {
+            fullscreenOverlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        // 全屏按钮点击
+        document.getElementById('fullscreenBtn').addEventListener('click', openFullscreen);
+
+        // 关闭按钮
+        fsClose.addEventListener('click', closeFullscreen);
+
+        // ESC 键关闭
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && fullscreenOverlay.classList.contains('show')) {
+                closeFullscreen();
+            }
+        });
+
+        // ===== 示例 =====
+        document.getElementById('exampleBtn').addEventListener('click', function() {
+            input.value = `# 槐序Lab实验室
+
+## 📝 Markdown 预览器
+
+这是一个基于 **marked.js** 的实时 Markdown 预览工具。
+
+---
+
+### 🎯 支持的功能
+
+- **标题**：H1 ~ H6
+- **列表**：有序 / 无序
+- **代码**：行内代码 \`code\` 和代码块
+- **表格**：标准表格
+- **引用**：> 引用块
+- **链接**：[点击跳转](https://lab.lruriawa.top)
+- **图片**：![alt](https://lab.lruriawa.top/tx.png)
+- **粗体** 和 *斜体*
+
+---
+
+### 📊 表格示例
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| 实时预览 | ✅ | 输入即渲染 |
+| 代码高亮 | ✅ | 支持多种语言 |
+| 表格支持 | ✅ | 标准 Markdown 表格 |
+| 图片显示 | ✅ | 自动适配宽度 |
+
+---
+
+### 💻 代码示例
+
+\`\`\`javascript
+function hello() {
+    console.log('Hello, 槐序Lab!');
+}
+hello();
+\`\`\`
+
+\`\`\`python
+def hello():
+    print("Hello, 槐序Lab!")
+hello()
+\`\`\`
+
+---
+
+> 📌 由热爱驱动，为探索而生。
+> **槐序Lab实验室** · 交互 · 视觉 · 工具 · 游戏`;
+            renderMarkdown();
+            preview.scrollTop = 0;
+            showToast('📄 已加载示例');
+        });
+
+        // ===== 复制 =====
+        document.getElementById('copyBtn').addEventListener('click', function() {
+            const text = input.value.trim();
+            if (!text) {
+                showToast('⚠️ 没有内容可复制');
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('✅ 已复制 Markdown 源码');
+            }).catch(() => {
+                input.select();
+                document.execCommand('copy');
+                showToast('✅ 已复制');
+            });
+        });
+
+        // ===== 清空 =====
+        document.getElementById('clearBtn').addEventListener('click', function() {
+            input.value = '';
+            renderMarkdown();
+            showToast('✕ 已清空');
+        });
+
+        // 初始加载示例
+        setTimeout(function() {
+            document.getElementById('exampleBtn').click();
+        }, 300);
+    </script>
+</body>
+</html>

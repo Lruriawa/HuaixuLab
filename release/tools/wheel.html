@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎲 决策轮盘-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:16px;
+            text-align:center;
+            min-height:380px;
+        }
+
+        /* ===== 轮盘区域 ===== */
+        .wheel-wrapper {
+            position:relative;
+            width:100%;
+            max-width:280px;
+            margin:0 auto 12px;
+        }
+        .wheel-wrapper canvas {
+            width:100%;
+            height:auto;
+            display:block;
+            border-radius:50%;
+            box-shadow:0 0 40px rgba(33,110,57,0.06);
+            cursor:pointer;
+            background:#fff;
+            border:2px solid rgba(0,0,0,0.04);
+        }
+        .wheel-pointer {
+            position:absolute;
+            top:-14px;
+            left:50%;
+            transform:translateX(-50%);
+            font-size:2rem;
+            filter:drop-shadow(0 4px 12px rgba(0,0,0,0.1));
+            z-index:2;
+            pointer-events:none;
+            color:#216E39;
+        }
+
+        /* ===== 结果 ===== */
+        .wheel-result {
+            font-size:1.2rem;
+            font-weight:600;
+            color:#216E39;
+            min-height:2.4rem;
+            margin-bottom:10px;
+            text-align:center;
+            background:rgba(33,110,57,0.04);
+            border-radius:12px;
+            padding:6px 12px;
+            border:1px solid rgba(33,110,57,0.06);
+        }
+        .wheel-result .highlight {
+            color:#216E39;
+            font-size:1.5rem;
+            font-weight:700;
+        }
+        .wheel-result .warn {
+            color:#e74c3c;
+        }
+
+        /* ===== 输入区域 ===== */
+        .wheel-input-group {
+            display:flex;
+            gap:6px;
+            margin-bottom:8px;
+            flex-wrap:wrap;
+            justify-content:center;
+        }
+        .wheel-input-group input {
+            flex:1;
+            min-width:100px;
+            background:rgba(255,255,255,0.7);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:8px;
+            padding:8px 12px;
+            color:#1a1a1a;
+            font-size:0.8rem;
+            outline:none;
+            transition:border-color 0.3s;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .wheel-input-group input:focus { border-color:#40C463; }
+        .wheel-input-group input::placeholder { color:rgba(0,0,0,0.2); }
+        .wheel-input-group button {
+            padding:8px 14px;
+            border:none;
+            border-radius:8px;
+            font-size:0.75rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            box-shadow:0 4px 16px rgba(64,196,99,0.2);
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .wheel-input-group button:active { transform:scale(0.94); }
+        .wheel-input-group button:hover { opacity:0.9; }
+
+        /* ===== 选项标签 ===== */
+        .wheel-options {
+            display:flex;
+            flex-wrap:wrap;
+            gap:4px;
+            justify-content:center;
+            margin-bottom:8px;
+            max-height:80px;
+            overflow-y:auto;
+            padding:4px 0;
+        }
+        .wheel-options::-webkit-scrollbar { width:3px; }
+        .wheel-options::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.08); border-radius:10px; }
+
+        .wheel-options .tag {
+            background:rgba(255,255,255,0.6);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:20px;
+            padding:2px 10px;
+            font-size:0.7rem;
+            color:rgba(0,0,0,0.6);
+            display:flex;
+            align-items:center;
+            gap:4px;
+            font-weight:500;
+        }
+        .wheel-options .tag .del {
+            cursor:pointer;
+            color:rgba(0,0,0,0.15);
+            font-size:0.6rem;
+            transition:color 0.2s;
+        }
+        .wheel-options .tag .del:hover { color:#e74c3c; }
+
+        /* ===== 按钮组 ===== */
+        .btn-group {
+            display:flex;
+            gap:8px;
+        }
+        .btn-group button {
+            flex:1;
+            padding:8px 12px;
+            border:none;
+            border-radius:10px;
+            font-size:0.8rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .btn-group button:active { transform:scale(0.94); }
+        .btn-group button:hover { opacity:0.9; }
+        .btn-group .btn-spin {
+            background:linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow:0 4px 20px rgba(245,158,11,0.25);
+        }
+        .btn-group .btn-reset {
+            background:rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.06);
+            color:rgba(0,0,0,0.4);
+        }
+        .btn-group .btn-reset:hover { background:rgba(0,0,0,0.06); }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; min-height:340px; }
+            .wheel-wrapper { max-width:220px; }
+            .wheel-pointer { font-size:1.6rem; top:-12px; }
+            .wheel-result { font-size:1rem; min-height:2rem; padding:4px 10px; }
+            .wheel-result .highlight { font-size:1.2rem; }
+            .wheel-input-group input { font-size:0.75rem; padding:6px 10px; min-width:80px; }
+            .wheel-input-group button { font-size:0.7rem; padding:6px 12px; }
+            .wheel-options .tag { font-size:0.6rem; padding:1px 8px; }
+            .btn-group button { font-size:0.7rem; padding:6px 10px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+        }
+        @media (max-width: 380px) {
+            .wheel-wrapper { max-width:180px; }
+            .wheel-pointer { font-size:1.2rem; top:-10px; }
+            .wheel-result { font-size:0.9rem; }
+            .wheel-input-group input { font-size:0.65rem; padding:4px 8px; min-width:60px; }
+            .wheel-input-group button { font-size:0.6rem; padding:4px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+    <div class="logo">🎲</div>
+    <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+    <div class="loading-status">加载中...</div>
+    <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+    <a href="https://lab.lruriawa.top/" class="brand">
+        <span class="logo-icon">🧪</span>
+        <span class="brand-text">槐序Lab实验室</span>
+    </a>
+    <span class="title">🎲 决策轮盘</span>
+    <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+    <div class="tool-header">
+        <span style="opacity:0.5;">🎲</span>
+        <span class="title-tag">决策轮盘</span>
+    </div>
+
+    <div class="tool-container">
+        <div class="wheel-wrapper">
+            <canvas id="wheelCanvas" width="400" height="400"></canvas>
+            <div class="wheel-pointer">▼</div>
+        </div>
+
+        <div class="wheel-result" id="wheelResult">🎯 点击轮盘或「转动」</div>
+
+        <div class="wheel-input-group">
+            <input type="text" id="wheelInput" placeholder="输入选项" maxlength="20">
+            <button id="addOptionBtn">➕ 添加</button>
+        </div>
+
+        <div class="wheel-options" id="wheelOptions"></div>
+
+        <div class="btn-group">
+            <button class="btn-spin" id="spinBtn">🎡 转动</button>
+            <button class="btn-reset" id="resetWheelBtn">↺ 重置</button>
+        </div>
+    </div>
+
+    <div class="how-to-play">
+        <strong>🎲 决策轮盘：</strong>
+        添加选项 → 点击轮盘或「转动」按钮 → 随机抽取一个选项
+    </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+    <span class="text">
+        🧪 槐序Lab实验室 · 决策轮盘 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+        &nbsp;&nbsp;<span class="love">❤️</span>
+    </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为决策轮盘核心逻辑，完整保留 =====
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+const resultEl = document.getElementById('wheelResult');
+
+let options = ['🎮 游戏', '📝 写作', '🎨 绘画', '📖 阅读', '🎵 音乐'];
+let isSpinning = false;
+let currentAngle = 0;
+let animationId = null;
+
+const COLORS = [
+    '#FF6B6B', '#FFA94D', '#FDCB6E', '#55EFC4', '#A29BFE',
+    '#FD79A8', '#74B9FF', '#55EFC4', '#FDCB6E', '#FF9FF3',
+    '#54A0FF', '#5F27CD', '#FF6B6B', '#F9CA24', '#00D2D3'
+];
+
+function drawWheel(rotation) {
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const radius = Math.min(w, h) / 2 - 10;
+
+    ctx.clearRect(0, 0, w, h);
+
+    if (options.length === 0) {
+        ctx.fillStyle = 'rgba(0,0,0,0.03)';
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.font = '18px "MiSans", "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('添加选项', cx, cy);
+        return;
+    }
+
+    const sliceAngle = (Math.PI * 2) / options.length;
+
+    for (let i = 0; i < options.length; i++) {
+        const startAngle = rotation + i * sliceAngle;
+        const endAngle = startAngle + sliceAngle;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, startAngle, endAngle);
+        ctx.closePath();
+
+        ctx.fillStyle = COLORS[i % COLORS.length];
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // 文字
+        const midAngle = startAngle + sliceAngle / 2;
+        const textRadius = radius * 0.65;
+        const tx = cx + Math.cos(midAngle) * textRadius;
+        const ty = cy + Math.sin(midAngle) * textRadius;
+
+        ctx.save();
+        ctx.translate(tx, ty);
+        ctx.rotate(midAngle + (midAngle > Math.PI / 2 ? Math.PI : 0));
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '13px "MiSans", "Segoe UI", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0,0,0,0.15)';
+        ctx.shadowBlur = 4;
+
+        let text = options[i];
+        if (text.length > 8) text = text.slice(0, 7) + '…';
+        ctx.fillText(text, 0, 0);
+        ctx.restore();
+    }
+
+    // 中心装饰
+    ctx.shadowBlur = 0;
+    ctx.beginPath();
+    ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(33,110,57,0.15)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#216E39';
+    ctx.font = '16px "MiSans", Arial, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🎯', cx, cy + 1);
+}
+
+function getResult(rotation) {
+    if (options.length === 0) return null;
+    const sliceAngle = (Math.PI * 2) / options.length;
+    const pointerAngle = -Math.PI / 2;
+    let rawAngle = (pointerAngle - rotation) % (Math.PI * 2);
+    if (rawAngle < 0) rawAngle += Math.PI * 2;
+    const index = Math.floor(rawAngle / sliceAngle) % options.length;
+    return index;
+}
+
+function spinWheel() {
+    if (isSpinning) return;
+    if (options.length === 0) {
+        resultEl.innerHTML = '⚠️ 请先添加选项';
+        resultEl.className = 'wheel-result warn';
+        return;
+    }
+
+    isSpinning = true;
+    resultEl.innerHTML = '🌀 转动中...';
+    resultEl.className = 'wheel-result';
+
+    const spins = 5 + Math.random() * 5;
+    const targetAngle = currentAngle + spins * 2 * Math.PI + (Math.random() - 0.5) * 1.5;
+
+    const startAngle = currentAngle;
+    const duration = 3000 + Math.random() * 1500;
+    const startTime = performance.now();
+
+    function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 4);
+        currentAngle = startAngle + (targetAngle - startAngle) * eased;
+
+        drawWheel(currentAngle);
+
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            currentAngle = targetAngle;
+            const idx = getResult(currentAngle);
+            if (idx !== null && idx >= 0) {
+                resultEl.innerHTML = `🎉 结果是：<span class="highlight">${options[idx]}</span>`;
+                resultEl.className = 'wheel-result';
+            } else {
+                resultEl.innerHTML = '❌ 出错了，再试一次';
+                resultEl.className = 'wheel-result warn';
+            }
+            isSpinning = false;
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function renderOptions() {
+    const container = document.getElementById('wheelOptions');
+    container.innerHTML = '';
+    options.forEach((opt, i) => {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.innerHTML = `${opt} <span class="del" data-index="${i}">✕</span>`;
+        container.appendChild(tag);
+    });
+    document.querySelectorAll('.tag .del').forEach(el => {
+        el.addEventListener('click', function() {
+            const idx = parseInt(this.dataset.index);
+            options.splice(idx, 1);
+            renderOptions();
+            drawWheel(currentAngle);
+            resultEl.innerHTML = '📌 已删除选项';
+            resultEl.className = 'wheel-result';
+        });
+    });
+    drawWheel(currentAngle);
+}
+
+// ===== 事件绑定 =====
+document.getElementById('addOptionBtn').addEventListener('click', function() {
+    const input = document.getElementById('wheelInput');
+    const val = input.value.trim();
+    if (!val) return;
+    if (options.length >= 12) {
+        resultEl.innerHTML = '⚠️ 最多12个选项';
+        resultEl.className = 'wheel-result warn';
+        return;
+    }
+    options.push(val);
+    input.value = '';
+    input.focus();
+    renderOptions();
+    resultEl.innerHTML = `✅ 已添加「${val}」`;
+    resultEl.className = 'wheel-result';
+});
+
+document.getElementById('wheelInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('addOptionBtn').click();
+});
+
+document.getElementById('spinBtn').addEventListener('click', spinWheel);
+canvas.addEventListener('click', spinWheel);
+
+document.getElementById('resetWheelBtn').addEventListener('click', function() {
+    options = ['🎮 游戏', '📝 写作', '🎨 绘画', '📖 阅读', '🎵 音乐'];
+    currentAngle = 0;
+    isSpinning = false;
+    renderOptions();
+    resultEl.innerHTML = '🔄 已重置默认选项';
+    resultEl.className = 'wheel-result';
+});
+
+// ===== 初始化 =====
+renderOptions();
+</script>
+</body>
+</html>

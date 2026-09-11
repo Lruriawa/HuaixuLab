@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🍎 接水果-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 游戏容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.1rem;
+  }
+  .game-header .score {
+    background:rgba(0,0,0,0.06);
+    padding:4px 16px;
+    border-radius:30px;
+    color:#1a1a1a;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    font-size:1rem;
+  }
+  .game-header .score .lives { color:#e74c3c; }
+  .game-header .pause-btn {
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:#1a1a1a;
+    padding:4px 12px;
+    border-radius:30px;
+    font-size:0.85rem;
+    cursor:pointer;
+    transition:background 0.2s;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+  .game-header .pause-btn:active { background:rgba(0,0,0,0.1); }
+
+  .canvas-wrap {
+    position:relative;
+    width:100%;
+    aspect-ratio:3/4;
+    border-radius:16px;
+    overflow:hidden;
+    background:linear-gradient(180deg, #4A90D9 0%, #87CEEB 35%, #90EE90 70%, #228B22 100%);
+    box-shadow:inset 0 0 60px rgba(0,0,0,0.1);
+  }
+  canvas { display:block; width:100%; height:100%; cursor:pointer; touch-action:none; background:transparent; }
+
+  /* 遮罩样式（保留深色半透明） */
+  .countdown-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.4); backdrop-filter:blur(2px);
+    display:flex; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.2s;
+    border-radius:16px; z-index:6;
+  }
+  .countdown-overlay.show { opacity:1; pointer-events:auto; }
+  .countdown-overlay .number {
+    font-size:8rem; font-weight:900; text-shadow:0 0 60px rgba(255,255,255,0.3);
+    animation: countPop 0.6s ease-out;
+  }
+  @keyframes countPop {
+    0% { transform:scale(1.8); opacity:0; }
+    50% { transform:scale(1); opacity:1; }
+    100% { transform:scale(1); opacity:1; }
+  }
+
+  .pause-overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(4px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.3s;
+    border-radius:16px; z-index:5;
+  }
+  .pause-overlay.show { opacity:1; pointer-events:auto; }
+  .pause-overlay .big-icon { font-size:3.5rem; margin-bottom:8px; }
+  .pause-overlay h2 { font-size:2rem; font-weight:700; margin-bottom:4px; }
+  .pause-overlay .sub { font-size:1.1rem; opacity:0.5; }
+  .pause-overlay .key-hint {
+    margin-top:12px; font-size:0.9rem; opacity:0.3;
+    background:rgba(255,255,255,0.05); padding:4px 16px;
+    border-radius:20px; border:1px solid rgba(255,255,255,0.05);
+  }
+
+  .overlay {
+    position:absolute; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.55); backdrop-filter:blur(6px);
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s;
+    border-radius:16px; z-index:10;
+  }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button {
+    padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700;
+    cursor:pointer; transition:transform 0.2s;
+  }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.5);
+    font-size:0.95rem;
+    line-height:1.6;
+    text-align:center;
+  }
+  .how-to-play strong { color:#1a1a1a; }
+
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:1rem; }
+    .game-header .score { font-size:0.9rem; padding:2px 12px; gap:8px; }
+    .game-header .pause-btn { font-size:0.8rem; padding:3px 10px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🍎</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🍎 接水果</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.5;">🏆</span>
+    <span class="score">🍎 <span id="scoreDisplay">0</span> ❤️ <span class="lives" id="livesDisplay">5</span></span>
+    <button class="pause-btn" id="pauseBtn">⏸️ <span id="pauseLabel">暂停</span></button>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="number" id="countdownNumber">3</div>
+    </div>
+    <div class="pause-overlay" id="pauseOverlay">
+      <div class="big-icon">⏸️</div>
+      <h2>已暂停</h2>
+      <p class="sub">按 ESC 或点击按钮继续</p>
+      <div class="key-hint">⌨️ ESC 切换暂停</div>
+    </div>
+    <div class="overlay show" id="startOverlay">
+      <h2>🍎 接水果</h2>
+      <p class="sub-text">滑动篮子接水果</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-home" id="homeBtn">🏠 返回首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2>💔 游戏结束</h2>
+      <p class="sub-text">得分：<span id="finalScore">0</span></p>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-home" id="homeBtn2">🏠 返回首页</button>
+      </div>
+    </div>
+  </div>
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    👆 手指左右滑动篮子，接住掉下来的 🍎 水果，
+    接住得分，漏掉扣一条命！按 ESC 暂停
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 接水果 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2秒） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2000);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() {
+        document.getElementById('loader').classList.add('hide');
+    }, 2000);
+}
+
+// ===== 以下为游戏核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const livesSpan = document.getElementById('livesDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const countdownOverlay = document.getElementById('countdownOverlay');
+const countdownNumber = document.getElementById('countdownNumber');
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseLabel = document.getElementById('pauseLabel');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+
+const W = 360, H = 480;
+function resizeCanvas() {
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+let game = { score: 0, lives: 5, isOver: false, frame: 0 };
+let started = false;
+let paused = false;
+let countdownActive = false;
+const basket = { x: W/2 - 55, y: H - 55, w: 110, h: 48, targetX: W/2 - 55 };
+let fruits = [];
+const FRUIT_EMOJIS = ['🍎', '🍊', '🍇', '🍓', '🍉', '🍑', '🍒', '🥝'];
+
+function resetGameState() {
+  game.score = 0;
+  game.lives = 5;
+  game.isOver = false;
+  game.frame = 0;
+  started = false;
+  paused = false;
+  countdownActive = false;
+  fruits = [];
+  basket.x = W/2 - 55;
+  basket.targetX = W/2 - 55;
+  basket.y = H - 55;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  gameOverOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  updateUI();
+}
+
+function startGame() {
+  game.score = 0;
+  game.lives = 5;
+  game.isOver = false;
+  game.frame = 0;
+  started = false;
+  paused = false;
+  countdownActive = false;
+  fruits = [];
+  basket.x = W/2 - 55;
+  basket.targetX = W/2 - 55;
+  basket.y = H - 55;
+  pauseOverlay.classList.remove('show');
+  countdownOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  gameOverOverlay.classList.remove('show');
+  updateUI();
+  
+  startOverlay.classList.remove('show');
+  
+  startCountdown(function() {
+    started = true;
+  });
+}
+
+function togglePause() {
+  if (!started || game.isOver || countdownActive) return;
+  paused = !paused;
+  if (paused) {
+    pauseOverlay.classList.add('show');
+    pauseLabel.textContent = '继续';
+  } else {
+    startCountdown(function() {
+      paused = false;
+    });
+  }
+}
+
+function startCountdown(callback) {
+  if (countdownActive) return;
+  countdownActive = true;
+  pauseOverlay.classList.remove('show');
+  pauseLabel.textContent = '暂停';
+  
+  let count = 3;
+  countdownNumber.textContent = count;
+  countdownOverlay.classList.add('show');
+  countdownNumber.style.animation = 'none';
+  void countdownNumber.offsetWidth;
+  countdownNumber.style.animation = 'countPop 0.6s ease-out';
+
+  const interval = setInterval(function() {
+    count--;
+    if (count > 0) {
+      countdownNumber.textContent = count;
+      countdownNumber.style.animation = 'none';
+      void countdownNumber.offsetWidth;
+      countdownNumber.style.animation = 'countPop 0.6s ease-out';
+    } else {
+      clearInterval(interval);
+      countdownOverlay.classList.remove('show');
+      countdownActive = false;
+      if (callback) callback();
+    }
+  }, 1000);
+}
+
+function spawnFruit() {
+  if (game.isOver || paused || countdownActive || !started) return;
+  const size = 20 + Math.random() * 14;
+  const x = 15 + Math.random() * (W - 30);
+  const speed = 0.6 + Math.random() * 1.2;
+  const idx = Math.floor(Math.random() * FRUIT_EMOJIS.length);
+  fruits.push({
+    x, y: -size, r: size, vy: speed, emoji: FRUIT_EMOJIS[idx], hue: Math.random() * 360,
+    wobble: Math.random() * 100, wobbleSpeed: 0.8 + Math.random() * 1.2
+  });
+}
+
+function update() {
+  if (game.isOver || paused || countdownActive || !started) return;
+  game.frame++;
+  const spawnRate = Math.max(30, 60 - Math.floor(game.score / 8));
+  if (game.frame % spawnRate === 0) {
+    spawnFruit();
+    if (game.score > 30 && Math.random() < 0.08) spawnFruit();
+  }
+  for (let i = fruits.length - 1; i >= 0; i--) {
+    const f = fruits[i];
+    f.y += f.vy;
+    f.x += Math.sin(game.frame * 0.015 + f.wobble) * 0.15;
+    if (f.y - f.r > H) {
+      fruits.splice(i, 1);
+      game.lives--;
+      updateUI();
+      if (game.lives <= 0) { gameOverFn(); return; }
+      continue;
+    }
+    const bx = basket.x, by = basket.y, bw = basket.w, bh = basket.h;
+    const fr = f.r * 0.8;
+    const cx = f.x, cy = f.y;
+    const closestX = Math.max(bx, Math.min(cx, bx + bw));
+    const closestY = Math.max(by, Math.min(cy, by + bh));
+    const dist = Math.hypot(cx - closestX, cy - closestY);
+    if (dist < fr + 8) {
+      game.score++;
+      updateUI();
+      fruits.splice(i, 1);
+    }
+  }
+  basket.x += (basket.targetX - basket.x) * 0.18;
+  basket.x = Math.max(0, Math.min(W - basket.w, basket.x));
+}
+
+function gameOverFn() {
+  game.isOver = true;
+  finalScoreSpan.textContent = game.score;
+  gameOverOverlay.classList.add('show');
+}
+
+function updateUI() {
+  scoreSpan.textContent = game.score;
+  livesSpan.textContent = game.lives;
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  for (const f of fruits) {
+    const grad = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, f.r * 1.8);
+    grad.addColorStop(0, `hsla(${f.hue}, 90%, 70%, 0.2)`);
+    grad.addColorStop(1, `hsla(${f.hue}, 90%, 70%, 0)`);
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r * 1.8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = `hsla(${f.hue}, 80%, 50%, 0.25)`;
+    ctx.font = `${f.r * 1.6}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowBlur = 0;
+    ctx.fillText(f.emoji, f.x, f.y + 1);
+  }
+  const bx = basket.x, by = basket.y, bw = basket.w, bh = basket.h;
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = 'rgba(0,0,0,0.2)';
+  const r = 10;
+  ctx.beginPath();
+  ctx.moveTo(bx + r, by);
+  ctx.lineTo(bx + bw - r, by);
+  ctx.quadraticCurveTo(bx + bw, by, bx + bw, by + r);
+  ctx.lineTo(bx + bw, by + bh - r);
+  ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+  ctx.lineTo(bx + r, by + bh);
+  ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+  ctx.lineTo(bx, by + r);
+  ctx.quadraticCurveTo(bx, by, bx + r, by);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(bx, by, bx, by + bh);
+  grad.addColorStop(0, '#D4A574');
+  grad.addColorStop(0.5, '#C4956A');
+  grad.addColorStop(1, '#A67B5B');
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = '#8B6B4A';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.12)';
+  ctx.beginPath();
+  ctx.roundRect(bx + 8, by + 5, bw - 16, 10, 5);
+  ctx.fill();
+  ctx.font = '20px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const decoFruits = ['🍎', '🍊', '🍇'];
+  for (let i = 0; i < 3; i++) {
+    const fx = bx + 16 + i * 26;
+    const fy = by + 18 + Math.sin(game.frame * 0.025 + i * 2) * 1.5;
+    ctx.fillText(decoFruits[i % 3], fx, fy);
+  }
+  ctx.shadowBlur = 0;
+}
+
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, radii) {
+    const r = typeof radii === 'number' ? radii : (radii || 0);
+    this.moveTo(x + r, y);
+    this.arcTo(x + w, y, x + w, y + h, r);
+    this.arcTo(x + w, y + h, x, y + h, r);
+    this.arcTo(x, y + h, x, y, r);
+    this.arcTo(x, y, x + w, y, r);
+    return this;
+  };
+}
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function handleMove(clientX) {
+  if (game.isOver || paused || countdownActive || !started) return;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const canvasX = (clientX - rect.left) * scaleX;
+  basket.targetX = canvasX - basket.w / 2;
+  basket.targetX = Math.max(0, Math.min(W - basket.w, basket.targetX));
+}
+
+canvas.addEventListener('mousemove', function(e) { e.preventDefault(); handleMove(e.clientX); });
+canvas.addEventListener('touchmove', function(e) { e.preventDefault(); const touch = e.touches[0]; if (touch) handleMove(touch.clientX); }, { passive: false });
+canvas.addEventListener('touchstart', function(e) { e.preventDefault(); const touch = e.touches[0]; if (touch) handleMove(touch.clientX); }, { passive: false });
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    togglePause();
+  }
+});
+
+pauseBtn.addEventListener('click', togglePause);
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+homeBtns.forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    window.location.href = 'https://lab.lruriawa.top/release/home.html';
+  });
+});
+
+resetGameState();
+loop();
+</script>
+</body>
+</html>

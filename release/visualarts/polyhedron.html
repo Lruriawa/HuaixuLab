@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🧊 3D多面体-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    overflow:hidden;
+    height:100vh;
+    width:100vw;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 3D 渲染容器 ===== */
+  #three-container {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    z-index:1;
+    background:#0a0a1a;
+  }
+  #three-container canvas {
+    display:block;
+    width:100% !important;
+    height:100% !important;
+  }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+    pointer-events:none;
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+    pointer-events:auto;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+    pointer-events:auto;
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+    pointer-events:none;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+    pointer-events:none;
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+    pointer-events:none;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 交互提示 ===== */
+  .hint {
+    position:fixed;
+    bottom:80px;
+    left:0;
+    right:0;
+    z-index:5;
+    text-align:center;
+    color:rgba(255,255,255,0.08);
+    font-size:0.8rem;
+    letter-spacing:1px;
+    pointer-events:none;
+    font-weight:400;
+    transition:opacity 0.5s;
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+    .hint { font-size:0.6rem; bottom:65px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🧊</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 3D 渲染容器 ===== -->
+<div id="three-container"></div>
+
+<!-- ===== 交互提示 ===== -->
+<div class="hint">👆 拖动旋转 · 点击切换颜色</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🧊 3D多面体 <span>· 3D交互</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 3D多面体 · 3D交互 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<!-- ===== Three.js 导入映射 ===== -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<!-- ===== Three.js 核心逻辑 ===== -->
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ===== 加载完成隐藏加载动画 =====
+const loader = document.getElementById('loader');
+if (loader) {
+  setTimeout(() => { loader.classList.add('hide'); }, 2500);
+}
+
+// ===== 获取容器 =====
+const container = document.getElementById('three-container');
+
+// ===== 场景、相机、渲染器 =====
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a1a);
+
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(4, 2, 6);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+
+// ===== 轨道控制器 =====
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 2.5;
+controls.target.set(0, 0, 0);
+
+// ===== 灯光 =====
+const light = new THREE.DirectionalLight(0xffffff, 1.5);
+light.position.set(2, 5, 3);
+scene.add(light);
+
+const ambient = new THREE.AmbientLight(0x404060);
+scene.add(ambient);
+
+const backLight = new THREE.DirectionalLight(0x4488ff, 0.5);
+backLight.position.set(-3, -1, -4);
+scene.add(backLight);
+
+// ===== 多面体 =====
+const geometry = new THREE.IcosahedronGeometry(1.5, 0);
+const material = new THREE.MeshStandardMaterial({
+  color: 0xff6b6b,
+  roughness: 0.2,
+  metalness: 0.7,
+  emissive: new THREE.Color(0x220000),
+  emissiveIntensity: 0.2,
+  wireframe: false,
+});
+const mesh = new THREE.Mesh(geometry, material);
+mesh.castShadow = true;
+scene.add(mesh);
+
+// ===== 线框 =====
+const edges = new THREE.EdgesGeometry(geometry);
+const lineMat = new THREE.LineBasicMaterial({
+  color: 0x88ccff,
+  transparent: true,
+  opacity: 0.3
+});
+const wireframe = new THREE.LineSegments(edges, lineMat);
+mesh.add(wireframe);
+
+// ===== 网格地面 =====
+const gridHelper = new THREE.GridHelper(5, 20, 0x4488ff, 0x223366);
+gridHelper.position.y = -1.8;
+scene.add(gridHelper);
+
+// ===== 点击切换颜色 =====
+renderer.domElement.addEventListener('click', () => {
+  const colors = [0xff6b6b, 0x4ecdc4, 0xffe66d, 0xa29bfe, 0xfd79a8, 0x00b894];
+  const current = colors.indexOf(material.color.getHex());
+  const next = (current + 1) % colors.length;
+  material.color.setHex(colors[next]);
+  material.emissive.setHex(colors[next]);
+  material.emissiveIntensity = 0.15;
+});
+
+// ===== 窗口自适应 =====
+window.addEventListener('resize', () => {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+
+// ===== 动画循环 =====
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>

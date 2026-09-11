@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎲 随机数-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 工具容器（毛玻璃卡片） ===== */
+  .tool-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .tool-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .tool-header .title-tag {
+    color:rgba(0,0,0,0.3);
+    font-size:0.9rem;
+    font-weight:400;
+  }
+
+  /* ===== 内部工具容器（浅色毛玻璃） ===== */
+  .tool-container {
+    position:relative;
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.6);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(0,0,0,0.04);
+    padding:20px 16px;
+    min-height:320px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  /* ===== 随机数显示 ===== */
+  .random-display {
+    text-align:center;
+    padding:16px 0 20px 0;
+    width:100%;
+  }
+  .random-display .number {
+    font-size:5rem;
+    font-weight:900;
+    color:#216E39;
+    text-shadow:0 0 40px rgba(33,110,57,0.08);
+    font-family:'MiSans', 'Courier New', monospace;
+    line-height:1.2;
+    min-height:80px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(33,110,57,0.02);
+    border-radius:16px;
+    border:1px solid rgba(33,110,57,0.04);
+    padding:8px 0;
+  }
+  .random-display .number.warning {
+    color:#e74c3c;
+    font-size:3rem;
+  }
+
+  /* ===== 范围输入 ===== */
+  .random-inputs {
+    display:flex;
+    gap:12px;
+    justify-content:center;
+    margin:8px 0 16px 0;
+    width:100%;
+  }
+  .random-inputs input {
+    width:80px;
+    padding:10px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.06);
+    background:rgba(255,255,255,0.7);
+    color:#1a1a1a;
+    font-size:1.1rem;
+    text-align:center;
+    outline:none;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .random-inputs input:focus {
+    border-color:#40C463;
+    background:rgba(255,255,255,0.9);
+  }
+  .random-inputs input::-webkit-outer-spin-button,
+  .random-inputs input::-webkit-inner-spin-button { -webkit-appearance:none; }
+  .random-inputs input[type=number] { -moz-appearance:textfield; appearance:textfield; }
+  .random-inputs .dash {
+    color:rgba(0,0,0,0.15);
+    font-size:1.4rem;
+    display:flex;
+    align-items:center;
+    font-weight:300;
+  }
+
+  /* ===== 生成按钮 ===== */
+  .controls {
+    text-align:center;
+    width:100%;
+    padding:4px 0;
+  }
+  .controls button {
+    padding:12px 44px;
+    border:none;
+    border-radius:40px;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    font-size:1.1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform 0.2s, opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    box-shadow:0 4px 20px rgba(64,196,99,0.25);
+  }
+  .controls button:active { transform:scale(0.94); }
+  .controls button:hover { opacity:0.9; }
+
+  /* ===== 历史记录 ===== */
+  .history {
+    margin-top:16px;
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    width:100%;
+    min-height:36px;
+    padding:4px 0;
+  }
+  .history span {
+    padding:4px 12px;
+    border-radius:20px;
+    background:rgba(0,0,0,0.04);
+    color:rgba(0,0,0,0.3);
+    font-size:0.8rem;
+    font-family:'MiSans', 'Consolas', monospace;
+    border:1px solid rgba(0,0,0,0.04);
+    font-weight:500;
+  }
+  .history .empty {
+    color:rgba(0,0,0,0.12);
+    font-size:0.75rem;
+    font-style:italic;
+    font-weight:400;
+    background:none;
+    border:none;
+  }
+
+  /* ===== 说明 ===== */
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:12px;
+    color:rgba(0,0,0,0.4);
+    font-size:0.85rem;
+    line-height:1.6;
+    text-align:center;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .tool-wrapper { padding:12px; }
+    .tool-header { font-size:0.85rem; }
+    .tool-container { padding:16px 12px; min-height:280px; }
+    .random-display .number { font-size:3.8rem; min-height:64px; }
+    .random-inputs input { width:64px; font-size:1rem; padding:8px; }
+    .random-inputs .dash { font-size:1.1rem; }
+    .controls button { font-size:1rem; padding:10px 34px; }
+    .history span { font-size:0.7rem; padding:3px 10px; }
+    .how-to-play { font-size:0.75rem; padding:8px 10px; }
+  }
+  @media (max-width: 380px) {
+    .random-display .number { font-size:3rem; min-height:56px; }
+    .random-inputs input { width:54px; font-size:0.9rem; padding:6px; }
+    .random-inputs { gap:6px; }
+    .controls button { font-size:0.9rem; padding:8px 28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🎲</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🎲 随机数</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="tool-wrapper">
+  <div class="tool-header">
+    <span style="opacity:0.5;">🎲</span>
+    <span class="title-tag">随机数生成器</span>
+  </div>
+
+  <div class="tool-container">
+    <div class="random-display">
+      <div class="number" id="randNum">42</div>
+    </div>
+
+    <div class="random-inputs">
+      <input type="number" id="minVal" value="1" min="0">
+      <span class="dash">—</span>
+      <input type="number" id="maxVal" value="100" min="1">
+    </div>
+
+    <div class="controls">
+      <button id="genBtn">🎲 生成</button>
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+
+  <div class="how-to-play">
+    <strong>💡 使用：</strong> 设置范围 · 点击生成 · 历史记录自动保存
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 随机数 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为随机数核心逻辑，完整保留 =====
+const minInput = document.getElementById('minVal');
+const maxInput = document.getElementById('maxVal');
+const genBtn = document.getElementById('genBtn');
+const numDisplay = document.getElementById('randNum');
+const historyEl = document.getElementById('history');
+
+let historyData = JSON.parse(localStorage.getItem('randHistory')) || [];
+
+function renderHistory() {
+  if (historyData.length === 0) {
+    historyEl.innerHTML = '<span class="empty">暂无记录</span>';
+    return;
+  }
+  historyEl.innerHTML = historyData.slice(-12).map(n => `<span>${n}</span>`).join('');
+}
+
+function generate() {
+  const min = parseInt(minInput.value) || 0;
+  const max = parseInt(maxInput.value) || 100;
+  if (min >= max) {
+    numDisplay.textContent = '⚠️';
+    numDisplay.className = 'number warning';
+    return;
+  }
+  const num = Math.floor(Math.random() * (max - min + 1)) + min;
+  numDisplay.textContent = num;
+  numDisplay.className = 'number';
+  historyData.push(num);
+  if (historyData.length > 100) historyData.shift();
+  localStorage.setItem('randHistory', JSON.stringify(historyData));
+  renderHistory();
+}
+
+genBtn.addEventListener('click', generate);
+
+// 回车键触发生成
+[minInput, maxInput].forEach(input => {
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      genBtn.click();
+    }
+  });
+});
+
+// 初始化
+generate();
+</script>
+</body>
+</html>

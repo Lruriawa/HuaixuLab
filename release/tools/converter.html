@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>📐 单位换算-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 工具容器（毛玻璃卡片） ===== */
+  .tool-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+
+  /* ===== 分类标签 ===== */
+  .category-tabs {
+    display:flex;
+    gap:6px;
+    margin:10px 0;
+    flex-wrap:wrap;
+  }
+  .category-tabs button {
+    padding:6px 12px;
+    border:none;
+    border-radius:20px;
+    background:rgba(0,0,0,0.04);
+    color:rgba(0,0,0,0.4);
+    font-size:0.75rem;
+    cursor:pointer;
+    transition:all 0.2s;
+    flex:1;
+    font-weight:500;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .category-tabs button:active { transform:scale(0.95); }
+  .category-tabs button.active {
+    background:rgba(33,110,57,0.08);
+    color:#216E39;
+    border-color:rgba(33,110,57,0.12);
+  }
+
+  /* ===== 换算区域 ===== */
+  .converter-area { padding:6px 0; }
+  .converter-area .row {
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+    align-items:center;
+  }
+  .converter-area input {
+    flex:2;
+    padding:10px 14px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.06);
+    background:rgba(0,0,0,0.02);
+    color:#1a1a1a;
+    font-size:1rem;
+    outline:none;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .converter-area input:focus {
+    border-color:#40C463;
+    background:rgba(0,0,0,0.04);
+  }
+  .converter-area input::placeholder { color:rgba(0,0,0,0.2); }
+  .converter-area select {
+    flex:1;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(0,0,0,0.06);
+    background:rgba(0,0,0,0.02);
+    color:#1a1a1a;
+    font-size:0.9rem;
+    outline:none;
+    cursor:pointer;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+    transition:border-color 0.2s, background 0.2s;
+  }
+  .converter-area select:focus {
+    border-color:#40C463;
+    background:rgba(0,0,0,0.04);
+  }
+  .converter-area .arrow {
+    color:rgba(0,0,0,0.15);
+    font-size:1.1rem;
+    font-weight:300;
+  }
+  .converter-area .result {
+    color:#216E39;
+    font-size:1.2rem;
+    font-weight:700;
+    text-align:center;
+    padding:8px 0;
+    min-height:48px;
+    border-radius:12px;
+    background:rgba(33,110,57,0.04);
+    border:1px solid rgba(33,110,57,0.06);
+    font-family:'MiSans', monospace;
+    letter-spacing:0.3px;
+  }
+  .converter-area .result.pending {
+    color:rgba(0,0,0,0.2);
+    font-weight:400;
+  }
+
+  /* ===== 说明 ===== */
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:12px;
+    color:rgba(0,0,0,0.4);
+    font-size:0.85rem;
+    line-height:1.6;
+    text-align:center;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .tool-wrapper { padding:12px; }
+    .category-tabs button { font-size:0.65rem; padding:4px 10px; }
+    .converter-area input { font-size:0.9rem; padding:8px 12px; }
+    .converter-area select { font-size:0.8rem; padding:8px 10px; }
+    .converter-area .result { font-size:1rem; padding:6px 0; min-height:40px; }
+    .how-to-play { font-size:0.75rem; padding:8px 10px; }
+  }
+  @media (max-width: 400px) {
+    .category-tabs button { font-size:0.55rem; padding:3px 6px; }
+    .converter-area .row { gap:6px; flex-wrap:nowrap; }
+    .converter-area input { flex:1.5; font-size:0.8rem; padding:6px 10px; }
+    .converter-area select { font-size:0.7rem; padding:6px 8px; }
+    .converter-area .arrow { font-size:0.8rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">📐</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">📐 单位换算</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="tool-wrapper">
+  <div class="category-tabs" id="catTabs">
+    <button class="active" data-cat="length">📏 长度</button>
+    <button data-cat="weight">⚖️ 重量</button>
+    <button data-cat="temp">🌡️ 温度</button>
+    <button data-cat="area">📐 面积</button>
+  </div>
+  <div class="converter-area" id="converterArea"></div>
+  <div class="how-to-play">
+    <strong>💡 使用：</strong> 选择分类 · 输入数值 · 选择单位 · 自动换算
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 单位换算 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为单位换算核心逻辑，完整保留，未作任何修改 =====
+const units = {
+  length: { name: '长度', units: ['毫米','厘米','分米','米','千米','英寸','英尺','码','英里'], toBase: [0.001,0.01,0.1,1,1000,0.0254,0.3048,0.9144,1609.344] },
+  weight: { name: '重量', units: ['毫克','克','千克','吨','盎司','磅'], toBase: [0.001,1,1000,1000000,28.3495,453.592] },
+  temp: { name: '温度', units: ['摄氏度','华氏度','开尔文'] },
+  area: { name: '面积', units: ['平方毫米','平方厘米','平方分米','平方米','公顷','平方公里','平方英寸','平方英尺','平方码','英亩'], toBase: [0.000001,0.0001,0.01,1,10000,1000000,0.00064516,0.092903,0.836127,4046.856] }
+};
+let currentCat = 'length';
+
+function renderConverter(cat) {
+  const data = units[cat];
+  const area = document.getElementById('converterArea');
+  if (!data) return;
+
+  if (cat === 'temp') {
+    area.innerHTML = `
+      <div class="row"><input type="number" id="val1" placeholder="输入数值" step="any"></div>
+      <div class="row">
+        <select id="unit1"><option value="c">摄氏度</option><option value="f">华氏度</option><option value="k">开尔文</option></select>
+        <span class="arrow">➜</span>
+        <select id="unit2"><option value="c">摄氏度</option><option value="f">华氏度</option><option value="k">开尔文</option></select>
+      </div>
+      <div class="result pending" id="tempResult">等待输入...</div>
+    `;
+    const val1 = document.getElementById('val1');
+    const u1 = document.getElementById('unit1');
+    const u2 = document.getElementById('unit2');
+    const res = document.getElementById('tempResult');
+    function calc() {
+      const v = parseFloat(val1.value);
+      if (isNaN(v)) { res.textContent = '请输入有效数字'; res.className = 'result pending'; return; }
+      let celsius;
+      if (u1.value === 'c') celsius = v;
+      else if (u1.value === 'f') celsius = (v - 32) * 5/9;
+      else celsius = v - 273.15;
+      let result;
+      if (u2.value === 'c') result = celsius;
+      else if (u2.value === 'f') result = celsius * 9/5 + 32;
+      else result = celsius + 273.15;
+      res.className = 'result';
+      res.textContent = v + ' ' + u1.options[u1.selectedIndex].text + ' = ' + result.toFixed(4) + ' ' + u2.options[u2.selectedIndex].text;
+    }
+    val1.addEventListener('input', calc);
+    u1.addEventListener('change', calc);
+    u2.addEventListener('change', calc);
+    return;
+  }
+
+  const unitsList = data.units;
+  area.innerHTML = `
+    <div class="row"><input type="number" id="val1" placeholder="输入数值" step="any"></div>
+    <div class="row">
+      <select id="unit1">${unitsList.map((u,i) => `<option value="${i}">${u}</option>`).join('')}</select>
+      <span class="arrow">➜</span>
+      <select id="unit2">${unitsList.map((u,i) => `<option value="${i}" ${i===1?'selected':''}>${u}</option>`).join('')}</select>
+    </div>
+    <div class="result pending" id="convResult">等待输入...</div>
+  `;
+  const val1 = document.getElementById('val1');
+  const u1 = document.getElementById('unit1');
+  const u2 = document.getElementById('unit2');
+  const res = document.getElementById('convResult');
+  function calc() {
+    const v = parseFloat(val1.value);
+    if (isNaN(v)) { res.textContent = '请输入有效数字'; res.className = 'result pending'; return; }
+    const base = v * data.toBase[parseInt(u1.value)];
+    const result = base / data.toBase[parseInt(u2.value)];
+    res.className = 'result';
+    res.textContent = v + ' ' + unitsList[parseInt(u1.value)] + ' = ' + result.toFixed(6) + ' ' + unitsList[parseInt(u2.value)];
+  }
+  val1.addEventListener('input', calc);
+  u1.addEventListener('change', calc);
+  u2.addEventListener('change', calc);
+}
+
+document.querySelectorAll('#catTabs button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#catTabs button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentCat = this.dataset.cat;
+    renderConverter(currentCat);
+  });
+});
+
+renderConverter('length');
+</script>
+</body>
+</html>

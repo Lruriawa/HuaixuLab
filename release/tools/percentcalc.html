@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📊 百分比计算器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:16px;
+        }
+
+        /* ===== 计算区域 ===== */
+        .calc-section {
+            margin-bottom:14px;
+        }
+        .calc-section:last-child { margin-bottom:0; }
+
+        .calc-section .section-label {
+            color:rgba(0,0,0,0.2);
+            font-size:0.6rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            margin-bottom:6px;
+            font-weight:600;
+        }
+
+        .calc-row {
+            display:flex;
+            gap:8px;
+            align-items:center;
+            flex-wrap:wrap;
+        }
+        .calc-row input {
+            flex:1;
+            min-width:50px;
+            background:rgba(255,255,255,0.7);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:8px;
+            padding:8px 12px;
+            color:#1a1a1a;
+            font-size:0.85rem;
+            outline:none;
+            transition:border-color 0.3s;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .calc-row input:focus { border-color:#40C463; }
+        .calc-row input::placeholder { color:rgba(0,0,0,0.15); }
+        .calc-row .label {
+            color:rgba(0,0,0,0.25);
+            font-size:0.7rem;
+            white-space:nowrap;
+            font-weight:500;
+        }
+        .calc-row .result {
+            color:#216E39;
+            font-size:1.1rem;
+            font-weight:700;
+            min-width:60px;
+            text-align:center;
+            font-variant-numeric:tabular-nums;
+            font-family:'MiSans', 'Consolas', monospace;
+        }
+        .calc-row .result .unit {
+            color:rgba(0,0,0,0.2);
+            font-size:0.7rem;
+            font-weight:400;
+        }
+
+        .calc-divider {
+            height:1px;
+            background:rgba(0,0,0,0.04);
+            margin:14px 0;
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; }
+            .calc-row { gap:6px; }
+            .calc-row input { font-size:0.75rem; padding:6px 10px; min-width:40px; }
+            .calc-row .result { font-size:0.95rem; min-width:50px; }
+            .calc-row .label { font-size:0.6rem; }
+            .calc-section .section-label { font-size:0.55rem; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .calc-divider { margin:10px 0; }
+        }
+        @media (max-width: 380px) {
+            .calc-row input { font-size:0.65rem; padding:4px 8px; min-width:32px; }
+            .calc-row .result { font-size:0.8rem; min-width:40px; }
+            .calc-row { gap:4px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+    <div class="logo">📊</div>
+    <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+    <div class="loading-status">加载中...</div>
+    <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+    <a href="https://lab.lruriawa.top/" class="brand">
+        <span class="logo-icon">🧪</span>
+        <span class="brand-text">槐序Lab实验室</span>
+    </a>
+    <span class="title">📊 百分比计算</span>
+    <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+    <div class="tool-header">
+        <span style="opacity:0.5;">📊</span>
+        <span class="title-tag">百分比计算器</span>
+    </div>
+
+    <div class="tool-container">
+        <!-- 1. 求百分比: A 是 B 的百分之几 -->
+        <div class="calc-section">
+            <div class="section-label">📐 A 是 B 的百分之几</div>
+            <div class="calc-row">
+                <input type="number" id="pctA" value="25" step="any" placeholder="A">
+                <span class="label">是</span>
+                <input type="number" id="pctB" value="200" step="any" placeholder="B">
+                <span class="label">的</span>
+                <span class="result" id="pctResult">12.5<span class="unit">%</span></span>
+            </div>
+        </div>
+
+        <div class="calc-divider"></div>
+
+        <!-- 2. 求百分比值: A 的 B% 是多少 -->
+        <div class="calc-section">
+            <div class="section-label">🧮 A 的 B% 是多少</div>
+            <div class="calc-row">
+                <input type="number" id="valA" value="200" step="any" placeholder="A">
+                <span class="label">的</span>
+                <input type="number" id="valB" value="15" step="any" placeholder="B%">
+                <span class="label">=</span>
+                <span class="result" id="valResult">30</span>
+            </div>
+        </div>
+
+        <div class="calc-divider"></div>
+
+        <!-- 3. 增长率/折扣: A 到 B 的变化百分比 -->
+        <div class="calc-section">
+            <div class="section-label">📈 从 A 到 B 的变化百分比</div>
+            <div class="calc-row">
+                <input type="number" id="changeA" value="100" step="any" placeholder="A">
+                <span class="label">→</span>
+                <input type="number" id="changeB" value="120" step="any" placeholder="B">
+                <span class="label">变化</span>
+                <span class="result" id="changeResult">+20<span class="unit">%</span></span>
+            </div>
+        </div>
+
+        <div class="calc-divider"></div>
+
+        <!-- 4. 折扣价计算 -->
+        <div class="calc-section">
+            <div class="section-label">🏷️ 折扣价计算</div>
+            <div class="calc-row">
+                <input type="number" id="discountPrice" value="200" step="any" placeholder="原价">
+                <span class="label">打</span>
+                <input type="number" id="discountRate" value="20" step="any" placeholder="折扣%">
+                <span class="label">折</span>
+                <span class="result" id="discountResult">160</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="how-to-play">
+        <strong>📊 百分比计算器：</strong>
+        支持四种计算：求百分比 · 求百分比值 · 变化率 · 折扣价
+    </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+    <span class="text">
+        🧪 槐序Lab实验室 · 百分比计算器 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+        &nbsp;&nbsp;<span class="love">❤️</span>
+    </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为百分比计算核心逻辑，完整保留 =====
+
+// ===== 1. 求百分比 =====
+const pctA = document.getElementById('pctA');
+const pctB = document.getElementById('pctB');
+const pctResult = document.getElementById('pctResult');
+
+function calcPercent() {
+    const a = parseFloat(pctA.value) || 0;
+    const b = parseFloat(pctB.value) || 1;
+    if (b === 0) { pctResult.innerHTML = '∞'; return; }
+    const result = (a / b) * 100;
+    pctResult.innerHTML = result.toFixed(2) + '<span class="unit">%</span>';
+}
+pctA.addEventListener('input', calcPercent);
+pctB.addEventListener('input', calcPercent);
+
+// ===== 2. 求百分比值 =====
+const valA = document.getElementById('valA');
+const valB = document.getElementById('valB');
+const valResult = document.getElementById('valResult');
+
+function calcValue() {
+    const a = parseFloat(valA.value) || 0;
+    const b = parseFloat(valB.value) || 0;
+    const result = a * (b / 100);
+    valResult.textContent = result.toFixed(2);
+}
+valA.addEventListener('input', calcValue);
+valB.addEventListener('input', calcValue);
+
+// ===== 3. 变化百分比 =====
+const changeA = document.getElementById('changeA');
+const changeB = document.getElementById('changeB');
+const changeResult = document.getElementById('changeResult');
+
+function calcChange() {
+    const a = parseFloat(changeA.value) || 0;
+    const b = parseFloat(changeB.value) || 0;
+    if (a === 0) { changeResult.innerHTML = '∞'; return; }
+    const result = ((b - a) / a) * 100;
+    const sign = result >= 0 ? '+' : '';
+    changeResult.innerHTML = sign + result.toFixed(2) + '<span class="unit">%</span>';
+}
+changeA.addEventListener('input', calcChange);
+changeB.addEventListener('input', calcChange);
+
+// ===== 4. 折扣价 =====
+const discountPrice = document.getElementById('discountPrice');
+const discountRate = document.getElementById('discountRate');
+const discountResult = document.getElementById('discountResult');
+
+function calcDiscount() {
+    const price = parseFloat(discountPrice.value) || 0;
+    const rate = parseFloat(discountRate.value) || 0;
+    const result = price * (1 - rate / 100);
+    discountResult.textContent = result.toFixed(2);
+}
+discountPrice.addEventListener('input', calcDiscount);
+discountRate.addEventListener('input', calcDiscount);
+
+// ===== 初始化 =====
+calcPercent();
+calcValue();
+calcChange();
+calcDiscount();
+</script>
+</body>
+</html>

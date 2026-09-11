@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🧠 AI读心术-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  .test-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:20px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+    min-height:450px;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .test-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 4px 12px 4px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:0.9rem;
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .test-header .step {
+    color:rgba(0,0,0,0.2);
+    font-weight:400;
+    font-size:0.75rem;
+  }
+  .test-header .end-btn {
+    background:rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.06);
+    color:rgba(0,0,0,0.3);
+    padding:3px 12px;
+    border-radius:30px;
+    font-size:0.7rem;
+    cursor:pointer;
+    transition:all 0.2s;
+    font-weight:500;
+    touch-action:manipulation;
+  }
+  .test-header .end-btn:active {
+    transform:scale(0.95);
+    background:rgba(239,68,68,0.08);
+    border-color:rgba(239,68,68,0.2);
+    color:#e74c3c;
+  }
+
+  .progress-wrap {
+    width:100%;
+    height:4px;
+    background:rgba(0,0,0,0.06);
+    border-radius:4px;
+    margin:12px 0 16px 0;
+    overflow:hidden;
+  }
+  .progress-wrap .bar {
+    height:100%;
+    width:0%;
+    background:linear-gradient(90deg, #216E39, #40C463);
+    border-radius:4px;
+    transition:width 0.5s ease;
+  }
+
+  .question-area {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+  }
+  .question-area .q-text {
+    font-size:1.15rem;
+    font-weight:600;
+    color:#1a1a1a;
+    line-height:1.7;
+    margin-bottom:16px;
+    min-height:70px;
+  }
+  .question-area .options {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .question-area .options button {
+    padding:12px 16px;
+    border:1.5px solid rgba(0,0,0,0.06);
+    border-radius:14px;
+    background:rgba(255,255,255,0.5);
+    font-size:0.95rem;
+    color:#1a1a1a;
+    cursor:pointer;
+    transition:all 0.2s;
+    text-align:left;
+    font-weight:500;
+    touch-action:manipulation;
+  }
+  .question-area .options button:active {
+    transform:scale(0.97);
+  }
+  .question-area .options button.selected {
+    background:rgba(33,110,57,0.12);
+    border-color:#216E39;
+    box-shadow:0 0 0 2px rgba(33,110,57,0.08);
+  }
+  .question-area .options button:hover {
+    background:rgba(33,110,57,0.04);
+    border-color:rgba(33,110,57,0.2);
+  }
+
+  /* ===== 导航栏 - 修复为三个按钮等宽 ===== */
+  .nav-controls {
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap:10px;
+    margin-top:16px;
+    padding-top:12px;
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .nav-controls button {
+    padding:10px 0;
+    border:none;
+    border-radius:30px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s;
+    touch-action:manipulation;
+    background:rgba(0,0,0,0.04);
+    color:rgba(0,0,0,0.4);
+    text-align:center;
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .nav-controls button:active { transform:scale(0.95); }
+  .nav-controls button:disabled {
+    opacity:0.25;
+    cursor:not-allowed;
+    transform:none;
+  }
+  .nav-controls button.confirm-btn {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    color:#fff;
+    box-shadow:0 4px 16px rgba(33,110,57,0.25);
+  }
+  .nav-controls button.confirm-btn:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+    box-shadow:none;
+    background:rgba(0,0,0,0.08);
+    color:rgba(0,0,0,0.2);
+  }
+  .nav-controls button.prev-btn:disabled,
+  .nav-controls button.next-btn:disabled {
+    background:rgba(0,0,0,0.02);
+    color:rgba(0,0,0,0.15);
+  }
+
+  .page-center {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    text-align:center;
+    padding:10px 0;
+  }
+  .page-center .icon {
+    font-size:4.5rem;
+    margin-bottom:12px;
+  }
+  .page-center h2 {
+    font-size:1.6rem;
+    color:#1a1a1a;
+    margin-bottom:8px;
+  }
+  .page-center p {
+    color:rgba(0,0,0,0.4);
+    font-size:0.95rem;
+    line-height:1.8;
+    max-width:320px;
+    margin-bottom:18px;
+  }
+  .page-center .btn-main {
+    padding:12px 40px;
+    border:none;
+    border-radius:40px;
+    background:linear-gradient(135deg, #216E39, #40C463);
+    color:#fff;
+    font-size:1.1rem;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform 0.2s;
+    box-shadow:0 4px 16px rgba(33,110,57,0.3);
+    touch-action:manipulation;
+  }
+  .page-center .btn-main:active { transform:scale(0.95); }
+
+  .result-card {
+    background:rgba(33,110,57,0.06);
+    border-radius:16px;
+    padding:16px;
+    margin:6px 0 12px 0;
+    border:1px solid rgba(33,110,57,0.08);
+    width:100%;
+  }
+  .result-card .result-title {
+    font-size:1.5rem;
+    font-weight:700;
+    color:#216E39;
+    margin-bottom:4px;
+  }
+  .result-card .result-sub {
+    font-size:0.85rem;
+    color:rgba(0,0,0,0.4);
+    margin-bottom:10px;
+  }
+  .result-card .result-desc {
+    font-size:0.95rem;
+    color:#1a1a1a;
+    line-height:1.8;
+  }
+  .result-card .result-score {
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid rgba(0,0,0,0.04);
+    font-size:0.8rem;
+    color:rgba(0,0,0,0.25);
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .result-card .result-score span {
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+  }
+  .result-card .result-score .bar-bg {
+    display:inline-block;
+    width:40px;
+    height:4px;
+    background:rgba(0,0,0,0.06);
+    border-radius:2px;
+    overflow:hidden;
+    vertical-align:middle;
+  }
+  .result-card .result-score .bar-fill {
+    height:100%;
+    border-radius:2px;
+    transition:width 0.8s ease;
+  }
+
+  .btn-group {
+    display:flex;
+    gap:10px;
+    margin-top:14px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .btn-group .btn-secondary {
+    padding:10px 24px;
+    border:1.5px solid rgba(0,0,0,0.06);
+    border-radius:40px;
+    background:rgba(255,255,255,0.6);
+    color:#1a1a1a;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:all 0.2s;
+    touch-action:manipulation;
+  }
+  .btn-group .btn-secondary:active { transform:scale(0.95); }
+  .btn-group .btn-secondary:hover {
+    background:rgba(33,110,57,0.06);
+    border-color:#216E39;
+  }
+  .btn-group .btn-secondary.share-btn {
+    background:linear-gradient(135deg, #fbbf24, #f59e0b);
+    border-color:#fbbf24;
+    color:#1a1a1a;
+  }
+
+  .toast {
+    position:fixed;
+    bottom:100px;
+    left:50%;
+    transform:translateX(-50%);
+    background:rgba(0,0,0,0.75);
+    backdrop-filter:blur(8px);
+    color:#fff;
+    padding:10px 24px;
+    border-radius:30px;
+    font-size:0.9rem;
+    font-weight:500;
+    z-index:999;
+    opacity:0;
+    transition:opacity 0.4s ease;
+    pointer-events:none;
+    white-space:nowrap;
+  }
+  .toast.show { opacity:1; }
+
+  .modal-overlay {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom:0;
+    background:rgba(0,0,0,0.35);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:200;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.4s ease;
+    padding:20px;
+  }
+  .modal-overlay.show {
+    opacity:1;
+    pointer-events:auto;
+  }
+  .modal-box {
+    background:rgba(255,255,255,0.95);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-radius:24px;
+    padding:28px 24px 24px;
+    max-width:400px;
+    width:100%;
+    box-shadow:0 20px 60px rgba(0,0,0,0.12);
+    border:1px solid rgba(0,0,0,0.04);
+    text-align:center;
+    transform:scale(0.95) translateY(10px);
+    transition:transform 0.4s ease;
+  }
+  .modal-overlay.show .modal-box {
+    transform:scale(1) translateY(0);
+  }
+  .modal-box .modal-icon {
+    font-size:3.5rem;
+    margin-bottom:6px;
+  }
+  .modal-box h3 {
+    font-size:1.3rem;
+    color:#1a1a1a;
+    font-weight:700;
+    margin-bottom:12px;
+  }
+  .modal-box .modal-body {
+    text-align:left;
+    color:rgba(0,0,0,0.55);
+    font-size:0.9rem;
+    line-height:1.9;
+    margin-bottom:20px;
+  }
+  .modal-box .modal-body p {
+    margin-bottom:10px;
+  }
+  .modal-box .modal-body p:last-child {
+    margin-bottom:0;
+  }
+  .modal-box .modal-body strong {
+    color:#1a1a1a;
+    font-weight:600;
+  }
+  .modal-box .modal-buttons {
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .modal-box .modal-btn {
+    padding:10px 28px;
+    border:none;
+    border-radius:40px;
+    font-size:1rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform 0.2s;
+    touch-action:manipulation;
+  }
+  .modal-box .modal-btn:active {
+    transform:scale(0.95);
+  }
+  .modal-box .modal-btn.cancel {
+    background:rgba(0,0,0,0.05);
+    color:rgba(0,0,0,0.4);
+  }
+  .modal-box .modal-btn.cancel:hover {
+    background:rgba(0,0,0,0.08);
+  }
+  .modal-box .modal-btn.confirm {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    color:#fff;
+    box-shadow:0 4px 16px rgba(33,110,57,0.3);
+  }
+  .modal-box .modal-btn.confirm:hover {
+    opacity:0.9;
+  }
+  .modal-box .modal-btn.danger {
+    background:linear-gradient(135deg, #e74c3c, #c0392b);
+    color:#fff;
+    box-shadow:0 4px 16px rgba(231,76,60,0.3);
+  }
+  .modal-box .modal-btn.danger:hover {
+    opacity:0.9;
+  }
+
+  @media (max-width:640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .test-wrapper { padding:16px; min-height:400px; }
+    .question-area .q-text { font-size:1.05rem; min-height:60px; }
+    .page-center .icon { font-size:3.5rem; }
+    .page-center h2 { font-size:1.3rem; }
+    .result-card .result-title { font-size:1.2rem; }
+    .result-card .result-score { font-size:0.7rem; }
+    .modal-box { padding:20px 16px; }
+    .modal-box .modal-body { font-size:0.85rem; }
+    .modal-box .modal-btn { padding:8px 20px; font-size:0.9rem; }
+    .nav-controls { gap:8px; }
+    .nav-controls button { font-size:0.75rem; padding:8px 0; }
+  }
+  @media (max-width:380px) {
+    .nav-controls { gap:6px; }
+    .nav-controls button { font-size:0.7rem; padding:6px 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🧠</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<script>
+  setTimeout(function() {
+    var loader = document.getElementById('loader');
+    if (loader) loader.classList.add('hide');
+  }, 2500);
+</script>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🧠 AI读心术</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== Toast 提示 ===== -->
+<div class="toast" id="toast"></div>
+
+<!-- ===== 免责声明弹窗 ===== -->
+<div class="modal-overlay" id="disclaimerModal">
+  <div class="modal-box">
+    <div class="modal-icon">📋</div>
+    <h3>免责声明</h3>
+    <div class="modal-body">
+      <p>本测试仅供<strong>娱乐参考</strong>，所有结果基于您的主观回答生成，<strong>不构成</strong>任何专业心理、性格或医疗建议。</p>
+      <p>如果您有心理或情绪上的困扰，请咨询<strong>专业的心理咨询师或医生</strong>。</p>
+      <p>您的回答<strong>仅用于本次测试</strong>，不会被保存或用于其他用途。</p>
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="disclaimerCancel">取消</button>
+      <button class="modal-btn confirm" id="disclaimerConfirm">✅ 同意并继续</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 结束测试选项弹窗 ===== -->
+<div class="modal-overlay" id="endModal">
+  <div class="modal-box">
+    <div class="modal-icon">⏹️</div>
+    <h3>结束测试？</h3>
+    <div class="modal-body">
+      <p>你确定要结束当前测试吗？</p>
+    </div>
+    <div class="modal-buttons">
+      <button class="modal-btn cancel" id="endCancel">继续答题</button>
+      <button class="modal-btn confirm" id="endRestart">🔄 重新测试</button>
+      <button class="modal-btn danger" id="endHome">🏠 回到首页</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 主内容 ===== -->
+<div class="test-wrapper" id="app"></div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · AI读心术 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love"></span>
+  </span>
+</footer>
+
+<script>
+// ============================================================
+//  🧠 AI 读心术 - 16道题
+// ============================================================
+
+const questions = [
+  {
+    q: '你更倾向于哪种思考方式？',
+    options: [
+      { text: '逻辑分析，讲究证据和推理', score: '理性' },
+      { text: '直觉感受，跟着感觉走', score: '感性' },
+      { text: '结合实际，看什么最管用', score: '务实' }
+    ]
+  },
+  {
+    q: '面对一个陌生环境，你通常会？',
+    options: [
+      { text: '先观察再行动，不做没把握的事', score: '理性' },
+      { text: '立刻探索，充满好奇', score: '感性' },
+      { text: '找熟悉的人或东西先稳住', score: '务实' }
+    ]
+  },
+  {
+    q: '当你做决定时，最依赖什么？',
+    options: [
+      { text: '数据和事实', score: '理性' },
+      { text: '内心的感受和直觉', score: '感性' },
+      { text: '过去的经验和教训', score: '务实' }
+    ]
+  },
+  {
+    q: '你更喜欢哪种社交方式？',
+    options: [
+      { text: '深度交流，一两个知己就够了', score: '理性' },
+      { text: '热闹氛围，认识各种有趣的人', score: '感性' },
+      { text: '随缘，合得来就多聊几句', score: '务实' }
+    ]
+  },
+  {
+    q: '当你感到压力时，通常会？',
+    options: [
+      { text: '分析原因，拆解问题逐个解决', score: '理性' },
+      { text: '找朋友倾诉或做点别的事转移', score: '感性' },
+      { text: '直接行动，做点什么让自己不闲着', score: '务实' }
+    ]
+  },
+  {
+    q: '你觉得自己最大的优势是？',
+    options: [
+      { text: '头脑清晰，擅长思考和判断', score: '理性' },
+      { text: '共情能力强，善解人意', score: '感性' },
+      { text: '执行力和适应力强', score: '务实' }
+    ]
+  },
+  {
+    q: '你更愿意把时间花在？',
+    options: [
+      { text: '阅读、学习、深度思考', score: '理性' },
+      { text: '艺术、音乐、与人交流', score: '感性' },
+      { text: '旅行、动手实践、体验新事物', score: '务实' }
+    ]
+  },
+  {
+    q: '你如何看待失败？',
+    options: [
+      { text: '一个需要分析原因的学习机会', score: '理性' },
+      { text: '一件让人难过但能让人成长的事', score: '感性' },
+      { text: '很正常，换个方向继续试就行', score: '务实' }
+    ]
+  },
+  {
+    q: '在团队合作中，你通常扮演什么角色？',
+    options: [
+      { text: '策划者，负责梳理逻辑和制定方案', score: '理性' },
+      { text: '调和者，关注大家的情绪和氛围', score: '感性' },
+      { text: '执行者，把想法落地变成现实', score: '务实' }
+    ]
+  },
+  {
+    q: '你更喜欢哪种沟通风格？',
+    options: [
+      { text: '简洁直接，说重点不绕弯子', score: '理性' },
+      { text: '温和委婉，顾及对方的感受', score: '感性' },
+      { text: '灵活切换，看情况而定', score: '务实' }
+    ]
+  },
+  {
+    q: '当你收到不同意见时，第一反应是？',
+    options: [
+      { text: '评估对方观点是否合理', score: '理性' },
+      { text: '在意对方的态度和语气', score: '感性' },
+      { text: '思考这个意见能不能用上', score: '务实' }
+    ]
+  },
+  {
+    q: '你觉得什么最能定义一个人？',
+    options: [
+      { text: '他/她思考问题的方式', score: '理性' },
+      { text: '他/她对待他人的态度', score: '感性' },
+      { text: '他/她做成了什么事', score: '务实' }
+    ]
+  },
+  {
+    q: '空闲时间你更喜欢做什么？',
+    options: [
+      { text: '研究感兴趣的知识或技能', score: '理性' },
+      { text: '看电影、听音乐、发呆放空', score: '感性' },
+      { text: '出门走走、做点手工、运动', score: '务实' }
+    ]
+  },
+  {
+    q: '你怎样看待规则和标准？',
+    options: [
+      { text: '规则是有逻辑的，理解了才会遵守', score: '理性' },
+      { text: '规则可以灵活变通，看情况定', score: '感性' },
+      { text: '规则有用就遵守，没用就改', score: '务实' }
+    ]
+  },
+  {
+    q: '你希望别人怎么评价你？',
+    options: [
+      { text: '聪明、靠谱、有见解', score: '理性' },
+      { text: '温暖、真诚、懂人心', score: '感性' },
+      { text: '果断、能干、有效率', score: '务实' }
+    ]
+  },
+  {
+    q: '你觉得自己的人生更像什么？',
+    options: [
+      { text: '一场需要精心谋划的棋局', score: '理性' },
+      { text: '一段需要用心感受的旅程', score: '感性' },
+      { text: '一个需要不断闯关的游戏', score: '务实' }
+    ]
+  }
+];
+
+// ============================================================
+//  结果配置
+// ============================================================
+
+const results = {
+  '理性': {
+    title: '🧠 理性分析型',
+    emoji: '🔍',
+    desc: '你是那种凡事都要讲逻辑的人。做决定前会收集信息、权衡利弊，不容易被情绪左右。别人可能觉得你有点冷静过头，但关键时刻你总是最靠谱的那个。你适合做规划、策略类的工作，也是朋友眼中的"智囊"。不过偶尔也可以试着放下逻辑，跟着感觉走一次，也许会发现不一样的风景。',
+    color: '#3B82F6'
+  },
+  '感性': {
+    title: '🎨 感性探索型',
+    emoji: '🌈',
+    desc: '你的内心世界丰富而敏感，直觉是你最强大的工具。你善于共情，能轻易读懂别人的情绪，在艺术、创作或需要洞察力的领域有天然优势。你相信"感觉对了"比"逻辑通了"更重要。有时候会被人说不切实际，但正是这种特质让你能看到别人看不到的东西。记住：你的感性是一种天赋，不是弱点。',
+    color: '#EC4899'
+  },
+  '务实': {
+    title: '⚡ 务实行动型',
+    emoji: '🚀',
+    desc: '你是那种"少说多做"的人。不会纠结太多，先干了再说。你的执行力很强，适应能力也很好，不管环境怎么变都能找到应对方法。你相信结果比过程更重要，效率比完美更实际。朋友们遇到实际问题总会找你帮忙。不过有时候也可以放慢脚步想一想：这件事真的是对的吗？方向对了，努力才更有价值。',
+    color: '#F59E0B'
+  }
+};
+
+// ============================================================
+//  主程序
+// ============================================================
+
+let currentStep = 0;
+let answers = [];
+const totalQuestions = questions.length;
+const app = document.getElementById('app');
+const toastEl = document.getElementById('toast');
+const disclaimerModal = document.getElementById('disclaimerModal');
+const endModal = document.getElementById('endModal');
+
+function initAnswers() {
+  answers = new Array(totalQuestions).fill(-1);
+}
+
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._timer);
+  toastEl._timer = setTimeout(() => {
+    toastEl.classList.remove('show');
+  }, 2500);
+}
+
+function render() {
+  if (currentStep === -1) {
+    renderStart();
+  } else if (currentStep < totalQuestions) {
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+function renderStart() {
+  app.innerHTML = `
+    <div class="page-center">
+      <div class="icon">🧠</div>
+      <h2>AI 读心术</h2>
+      <p>
+        回答 ${totalQuestions} 个问题，让我读懂你的内心世界。<br>
+        没有标准答案，凭直觉选择就好。
+      </p>
+      <button class="btn-main" id="startBtn">🔮 开始测试</button>
+    </div>
+  `;
+  document.getElementById('startBtn').addEventListener('click', showDisclaimer);
+}
+
+function renderQuestion() {
+  const q = questions[currentStep];
+  const progress = ((currentStep) / totalQuestions * 100).toFixed(0);
+  const selectedIdx = answers[currentStep];
+
+  let optionsHtml = '';
+  q.options.forEach((opt, idx) => {
+    const isSelected = (selectedIdx === idx);
+    optionsHtml += `
+      <button class="opt-btn ${isSelected ? 'selected' : ''}" data-idx="${idx}">
+        ${opt.text}
+      </button>
+    `;
+  });
+
+  const isLast = currentStep === totalQuestions - 1;
+  const hasSelected = selectedIdx !== -1;
+
+  app.innerHTML = `
+    <div class="test-header">
+      <span>🧠 第 ${currentStep + 1} / ${totalQuestions} 题</span>
+      <span class="step">${Math.round(progress)}%</span>
+      <button class="end-btn" id="endTestBtn">⏹ 结束</button>
+    </div>
+    <div class="progress-wrap">
+      <div class="bar" style="width:${progress}%"></div>
+    </div>
+    <div class="question-area">
+      <div class="q-text">${q.q}</div>
+      <div class="options">${optionsHtml}</div>
+    </div>
+    <div class="nav-controls">
+      <button class="prev-btn" id="prevBtn" ${currentStep === 0 ? 'disabled' : ''}>⬅ 上一题</button>
+      <button class="confirm-btn" id="confirmBtn" ${!hasSelected ? 'disabled' : ''}>
+        ${isLast ? '📊 查看结果' : '✅ 确认'}
+      </button>
+      <button class="next-btn" id="nextBtn" ${currentStep === totalQuestions - 1 ? 'disabled' : ''}>下一题 ➡</button>
+    </div>
+  `;
+
+  document.querySelectorAll('.opt-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.idx);
+      answers[currentStep] = idx;
+      renderQuestion();
+    });
+  });
+
+  document.getElementById('prevBtn').addEventListener('click', function() {
+    if (currentStep > 0) {
+      currentStep--;
+      render();
+    }
+  });
+
+  document.getElementById('nextBtn').addEventListener('click', function() {
+    if (currentStep < totalQuestions - 1 && answers[currentStep] !== -1) {
+      currentStep++;
+      render();
+    }
+  });
+
+  document.getElementById('confirmBtn').addEventListener('click', function() {
+    if (answers[currentStep] === -1) {
+      showToast('请先选择一个选项');
+      return;
+    }
+    if (isLast) {
+      const unanswered = answers.some(a => a === -1);
+      if (unanswered) {
+        const firstUnanswered = answers.indexOf(-1);
+        if (firstUnanswered !== -1) {
+          currentStep = firstUnanswered;
+          render();
+          showToast('还有题目未作答，请先完成所有题目');
+        }
+        return;
+      }
+      currentStep = totalQuestions;
+      render();
+    } else {
+      if (currentStep < totalQuestions - 1) {
+        currentStep++;
+        render();
+      }
+    }
+  });
+
+  document.getElementById('endTestBtn').addEventListener('click', showEndModal);
+}
+
+function renderResult() {
+  let scores = { 理性: 0, 感性: 0, 务实: 0 };
+  for (let i = 0; i < totalQuestions; i++) {
+    const idx = answers[i];
+    if (idx !== -1) {
+      const scoreType = questions[i].options[idx].score;
+      scores[scoreType] = (scores[scoreType] || 0) + 1;
+    }
+  }
+
+  let maxScore = 0;
+  let resultType = '理性';
+  for (let key in scores) {
+    if (scores[key] > maxScore) {
+      maxScore = scores[key];
+      resultType = key;
+    }
+  }
+
+  const result = results[resultType];
+  const total = totalQuestions;
+
+  let scoreBars = '';
+  for (let key in scores) {
+    const pct = Math.round((scores[key] / total) * 100);
+    const color = results[key] ? results[key].color : '#999';
+    scoreBars += `
+      <span>
+        ${key}
+        <span class="bar-bg">
+          <span class="bar-fill" style="width:${pct}%;background:${color};"></span>
+        </span>
+        ${pct}%
+      </span>
+    `;
+  }
+
+  app.innerHTML = `
+    <div class="test-header">
+      <span>🔮 测试结果</span>
+      <span class="step">✅ 已完成</span>
+    </div>
+    <div class="page-center" style="justify-content:flex-start;padding-top:6px;">
+      <div class="icon" style="font-size:3.5rem;">${result.emoji}</div>
+      <div class="result-card">
+        <div class="result-title">${result.title}</div>
+        <div class="result-sub">你的内在人格类型</div>
+        <div class="result-desc">${result.desc}</div>
+        <div class="result-score">${scoreBars}</div>
+      </div>
+      <div style="font-size:0.7rem;color:rgba(0,0,0,0.15);margin:4px 0 6px 0;">
+        基于你回答的 ${total} 道题
+      </div>
+      <div class="btn-group">
+        <button class="btn-secondary" id="resetBtn">🔄 重新测试</button>
+        <button class="btn-secondary share-btn" id="shareBtn">📤 分享结果</button>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('resetBtn').addEventListener('click', resetTest);
+  document.getElementById('shareBtn').addEventListener('click', function() {
+    shareResult(result.title);
+  });
+}
+
+// ============================================================
+//  弹窗逻辑
+// ============================================================
+
+function showDisclaimer() {
+  disclaimerModal.classList.add('show');
+}
+
+function hideDisclaimer() {
+  disclaimerModal.classList.remove('show');
+}
+
+document.getElementById('disclaimerConfirm').addEventListener('click', function() {
+  hideDisclaimer();
+  setTimeout(function() {
+    startTest();
+  }, 200);
+});
+
+document.getElementById('disclaimerCancel').addEventListener('click', function() {
+  hideDisclaimer();
+});
+
+disclaimerModal.addEventListener('click', function(e) {
+  if (e.target === this) {
+    hideDisclaimer();
+  }
+});
+
+function showEndModal() {
+  endModal.classList.add('show');
+}
+
+function hideEndModal() {
+  endModal.classList.remove('show');
+}
+
+document.getElementById('endCancel').addEventListener('click', function() {
+  hideEndModal();
+});
+
+document.getElementById('endRestart').addEventListener('click', function() {
+  hideEndModal();
+  setTimeout(function() {
+    resetTest();
+  }, 200);
+});
+
+document.getElementById('endHome').addEventListener('click', function() {
+  hideEndModal();
+  setTimeout(function() {
+    currentStep = -1;
+    initAnswers();
+    render();
+  }, 200);
+});
+
+endModal.addEventListener('click', function(e) {
+  if (e.target === this) {
+    hideEndModal();
+  }
+});
+
+// ============================================================
+//  交互逻辑
+// ============================================================
+
+function startTest() {
+  currentStep = 0;
+  initAnswers();
+  render();
+}
+
+function resetTest() {
+  currentStep = -1;
+  initAnswers();
+  render();
+}
+
+// ============================================================
+//  分享功能
+// ============================================================
+
+function shareResult(title) {
+  const url = 'https://lab.lruriawa.top/release/tools/readmind.html';
+  const text = '🧠 我做了一个AI读心术测试，结果是：' + title + '！\n快来试试你能被读懂多少吧！\n' + url;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      showToast('✅ 已复制到剪贴板！');
+    }).catch(function() {
+      fallbackCopy(text);
+    });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '-9999px';
+  textarea.style.width = '1px';
+  textarea.style.height = '1px';
+  textarea.setAttribute('readonly', 'readonly');
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, text.length);
+  try {
+    var success = document.execCommand('copy');
+    if (success) {
+      showToast('✅ 已复制到剪贴板！');
+    } else {
+      prompt('请手动复制以下内容：', text);
+    }
+  } catch (e) {
+    prompt('请手动复制以下内容：', text);
+  }
+  document.body.removeChild(textarea);
+}
+
+// ============================================================
+//  启动
+// ============================================================
+currentStep = -1;
+initAnswers();
+render();
+</script>
+</body>
+</html>

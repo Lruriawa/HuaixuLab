@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🕒 彩虹时钟-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    flex-direction:column;
+    padding:10px;
+    position:relative;
+  }
+
+  /* ===== 加载动画 ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉 ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚 ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 时钟卡片 ===== */
+  .clock-card {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding: 30px 40px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    text-align: center;
+    min-width: 280px;
+    transition: box-shadow 0.5s ease;
+  }
+  .clock {
+    font-size: clamp(3.6rem, 12vw, 6rem);
+    font-weight: 700;
+    letter-spacing: 8px;
+    transition: color 0.2s;
+    color: #1a1a1a;
+    font-family:'MiSans', 'Courier New', monospace;
+  }
+  .date {
+    font-size: clamp(1rem, 2.5vw, 1.6rem);
+    color: rgba(0,0,0,0.25);
+    margin-top: 12px;
+    letter-spacing: 4px;
+    font-weight: 400;
+  }
+  .tip {
+    color: rgba(0,0,0,0.12);
+    margin-top: 20px;
+    font-size: 0.85rem;
+    letter-spacing: 2px;
+    transition: color 0.5s;
+  }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+    .clock-card { padding:20px 24px; min-width: auto; width: 90vw; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 加载动画 -->
+<div id="loader">
+  <div class="logo">🕒</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🕒 彩虹时钟 <span>· 颜色流动</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 时钟卡片 ===== -->
+<div class="clock-card" id="clockCard">
+  <div class="clock" id="clock">00:00:00</div>
+  <div class="date" id="date">----年--月--日</div>
+  <div class="tip" id="tip">🌈 每秒颜色流动</div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 彩虹时钟 · 每秒色相流动 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// 加载动画隐藏
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// 时钟逻辑
+const clockEl = document.getElementById('clock');
+const dateEl = document.getElementById('date');
+const tipEl = document.getElementById('tip');
+const cardEl = document.getElementById('clockCard');
+
+function updateTime() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2, '0');
+  const m = String(now.getMinutes()).padStart(2, '0');
+  const s = String(now.getSeconds()).padStart(2, '0');
+  clockEl.textContent = `${h}:${m}:${s}`;
+
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  dateEl.textContent = `${year}年${month}月${day}日`;
+
+  // 彩虹色流动：基于秒和分
+  const hue = (now.getSeconds() / 60) * 360 + (now.getMinutes() * 6);
+  const color = `hsl(${hue}, 80%, 60%)`;
+  clockEl.style.color = color;
+  tipEl.style.color = `hsla(${hue}, 80%, 60%, 0.3)`;
+  // 卡片阴影轻微跟随色相
+  cardEl.style.boxShadow = `0 4px 40px hsla(${hue}, 80%, 60%, 0.08)`;
+  cardEl.style.borderColor = `hsla(${hue}, 80%, 60%, 0.1)`;
+}
+
+updateTime();
+setInterval(updateTime, 1000);
+</script>
+</body>
+</html>

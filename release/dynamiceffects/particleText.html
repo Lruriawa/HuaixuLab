@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>💫 粒子文字-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    flex-direction:column;
+    padding:10px;
+    position:relative;
+  }
+  canvas {
+    display:block;
+    width:min(90vw,700px);
+    height:min(70vh,400px);
+    background: #fafcfa;
+    border-radius:20px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+  }
+
+  /* ===== 加载动画 ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉 ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚 ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 控件 ===== */
+  .controls {
+    margin-top:12px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+  }
+  .controls input {
+    padding:8px 16px;
+    border-radius:30px;
+    border:1px solid rgba(0,0,0,0.06);
+    background:rgba(255,255,255,0.8);
+    color:#1a1a1a;
+    font-size:0.95rem;
+    width:180px;
+    outline:none;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .controls input:focus { border-color:#40C463; }
+  .controls input::placeholder { color:rgba(0,0,0,0.2); }
+  .controls button {
+    padding:8px 25px;
+    border-radius:30px;
+    border:none;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:0.95rem;
+    transition:opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .controls button:active { transform:scale(0.95); }
+  .controls button:hover { opacity:0.85; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+    .controls input { width:140px; font-size:0.85rem; padding:6px 14px; }
+    .controls button { font-size:0.85rem; padding:6px 18px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="logo">💫</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">💫 粒子文字 <span>· 粒子动画</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<canvas id="canvas"></canvas>
+
+<!-- ===== 控件 ===== -->
+<div class="controls">
+  <input type="text" id="textInput" value="槐序Lab" maxlength="10" placeholder="输入文字...">
+  <button id="generateBtn">✨ 生成</button>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 粒子文字 · 粒子动画 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const input = document.getElementById('textInput');
+const btn = document.getElementById('generateBtn');
+
+let W, H;
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  W = canvas.width = rect.width || 700;
+  H = canvas.height = rect.height || 400;
+  if (!canvas.width || canvas.width < 10) {
+    canvas.width = 700;
+    canvas.height = 400;
+    W = 700;
+    H = 400;
+  }
+}
+resize();
+window.addEventListener('resize', resize);
+
+let particles = [];
+
+class Particle {
+  constructor(x, y, color) {
+    this.x = x + (Math.random() - 0.5) * 10;
+    this.y = y + (Math.random() - 0.5) * 10;
+    this.tx = x;
+    this.ty = y;
+    this.size = Math.random() * 4 + 2;
+    this.color = color;
+    this.vx = (Math.random() - 0.5) * 2;
+    this.vy = (Math.random() - 0.5) * 2;
+  }
+
+  update() {
+    this.vx += (this.tx - this.x) * 0.02;
+    this.vy += (this.ty - this.y) * 0.02;
+    this.vx *= 0.95;
+    this.vy *= 0.95;
+    this.x += this.vx;
+    this.y += this.vy;
+  }
+
+  draw() {
+    ctx.fillStyle = this.color;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = this.color + '40';
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function generateParticles(text) {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#1a1a1a';
+  ctx.font = 'bold ' + Math.min(W / text.length, 120) + 'px "MiSans", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, W / 2, H / 2);
+
+  const imageData = ctx.getImageData(0, 0, W, H);
+  const data = imageData.data;
+  ctx.clearRect(0, 0, W, H);
+
+  const step = 3;
+  const colorPalette = [
+    '#216E39', '#30A14E', '#40C463', '#5BE88A',
+    '#be185d', '#e84393', '#f472b6',
+    '#2563eb', '#60a5fa',
+    '#d97706', '#fbbf24'
+  ];
+
+  particles = [];
+
+  for (let y = 0; y < H; y += step) {
+    for (let x = 0; x < W; x += step) {
+      const idx = (y * W + x) * 4;
+      if (data[idx + 3] > 128) {
+        const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        particles.push(new Particle(x, y, color));
+      }
+    }
+  }
+
+  if (particles.length < 50) {
+    for (let i = 0; i < 200; i++) {
+      const x = Math.random() * W;
+      const y = Math.random() * H;
+      const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+      particles.push(new Particle(x, y, color));
+    }
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.shadowBlur = 0;
+
+  for (let p of particles) {
+    p.update();
+    p.draw();
+  }
+
+  ctx.shadowBlur = 0;
+  requestAnimationFrame(animate);
+}
+
+btn.addEventListener('click', function() {
+  const text = input.value.trim() || '槐序Lab';
+  generateParticles(text);
+});
+
+// Enter 键触发
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    btn.click();
+  }
+});
+
+generateParticles('槐序Lab');
+animate();
+</script>
+</body>
+</html>

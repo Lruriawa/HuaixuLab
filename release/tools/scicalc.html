@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧮 科学计算器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:16px;
+        }
+
+        /* ===== 显示器 ===== */
+        .calc-display {
+            background:rgba(255,255,255,0.7);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:12px 16px;
+            margin-bottom:10px;
+            text-align:right;
+            min-height:70px;
+            display:flex;
+            flex-direction:column;
+            justify-content:flex-end;
+        }
+        .calc-display .expression {
+            color:rgba(0,0,0,0.25);
+            font-size:0.7rem;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            word-break:break-all;
+            min-height:18px;
+        }
+        .calc-display .result {
+            color:#1a1a1a;
+            font-size:2.2rem;
+            font-weight:300;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            word-break:break-all;
+            min-height:38px;
+        }
+        .calc-display .result.error {
+            color:#e74c3c;
+            font-size:1.1rem;
+        }
+
+        /* ===== 模式切换 ===== */
+        .calc-mode-toggle {
+            display:flex;
+            gap:6px;
+            margin-bottom:8px;
+        }
+        .calc-mode-toggle button {
+            padding:4px 16px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:20px;
+            background:rgba(255,255,255,0.4);
+            color:rgba(0,0,0,0.3);
+            font-size:0.7rem;
+            cursor:pointer;
+            transition:all 0.3s;
+            font-weight:600;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .calc-mode-toggle button.active {
+            background:rgba(33,110,57,0.08);
+            border-color:rgba(33,110,57,0.12);
+            color:#216E39;
+        }
+        .calc-mode-toggle button:active { transform:scale(0.94); }
+        .calc-mode-toggle button:hover { background:rgba(0,0,0,0.04); }
+
+        /* ===== 按键网格 ===== */
+        .calc-grid {
+            display:grid;
+            gap:6px;
+        }
+        .calc-grid.basic {
+            grid-template-columns:repeat(4, 1fr);
+        }
+        .calc-grid.science {
+            grid-template-columns:repeat(5, 1fr);
+        }
+
+        .calc-btn {
+            padding:10px 0;
+            border:none;
+            border-radius:8px;
+            font-size:0.95rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.1s, background 0.15s;
+            color:#1a1a1a;
+            background:rgba(255,255,255,0.6);
+            border:1px solid rgba(0,0,0,0.04);
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+            text-align:center;
+            min-height:44px;
+        }
+        .calc-btn:active { transform:scale(0.92); }
+        .calc-btn.fn {
+            background:rgba(33,110,57,0.04);
+            border-color:rgba(33,110,57,0.06);
+            color:#216E39;
+            font-size:0.65rem;
+        }
+        .calc-btn.fn:hover { background:rgba(33,110,57,0.08); }
+        .calc-btn.op {
+            background:rgba(33,110,57,0.06);
+            border-color:rgba(33,110,57,0.08);
+            color:#216E39;
+            font-size:1.1rem;
+        }
+        .calc-btn.op:hover { background:rgba(33,110,57,0.10); }
+        .calc-btn.op-eq {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+            font-size:1.2rem;
+            box-shadow:0 2px 12px rgba(64,196,99,0.2);
+        }
+        .calc-btn.op-eq:hover { opacity:0.9; }
+        .calc-btn.clear {
+            background:rgba(231,76,60,0.06);
+            border-color:rgba(231,76,60,0.08);
+            color:#e74c3c;
+        }
+        .calc-btn.clear:hover { background:rgba(231,76,60,0.10); }
+        .calc-btn.span2 { grid-column:span 2; }
+
+        .sci-divider {
+            grid-column:1 / -1;
+            height:4px;
+            background:rgba(0,0,0,0.04);
+            border-radius:2px;
+            margin:2px 0;
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; }
+            .calc-display .result { font-size:1.8rem; min-height:32px; }
+            .calc-display { min-height:60px; padding:10px 12px; }
+            .calc-btn { font-size:0.85rem; padding:8px 0; min-height:38px; }
+            .calc-btn.fn { font-size:0.55rem; }
+            .calc-grid { gap:4px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .calc-mode-toggle button { font-size:0.6rem; padding:3px 12px; }
+        }
+        @media (max-width: 380px) {
+            .calc-display .result { font-size:1.4rem; min-height:28px; }
+            .calc-btn { font-size:0.75rem; padding:6px 0; min-height:32px; }
+            .calc-btn.fn { font-size:0.45rem; }
+            .calc-grid.science { gap:3px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">🧮</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">🧮 科学计算</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-header">
+            <span style="opacity:0.5;">🧮</span>
+            <span class="title-tag">科学计算器</span>
+        </div>
+
+        <div class="tool-container">
+            <div class="calc-mode-toggle">
+                <button class="active" data-mode="basic">基础</button>
+                <button data-mode="science">科学</button>
+            </div>
+
+            <div class="calc-display">
+                <div class="expression" id="expression"></div>
+                <div class="result" id="result">0</div>
+            </div>
+
+            <div class="calc-grid basic" id="calcGrid"></div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>🧮 科学计算器：</strong>
+            支持基础运算 + 科学函数（切换「科学」模式）· 三角函数 · 对数 · 阶乘 · 开方
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 科学计算器 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        }
+
+        // ===== 以下为科学计算器核心逻辑，完整保留 =====
+        let currentInput = '0';
+        let previousInput = '';
+        let operation = null;
+        let shouldResetInput = false;
+        let isScienceMode = false;
+
+        const resultEl = document.getElementById('result');
+        const expressionEl = document.getElementById('expression');
+        const calcGrid = document.getElementById('calcGrid');
+
+        function updateDisplay() {
+            let display = currentInput;
+            if (display.length > 14 && !display.includes('e')) {
+                display = parseFloat(display).toExponential(6);
+            }
+            resultEl.textContent = display;
+            resultEl.className = 'result';
+        }
+
+        function updateExpression() {
+            if (operation && previousInput) {
+                const opSymbols = { 'add': '+', 'subtract': '−', 'multiply': '×', 'divide': '÷' };
+                expressionEl.textContent = `${previousInput} ${opSymbols[operation] || operation}`;
+            } else {
+                expressionEl.textContent = '';
+            }
+        }
+
+        function inputDigit(digit) {
+            if (shouldResetInput) {
+                currentInput = '0';
+                shouldResetInput = false;
+            }
+            if (currentInput === '0' && digit !== '.') {
+                currentInput = digit;
+            } else {
+                if (currentInput.replace('-', '').replace('.', '').length >= 15) return;
+                currentInput += digit;
+            }
+            updateDisplay();
+            updateExpression();
+        }
+
+        function inputDecimal() {
+            if (shouldResetInput) {
+                currentInput = '0.';
+                shouldResetInput = false;
+                updateDisplay();
+                return;
+            }
+            if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay();
+        }
+
+        function handleOperation(op) {
+            if (operation && !shouldResetInput) calculate();
+            previousInput = currentInput;
+            operation = op;
+            shouldResetInput = true;
+            updateExpression();
+        }
+
+        function calculate() {
+            if (!operation || !previousInput) return;
+            const prev = parseFloat(previousInput);
+            const curr = parseFloat(currentInput);
+            if (isNaN(prev) || isNaN(curr)) {
+                resultEl.textContent = '错误';
+                resultEl.className = 'result error';
+                return;
+            }
+            let result;
+            switch (operation) {
+                case 'add': result = prev + curr; break;
+                case 'subtract': result = prev - curr; break;
+                case 'multiply': result = prev * curr; break;
+                case 'divide':
+                    if (curr === 0) {
+                        resultEl.textContent = '不能除以0';
+                        resultEl.className = 'result error';
+                        return;
+                    }
+                    result = prev / curr;
+                    break;
+                default: return;
+            }
+            if (typeof result === 'number' && !Number.isInteger(result)) {
+                result = parseFloat(result.toPrecision(12));
+            }
+            currentInput = String(result);
+            operation = null;
+            previousInput = '';
+            shouldResetInput = true;
+            expressionEl.textContent = '';
+            updateDisplay();
+        }
+
+        function sciFunction(func) {
+            const num = parseFloat(currentInput);
+            if (isNaN(num)) {
+                resultEl.textContent = '无效';
+                resultEl.className = 'result error';
+                return;
+            }
+            let result;
+            switch (func) {
+                case 'sin': result = Math.sin(num * Math.PI / 180); break;
+                case 'cos': result = Math.cos(num * Math.PI / 180); break;
+                case 'tan': result = Math.tan(num * Math.PI / 180); break;
+                case 'asin': result = Math.asin(num) * 180 / Math.PI; break;
+                case 'acos': result = Math.acos(num) * 180 / Math.PI; break;
+                case 'atan': result = Math.atan(num) * 180 / Math.PI; break;
+                case 'log': result = Math.log10(num); break;
+                case 'ln': result = Math.log(num); break;
+                case 'sqrt': result = Math.sqrt(num); break;
+                case 'square': result = num * num; break;
+                case 'cube': result = num * num * num; break;
+                case 'factorial':
+                    if (num < 0 || !Number.isInteger(num) || num > 170) {
+                        resultEl.textContent = '无效';
+                        resultEl.className = 'result error';
+                        return;
+                    }
+                    result = factorial(num);
+                    break;
+                case 'exp': result = Math.exp(num); break;
+                case 'pi': currentInput = String(Math.PI); updateDisplay(); return;
+                case 'e': currentInput = String(Math.E); updateDisplay(); return;
+                default: return;
+            }
+            if (typeof result === 'number' && !Number.isInteger(result)) {
+                result = parseFloat(result.toPrecision(12));
+            }
+            currentInput = String(result);
+            expressionEl.textContent = `${func}(${num}) =`;
+            shouldResetInput = true;
+            updateDisplay();
+        }
+
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            let r = 1;
+            for (let i = 2; i <= n; i++) r *= i;
+            return r;
+        }
+
+        function negate() {
+            if (currentInput !== '0') {
+                currentInput = currentInput.startsWith('-') ? currentInput.slice(1) : '-' + currentInput;
+                updateDisplay();
+            }
+        }
+
+        function percent() {
+            const num = parseFloat(currentInput);
+            if (!isNaN(num)) { currentInput = String(num / 100); updateDisplay(); }
+        }
+
+        function clearAll() {
+            currentInput = '0';
+            previousInput = '';
+            operation = null;
+            shouldResetInput = false;
+            expressionEl.textContent = '';
+            updateDisplay();
+        }
+
+        function backspace() {
+            if (currentInput.length > 1) {
+                currentInput = currentInput.slice(0, -1);
+            } else {
+                currentInput = '0';
+            }
+            updateDisplay();
+        }
+
+        function createButton(label, action, cls, handler) {
+            const btn = document.createElement('button');
+            btn.className = `calc-btn ${cls}`;
+            btn.textContent = label;
+            btn.dataset.action = action;
+            btn.addEventListener('click', handler);
+            return btn;
+        }
+
+        // ===== 渲染科学模式 =====
+        function renderScienceMode() {
+            calcGrid.className = 'calc-grid science';
+            calcGrid.innerHTML = '';
+
+            const sciFuncs = [
+                ['π', 'pi'], ['e', 'e'], ['sin⁻¹', 'asin'], ['cos⁻¹', 'acos'], ['tan⁻¹', 'atan'],
+                ['√', 'sqrt'], ['x²', 'square'], ['x³', 'cube'], ['n!', 'factorial'], ['eˣ', 'exp'],
+                ['sin', 'sin'], ['cos', 'cos'], ['tan', 'tan'], ['log', 'log'], ['ln', 'ln']
+            ];
+
+            sciFuncs.forEach(([label, action]) => {
+                const btn = createButton(label, action, 'fn', function() {
+                    sciFunction(this.dataset.action);
+                });
+                calcGrid.appendChild(btn);
+            });
+
+            const divider = document.createElement('div');
+            divider.className = 'sci-divider';
+            calcGrid.appendChild(divider);
+
+            // 第1行：AC  7  8  9  ×
+            const row1 = [
+                { label: 'AC', action: 'clear', cls: 'clear' },
+                { label: '7', action: '7', cls: '' },
+                { label: '8', action: '8', cls: '' },
+                { label: '9', action: '9', cls: '' },
+                { label: '×', action: 'multiply', cls: 'op' }
+            ];
+            row1.forEach(item => {
+                const btn = createButton(item.label, item.action, item.cls, function() {
+                    const a = this.dataset.action;
+                    if (a === 'clear') clearAll();
+                    else if (a === 'multiply') handleOperation('multiply');
+                    else inputDigit(a);
+                });
+                calcGrid.appendChild(btn);
+            });
+
+            // 第2行：%  4  5  6  −
+            const row2 = [
+                { label: '%', action: 'percent', cls: 'fn' },
+                { label: '4', action: '4', cls: '' },
+                { label: '5', action: '5', cls: '' },
+                { label: '6', action: '6', cls: '' },
+                { label: '−', action: 'subtract', cls: 'op' }
+            ];
+            row2.forEach(item => {
+                const btn = createButton(item.label, item.action, item.cls, function() {
+                    const a = this.dataset.action;
+                    if (a === 'percent') percent();
+                    else if (a === 'subtract') handleOperation('subtract');
+                    else inputDigit(a);
+                });
+                calcGrid.appendChild(btn);
+            });
+
+            // 第3行：⌫  1  2  3  +
+            const row3 = [
+                { label: '⌫', action: 'backspace', cls: 'clear' },
+                { label: '1', action: '1', cls: '' },
+                { label: '2', action: '2', cls: '' },
+                { label: '3', action: '3', cls: '' },
+                { label: '+', action: 'add', cls: 'op' }
+            ];
+            row3.forEach(item => {
+                const btn = createButton(item.label, item.action, item.cls, function() {
+                    const a = this.dataset.action;
+                    if (a === 'backspace') backspace();
+                    else if (a === 'add') handleOperation('add');
+                    else inputDigit(a);
+                });
+                calcGrid.appendChild(btn);
+            });
+
+            // 第4行：±  0  .  =（=占2列）
+            const row4 = [
+                { label: '±', action: 'negate', cls: '' },
+                { label: '0', action: '0', cls: '' },
+                { label: '.', action: 'decimal', cls: '' },
+                { label: '=', action: 'equals', cls: 'op-eq span2' }
+            ];
+            row4.forEach(item => {
+                const btn = createButton(item.label, item.action, item.cls, function() {
+                    const a = this.dataset.action;
+                    if (a === 'equals') calculate();
+                    else if (a === 'negate') negate();
+                    else if (a === 'decimal') inputDecimal();
+                    else if (a === '0') inputDigit('0');
+                    else inputDigit(a);
+                });
+                calcGrid.appendChild(btn);
+            });
+        }
+
+        // ===== 渲染基础模式 =====
+        function renderBasicMode() {
+            calcGrid.className = 'calc-grid basic';
+            calcGrid.innerHTML = '';
+
+            const basicLayout = [
+                ['AC', 'clear', 'clear'],
+                ['⌫', 'backspace', 'clear'],
+                ['%', 'percent', 'fn'],
+                ['÷', 'divide', 'op'],
+                ['7', '7', ''],
+                ['8', '8', ''],
+                ['9', '9', ''],
+                ['×', 'multiply', 'op'],
+                ['4', '4', ''],
+                ['5', '5', ''],
+                ['6', '6', ''],
+                ['−', 'subtract', 'op'],
+                ['1', '1', ''],
+                ['2', '2', ''],
+                ['3', '3', ''],
+                ['+', 'add', 'op'],
+                ['±', 'negate', ''],
+                ['0', '0', ''],
+                ['.', 'decimal', ''],
+                ['=', 'equals', 'op-eq']
+            ];
+
+            basicLayout.forEach(([label, action, cls]) => {
+                const btn = createButton(label, action, cls, function() {
+                    const a = this.dataset.action;
+                    if (a === 'clear') clearAll();
+                    else if (a === 'backspace') backspace();
+                    else if (a === 'percent') percent();
+                    else if (a === 'divide' || a === 'multiply' || a === 'subtract' || a === 'add') handleOperation(a);
+                    else if (a === 'equals') calculate();
+                    else if (a === 'negate') negate();
+                    else if (a === 'decimal') inputDecimal();
+                    else inputDigit(a);
+                });
+                calcGrid.appendChild(btn);
+            });
+        }
+
+        // ===== 切换模式 =====
+        function toggleMode(mode) {
+            isScienceMode = mode === 'science';
+            if (isScienceMode) {
+                renderScienceMode();
+            } else {
+                renderBasicMode();
+            }
+            clearAll();
+        }
+
+        // ===== 键盘支持 =====
+        document.addEventListener('keydown', function(e) {
+            const key = e.key;
+            if (key >= '0' && key <= '9') { inputDigit(key); }
+            else if (key === '.') { inputDecimal(); }
+            else if (key === '+') { handleOperation('add'); }
+            else if (key === '-') { handleOperation('subtract'); }
+            else if (key === '*') { handleOperation('multiply'); }
+            else if (key === '/') { e.preventDefault(); handleOperation('divide'); }
+            else if (key === 'Enter' || key === '=') { e.preventDefault(); calculate(); }
+            else if (key === 'Escape' || key === 'c' || key === 'C') { clearAll(); }
+            else if (key === 'Backspace') { backspace(); }
+            else if (key === '%') { percent(); }
+        });
+
+        // ===== 模式切换 =====
+        document.querySelectorAll('.calc-mode-toggle button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.calc-mode-toggle button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                toggleMode(this.dataset.mode);
+            });
+        });
+
+        // ===== 初始化 =====
+        renderBasicMode();
+        updateDisplay();
+    </script>
+</body>
+</html>

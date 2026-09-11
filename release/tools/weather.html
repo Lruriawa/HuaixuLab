@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌤️ 天气查询-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 工具容器（毛玻璃卡片） ===== */
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:440px;
+    width:100%;
+  }
+  .tool-header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:0 6px 12px 6px;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .tool-header .title-tag {
+    color:rgba(0,0,0,0.3);
+    font-size:0.9rem;
+    font-weight:400;
+  }
+
+  /* ===== 内部工具容器（浅色毛玻璃） ===== */
+  .tool-container {
+    position:relative;
+    width:100%;
+    border-radius:16px;
+    overflow:hidden;
+    background:rgba(255,255,255,0.6);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    border:1px solid rgba(0,0,0,0.04);
+    padding:16px;
+    min-height:360px;
+  }
+
+  /* ===== 搜索区域 ===== */
+  .search-area {
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .search-area input {
+    flex:1;
+    background:rgba(255,255,255,0.7);
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:10px;
+    padding:10px 14px;
+    color:#1a1a1a;
+    font-size:0.9rem;
+    outline:none;
+    transition:border-color 0.3s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .search-area input:focus { border-color:#40C463; }
+  .search-area input::placeholder { color:rgba(0,0,0,0.2); }
+  .search-area button {
+    padding:10px 20px;
+    border:none;
+    border-radius:10px;
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+    transition:transform 0.15s, opacity 0.2s;
+    color:#fff;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    box-shadow:0 4px 20px rgba(64,196,99,0.25);
+    white-space:nowrap;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .search-area button:active { transform:scale(0.94); }
+  .search-area button:disabled {
+    opacity:0.4;
+    cursor:not-allowed;
+    transform:none;
+  }
+  .search-area button:hover { opacity:0.9; }
+
+  .search-hint {
+    color:rgba(0,0,0,0.12);
+    font-size:0.55rem;
+    text-align:center;
+    margin-bottom:10px;
+    letter-spacing:0.3px;
+    font-weight:400;
+  }
+
+  /* ===== 快捷城市 ===== */
+  .quick-cities {
+    display:flex;
+    gap:5px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+    justify-content:center;
+  }
+  .quick-cities button {
+    padding:3px 12px;
+    border:1px solid rgba(0,0,0,0.06);
+    border-radius:16px;
+    background:rgba(255,255,255,0.4);
+    color:rgba(0,0,0,0.3);
+    font-size:0.6rem;
+    cursor:pointer;
+    transition:all 0.3s;
+    font-weight:500;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .quick-cities button:hover {
+    background:rgba(255,255,255,0.7);
+    color:rgba(0,0,0,0.5);
+  }
+  .quick-cities button:active { transform:scale(0.94); }
+
+  /* ===== 天气结果 ===== */
+  .weather-result {
+    display:none;
+    animation:fadeIn 0.5s ease;
+  }
+  .weather-result.show { display:block; }
+  @keyframes fadeIn {
+    0% { opacity:0; transform:translateY(8px); }
+    100% { opacity:1; transform:translateY(0); }
+  }
+
+  .weather-main {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:6px 2px 10px 2px;
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .weather-main .left .city {
+    color:#1a1a1a;
+    font-size:1.3rem;
+    font-weight:600;
+  }
+  .weather-main .left .time {
+    color:rgba(0,0,0,0.2);
+    font-size:0.65rem;
+    margin-top:2px;
+  }
+  .weather-main .right {
+    text-align:right;
+  }
+  .weather-main .right .weather-icon {
+    font-size:2.2rem;
+    margin-bottom:2px;
+  }
+  .weather-main .right .temp {
+    color:#1a1a1a;
+    font-size:2.6rem;
+    font-weight:300;
+    font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+  }
+  .weather-main .right .temp .degree {
+    font-size:1.2rem;
+    font-weight:300;
+    color:rgba(0,0,0,0.3);
+  }
+  .weather-main .right .desc {
+    color:rgba(0,0,0,0.35);
+    font-size:0.8rem;
+  }
+
+  /* ===== 天气详情 ===== */
+  .weather-details {
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:8px;
+    margin-top:12px;
+  }
+  .weather-details .item {
+    background:rgba(255,255,255,0.5);
+    border:1px solid rgba(0,0,0,0.04);
+    border-radius:10px;
+    padding:8px 6px;
+    text-align:center;
+  }
+  .weather-details .item .icon { font-size:1.1rem; }
+  .weather-details .item .value {
+    color:rgba(0,0,0,0.7);
+    font-size:0.8rem;
+    font-weight:500;
+    margin-top:2px;
+  }
+  .weather-details .item .label {
+    color:rgba(0,0,0,0.15);
+    font-size:0.5rem;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-top:1px;
+    font-weight:500;
+  }
+
+  /* ===== 状态提示 ===== */
+  .weather-error {
+    color:#e74c3c;
+    text-align:center;
+    padding:20px 0;
+    font-size:0.9rem;
+    display:none;
+  }
+  .weather-error.show { display:block; }
+
+  .weather-loading {
+    text-align:center;
+    padding:30px 0;
+    color:rgba(0,0,0,0.15);
+    font-size:0.9rem;
+    display:none;
+  }
+  .weather-loading.show { display:block; }
+  .weather-loading .spinner {
+    display:inline-block;
+    width:30px;
+    height:30px;
+    border:3px solid rgba(0,0,0,0.05);
+    border-top-color:#40C463;
+    border-radius:50%;
+    animation:spin 0.8s linear infinite;
+    margin-bottom:8px;
+  }
+  @keyframes spin {
+    0% { transform:rotate(0deg); }
+    100% { transform:rotate(360deg); }
+  }
+
+  .weather-hint {
+    color:rgba(0,0,0,0.12);
+    text-align:center;
+    padding:30px 0;
+    font-size:0.85rem;
+    line-height:1.8;
+  }
+  .weather-hint .icon-big { font-size:3rem; display:block; margin-bottom:8px; }
+
+  /* ===== 说明 ===== */
+  .how-to-play {
+    background:rgba(0,0,0,0.04);
+    border-radius:12px;
+    padding:10px 14px;
+    margin-top:10px;
+    color:rgba(0,0,0,0.4);
+    font-size:0.75rem;
+    line-height:1.6;
+    text-align:center;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .tool-header { font-size:0.85rem; }
+    .tool-container { padding:12px; min-height:320px; }
+    .search-area input { font-size:0.8rem; padding:8px 12px; }
+    .search-area button { font-size:0.75rem; padding:8px 14px; }
+    .weather-main .left .city { font-size:1.1rem; }
+    .weather-main .right .temp { font-size:2rem; }
+    .weather-main .right .weather-icon { font-size:1.8rem; }
+    .weather-details .item .value { font-size:0.7rem; }
+    .how-to-play { font-size:0.7rem; padding:8px 10px; }
+    .quick-cities button { font-size:0.55rem; padding:2px 10px; }
+  }
+  @media (max-width: 380px) {
+    .weather-main { flex-direction:column; align-items:flex-start; gap:4px; }
+    .weather-main .right { text-align:left; width:100%; }
+    .weather-details { grid-template-columns:1fr 1fr 1fr; gap:4px; }
+    .weather-details .item { padding:6px 4px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🌤️</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌤️ 天气查询</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+  <div class="tool-header">
+    <span style="opacity:0.5;">🌤️</span>
+    <span class="title-tag">天气查询</span>
+  </div>
+
+  <div class="tool-container">
+    <div class="search-area">
+      <input type="text" id="cityInput" placeholder="输入城市/区/县，如 海淀" value="北京">
+      <button id="searchBtn">🔍 查询</button>
+    </div>
+    <div class="search-hint">💡 支持省/市/区/县级查询</div>
+
+    <div class="quick-cities" id="quickCities"></div>
+
+    <div class="weather-loading" id="loadingState">
+      <div class="spinner"></div>
+      <div>正在查询天气...</div>
+    </div>
+
+    <div class="weather-result" id="weatherResult">
+      <div class="weather-main">
+        <div class="left">
+          <div class="city" id="cityName">北京</div>
+          <div class="time" id="updateTime">更新于：--</div>
+        </div>
+        <div class="right">
+          <div class="weather-icon" id="weatherIcon">🌤️</div>
+          <div class="temp" id="temperature">--<span class="degree">°C</span></div>
+          <div class="desc" id="weatherDesc">--</div>
+        </div>
+      </div>
+      <div class="weather-details">
+        <div class="item">
+          <div class="icon">💨</div>
+          <div class="value" id="windSpeed">--</div>
+          <div class="label">风速</div>
+        </div>
+        <div class="item">
+          <div class="icon">💧</div>
+          <div class="value" id="humidity">--</div>
+          <div class="label">湿度</div>
+        </div>
+        <div class="item">
+          <div class="icon">🌡️</div>
+          <div class="value" id="pressure">--</div>
+          <div class="label">气压</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="weather-error" id="errorState">
+      ❌ 查询失败，请检查城市名称或网络连接
+    </div>
+
+    <div class="weather-hint" id="hintState">
+      <span class="icon-big">🔍</span>
+      输入城市/区/县名称<br>点击查询获取实时天气
+    </div>
+  </div>
+
+  <div class="how-to-play">
+    <strong>🌤️ 天气查询：</strong>
+    支持省/市/区/县级 · 实时温度 · 风速 · 湿度 · 气压
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 天气查询 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为天气查询核心逻辑，完整保留 =====
+
+// ===== 城市坐标数据库（精确匹配优先） =====
+const cityCoords = {
+    // ===== 直辖市 =====
+    '北京': { lat: 39.9042, lon: 116.4074 },
+    '北京市': { lat: 39.9042, lon: 116.4074 },
+    '上海': { lat: 31.2304, lon: 121.4737 },
+    '上海市': { lat: 31.2304, lon: 121.4737 },
+    '天津': { lat: 39.0841, lon: 117.2009 },
+    '天津市': { lat: 39.0841, lon: 117.2009 },
+    '重庆': { lat: 29.5630, lon: 106.5516 },
+    '重庆市': { lat: 29.5630, lon: 106.5516 },
+
+    // ===== 北京各区 =====
+    '东城区': { lat: 39.9175, lon: 116.4188 },
+    '西城区': { lat: 39.9130, lon: 116.3668 },
+    '朝阳区': { lat: 39.9215, lon: 116.4864 },
+    '海淀区': { lat: 39.9561, lon: 116.3103 },
+    '丰台区': { lat: 39.8584, lon: 116.2865 },
+    '石景山区': { lat: 39.9146, lon: 116.1954 },
+    '通州区': { lat: 39.9099, lon: 116.6254 },
+    '顺义区': { lat: 40.1289, lon: 116.6558 },
+    '大兴区': { lat: 39.7267, lon: 116.3414 },
+    '房山区': { lat: 39.7473, lon: 116.1395 },
+    '门头沟区': { lat: 39.9375, lon: 116.1054 },
+    '昌平区': { lat: 40.2181, lon: 116.2312 },
+    '平谷区': { lat: 40.1448, lon: 117.1214 },
+    '怀柔区': { lat: 40.3165, lon: 116.6373 },
+    '密云区': { lat: 40.3763, lon: 116.8436 },
+    '延庆区': { lat: 40.4568, lon: 115.9750 },
+
+    // ===== 上海各区 =====
+    '黄浦区': { lat: 31.2312, lon: 121.4740 },
+    '徐汇区': { lat: 31.1799, lon: 121.4364 },
+    '长宁区': { lat: 31.2182, lon: 121.4246 },
+    '静安区': { lat: 31.2284, lon: 121.4551 },
+    '普陀区': { lat: 31.2437, lon: 121.3913 },
+    '虹口区': { lat: 31.2626, lon: 121.4910 },
+    '杨浦区': { lat: 31.2593, lon: 121.5260 },
+    '浦东新区': { lat: 31.2451, lon: 121.5677 },
+    '闵行区': { lat: 31.1117, lon: 121.3770 },
+    '宝山区': { lat: 31.4050, lon: 121.4813 },
+    '嘉定区': { lat: 31.3832, lon: 121.2497 },
+    '金山区': { lat: 30.7421, lon: 121.3413 },
+    '松江区': { lat: 31.0270, lon: 121.2233 },
+    '青浦区': { lat: 31.1498, lon: 121.1148 },
+    '奉贤区': { lat: 30.9184, lon: 121.4695 },
+    '崇明区': { lat: 31.6221, lon: 121.3973 },
+
+    // ===== 天津各区 =====
+    '和平区': { lat: 39.1179, lon: 117.2145 },
+    '河东区': { lat: 39.1295, lon: 117.2516 },
+    '河西区': { lat: 39.1095, lon: 117.2230 },
+    '南开区': { lat: 39.1382, lon: 117.1502 },
+    '河北区': { lat: 39.1476, lon: 117.1966 },
+    '红桥区': { lat: 39.1675, lon: 117.1515 },
+    '滨海新区': { lat: 39.0178, lon: 117.7103 },
+    '东丽区': { lat: 39.0862, lon: 117.3139 },
+    '西青区': { lat: 39.1417, lon: 117.0090 },
+    '津南区': { lat: 38.9376, lon: 117.4003 },
+    '北辰区': { lat: 39.2252, lon: 117.1355 },
+    '武清区': { lat: 39.3832, lon: 117.0444 },
+    '宝坻区': { lat: 39.7176, lon: 117.3102 },
+    '静海区': { lat: 38.9475, lon: 116.9744 },
+    '宁河区': { lat: 39.3304, lon: 117.8259 },
+    '蓟州区': { lat: 40.0457, lon: 117.4074 },
+
+    // ===== 重庆各区 =====
+    '渝中区': { lat: 29.5531, lon: 106.5687 },
+    '大渡口区': { lat: 29.4810, lon: 106.4830 },
+    '江北区': { lat: 29.6066, lon: 106.5743 },
+    '沙坪坝区': { lat: 29.5412, lon: 106.4568 },
+    '九龙坡区': { lat: 29.5012, lon: 106.5113 },
+    '南岸区': { lat: 29.5200, lon: 106.5637 },
+    '北碚区': { lat: 29.8054, lon: 106.3954 },
+    '渝北区': { lat: 29.7172, lon: 106.6316 },
+    '巴南区': { lat: 29.4004, lon: 106.5196 },
+
+    // ===== 各省会 =====
+    '石家庄': { lat: 38.0428, lon: 114.5149 },
+    '石家庄市': { lat: 38.0428, lon: 114.5149 },
+    '河北省': { lat: 38.0428, lon: 114.5149 },
+    '河北': { lat: 38.0428, lon: 114.5149 },
+    '太原': { lat: 37.8706, lon: 112.5489 },
+    '山西省': { lat: 37.8706, lon: 112.5489 },
+    '山西': { lat: 37.8706, lon: 112.5489 },
+    '呼和浩特': { lat: 40.8424, lon: 111.7485 },
+    '内蒙古': { lat: 40.8424, lon: 111.7485 },
+    '沈阳': { lat: 41.8057, lon: 123.4315 },
+    '辽宁省': { lat: 41.8057, lon: 123.4315 },
+    '辽宁': { lat: 41.8057, lon: 123.4315 },
+    '长春': { lat: 43.8171, lon: 125.3235 },
+    '吉林省': { lat: 43.8171, lon: 125.3235 },
+    '吉林': { lat: 43.8171, lon: 125.3235 },
+    '哈尔滨': { lat: 45.8038, lon: 126.5350 },
+    '黑龙江省': { lat: 45.8038, lon: 126.5350 },
+    '黑龙江': { lat: 45.8038, lon: 126.5350 },
+    '南京': { lat: 32.0603, lon: 118.7969 },
+    '江苏省': { lat: 32.0603, lon: 118.7969 },
+    '江苏': { lat: 32.0603, lon: 118.7969 },
+    '杭州': { lat: 30.2741, lon: 120.1551 },
+    '浙江省': { lat: 30.2741, lon: 120.1551 },
+    '浙江': { lat: 30.2741, lon: 120.1551 },
+    '合肥': { lat: 31.8206, lon: 117.2272 },
+    '安徽省': { lat: 31.8206, lon: 117.2272 },
+    '安徽': { lat: 31.8206, lon: 117.2272 },
+    '福州': { lat: 26.0745, lon: 119.2965 },
+    '福建省': { lat: 26.0745, lon: 119.2965 },
+    '福建': { lat: 26.0745, lon: 119.2965 },
+    '南昌': { lat: 28.6820, lon: 115.8579 },
+    '江西省': { lat: 28.6820, lon: 115.8579 },
+    '江西': { lat: 28.6820, lon: 115.8579 },
+    '济南': { lat: 36.6512, lon: 117.1201 },
+    '山东省': { lat: 36.6512, lon: 117.1201 },
+    '山东': { lat: 36.6512, lon: 117.1201 },
+    '郑州': { lat: 34.7472, lon: 113.6253 },
+    '河南省': { lat: 34.7472, lon: 113.6253 },
+    '河南': { lat: 34.7472, lon: 113.6253 },
+    '武汉': { lat: 30.5928, lon: 114.3055 },
+    '湖北省': { lat: 30.5928, lon: 114.3055 },
+    '湖北': { lat: 30.5928, lon: 114.3055 },
+    '长沙': { lat: 28.2282, lon: 112.9388 },
+    '湖南省': { lat: 28.2282, lon: 112.9388 },
+    '湖南': { lat: 28.2282, lon: 112.9388 },
+    '广州': { lat: 23.1291, lon: 113.2644 },
+    '广东省': { lat: 23.1291, lon: 113.2644 },
+    '广东': { lat: 23.1291, lon: 113.2644 },
+    '南宁': { lat: 22.8170, lon: 108.3665 },
+    '广西': { lat: 22.8170, lon: 108.3665 },
+    '海口': { lat: 20.0174, lon: 110.3492 },
+    '海南省': { lat: 20.0174, lon: 110.3492 },
+    '海南': { lat: 20.0174, lon: 110.3492 },
+    '成都': { lat: 30.5728, lon: 104.0668 },
+    '四川省': { lat: 30.5728, lon: 104.0668 },
+    '四川': { lat: 30.5728, lon: 104.0668 },
+    '贵阳': { lat: 26.6477, lon: 106.6302 },
+    '贵州省': { lat: 26.6477, lon: 106.6302 },
+    '贵州': { lat: 26.6477, lon: 106.6302 },
+    '昆明': { lat: 24.8801, lon: 102.8329 },
+    '云南省': { lat: 24.8801, lon: 102.8329 },
+    '云南': { lat: 24.8801, lon: 102.8329 },
+    '拉萨': { lat: 29.6500, lon: 91.1000 },
+    '西藏': { lat: 29.6500, lon: 91.1000 },
+    '西安': { lat: 34.3416, lon: 108.9398 },
+    '陕西省': { lat: 34.3416, lon: 108.9398 },
+    '陕西': { lat: 34.3416, lon: 108.9398 },
+    '兰州': { lat: 36.0611, lon: 103.8343 },
+    '甘肃省': { lat: 36.0611, lon: 103.8343 },
+    '甘肃': { lat: 36.0611, lon: 103.8343 },
+    '西宁': { lat: 36.6232, lon: 101.7782 },
+    '青海省': { lat: 36.6232, lon: 101.7782 },
+    '青海': { lat: 36.6232, lon: 101.7782 },
+    '银川': { lat: 38.4872, lon: 106.2309 },
+    '宁夏': { lat: 38.4872, lon: 106.2309 },
+    '乌鲁木齐': { lat: 43.8256, lon: 87.6168 },
+    '新疆': { lat: 43.8256, lon: 87.6168 },
+    '台北': { lat: 25.0330, lon: 121.5654 },
+    '台湾': { lat: 25.0330, lon: 121.5654 },
+    '香港': { lat: 22.3193, lon: 114.1694 },
+    '澳门': { lat: 22.1987, lon: 113.5439 },
+
+    // ===== 其他城市 =====
+    '深圳': { lat: 22.5431, lon: 114.0579 },
+    '苏州': { lat: 31.2990, lon: 120.5853 },
+    '东莞': { lat: 23.0207, lon: 113.7518 },
+    '青岛': { lat: 36.0671, lon: 120.3826 },
+    '厦门': { lat: 24.4798, lon: 118.0894 },
+    '宁波': { lat: 29.8683, lon: 121.5435 },
+    '大连': { lat: 38.9140, lon: 121.6147 },
+    '珠海': { lat: 22.2707, lon: 113.5767 },
+    '佛山': { lat: 23.0215, lon: 113.1214 },
+    '惠州': { lat: 23.1107, lon: 114.4156 },
+    '中山': { lat: 22.5158, lon: 113.3925 },
+    '汕头': { lat: 23.3715, lon: 116.7085 },
+    '泉州': { lat: 24.8740, lon: 118.6759 },
+    '温州': { lat: 28.0000, lon: 120.7000 },
+    '无锡': { lat: 31.4912, lon: 120.3119 },
+    '常州': { lat: 31.8107, lon: 119.9736 },
+    '徐州': { lat: 34.2044, lon: 117.2848 },
+    '南通': { lat: 32.0162, lon: 120.8747 },
+    '扬州': { lat: 32.3932, lon: 119.4210 },
+    '绍兴': { lat: 29.9987, lon: 120.5790 },
+    '嘉兴': { lat: 30.7642, lon: 120.7588 },
+    '金华': { lat: 29.1028, lon: 119.6474 },
+    '台州': { lat: 28.6562, lon: 121.4209 },
+    '湖州': { lat: 30.8943, lon: 120.0868 },
+    '九江': { lat: 29.7051, lon: 116.0018 },
+    '赣州': { lat: 25.8310, lon: 114.9352 },
+    '桂林': { lat: 25.2736, lon: 110.2903 },
+    '柳州': { lat: 24.3143, lon: 109.4117 },
+    '北海': { lat: 21.4735, lon: 109.1192 },
+    '三亚': { lat: 18.2528, lon: 109.5119 },
+    '大理': { lat: 25.6065, lon: 100.2676 },
+    '丽江': { lat: 26.8564, lon: 100.2271 },
+    '西双版纳': { lat: 22.0087, lon: 100.7974 },
+    '延安': { lat: 36.5961, lon: 109.4891 },
+    '洛阳': { lat: 34.6181, lon: 112.4540 },
+    '开封': { lat: 34.7973, lon: 114.3072 },
+    '襄阳': { lat: 32.0085, lon: 112.1224 },
+    '宜昌': { lat: 30.6902, lon: 111.2908 },
+    '张家界': { lat: 29.1272, lon: 110.4788 },
+    '岳阳': { lat: 29.3700, lon: 113.1320 },
+    '衡阳': { lat: 26.8934, lon: 112.5717 },
+    '株洲': { lat: 27.8270, lon: 113.1338 },
+    '湘潭': { lat: 27.8295, lon: 112.9440 },
+    '常德': { lat: 29.0316, lon: 111.6984 },
+    '益阳': { lat: 28.5539, lon: 112.3551 },
+    '郴州': { lat: 25.7706, lon: 113.0149 },
+    '永州': { lat: 26.4200, lon: 111.6180 },
+    '怀化': { lat: 27.5407, lon: 110.0054 },
+    '娄底': { lat: 27.6973, lon: 111.9961 },
+
+    // ===== 国际 =====
+    '东京': { lat: 35.6762, lon: 139.6503 },
+    '纽约': { lat: 40.7128, lon: -74.0060 },
+    '伦敦': { lat: 51.5074, lon: -0.1278 },
+    '巴黎': { lat: 48.8566, lon: 2.3522 },
+    '悉尼': { lat: -33.8688, lon: 151.2093 },
+    '新加坡': { lat: 1.3521, lon: 103.8198 },
+    '曼谷': { lat: 13.7563, lon: 100.5018 },
+    '迪拜': { lat: 25.2048, lon: 55.2708 },
+    '首尔': { lat: 37.5665, lon: 126.9780 },
+    '莫斯科': { lat: 55.7558, lon: 37.6173 },
+    '柏林': { lat: 52.5200, lon: 13.4050 },
+    '罗马': { lat: 41.9028, lon: 12.4964 },
+    '马德里': { lat: 40.4168, lon: -3.7038 },
+    '多伦多': { lat: 43.6532, lon: -79.3832 },
+    '洛杉矶': { lat: 34.0522, lon: -118.2437 },
+    '芝加哥': { lat: 41.8781, lon: -87.6298 },
+    '墨西哥城': { lat: 19.4326, lon: -99.1332 },
+    '里约热内卢': { lat: -22.9068, lon: -43.1729 },
+    '开普敦': { lat: -33.9249, lon: 18.4241 },
+    '孟买': { lat: 19.0760, lon: 72.8777 },
+};
+
+// ===== DOM 引用 =====
+const cityInput = document.getElementById('cityInput');
+const searchBtn = document.getElementById('searchBtn');
+const weatherResult = document.getElementById('weatherResult');
+const loadingState = document.getElementById('loadingState');
+const errorState = document.getElementById('errorState');
+const hintState = document.getElementById('hintState');
+
+const cityName = document.getElementById('cityName');
+const updateTime = document.getElementById('updateTime');
+const temperature = document.getElementById('temperature');
+const weatherDesc = document.getElementById('weatherDesc');
+const weatherIcon = document.getElementById('weatherIcon');
+const windSpeed = document.getElementById('windSpeed');
+const humidity = document.getElementById('humidity');
+const pressure = document.getElementById('pressure');
+const quickCities = document.getElementById('quickCities');
+
+// ===== 快捷城市列表 =====
+const quickList = ['北京', '上海', '广州', '深圳', '成都', '杭州', '武汉', '重庆', '南京', '西安', '天津', '长沙', '郑州', '青岛', '厦门', '苏州', '昆明', '香港', '东京', '纽约'];
+
+quickList.forEach(city => {
+    const btn = document.createElement('button');
+    btn.textContent = city;
+    btn.dataset.city = city;
+    btn.addEventListener('click', function() {
+        cityInput.value = this.dataset.city;
+        fetchWeather(this.dataset.city);
+    });
+    quickCities.appendChild(btn);
+});
+
+// ===== 获取城市坐标（精确匹配优先） =====
+function getCityCoords(city) {
+    // 1. 精确匹配
+    if (cityCoords[city]) return cityCoords[city];
+
+    // 2. 去掉末尾的"市"、"省"、"区"、"县"后匹配
+    const clean = city.replace(/[市区县省]$/, '');
+    if (cityCoords[clean]) return cityCoords[clean];
+
+    // 3. 遍历模糊匹配（包含关系）
+    for (const [key, val] of Object.entries(cityCoords)) {
+        if (city.includes(key) && key.length > 2) return val;
+        if (key.includes(city) && city.length > 2) return val;
+    }
+
+    return null;
+}
+
+// ===== 天气代码转图标 =====
+function getWeatherIconByCode(code) {
+    const icons = {
+        0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+        45: '🌫️', 48: '🌫️',
+        51: '🌦️', 53: '🌦️', 55: '🌧️', 56: '🌧️', 57: '🌧️',
+        61: '🌧️', 63: '🌧️', 65: '⛈️', 66: '🌧️', 67: '🌧️',
+        71: '🌨️', 73: '🌨️', 75: '❄️', 77: '🌨️',
+        80: '🌦️', 81: '🌧️', 82: '⛈️',
+        85: '🌨️', 86: '❄️',
+        95: '⛈️', 96: '⛈️', 99: '⛈️'
+    };
+    return icons[code] || '🌤️';
+}
+
+function getWeatherDescByCode(code) {
+    const descs = {
+        0: '晴朗', 1: '晴朗', 2: '部分多云', 3: '多云',
+        45: '雾', 48: '雾',
+        51: '毛毛雨', 53: '毛毛雨', 55: '毛毛雨',
+        56: '冻雨', 57: '冻雨',
+        61: '小雨', 63: '中雨', 65: '大雨',
+        66: '冻雨', 67: '冻雨',
+        71: '小雪', 73: '中雪', 75: '大雪',
+        77: '雪粒',
+        80: '阵雨', 81: '阵雨', 82: '强阵雨',
+        85: '阵雪', 86: '强阵雪',
+        95: '雷暴', 96: '雷暴', 99: '强雷暴'
+    };
+    return descs[code] || '未知天气';
+}
+
+// ===== 查询天气 =====
+async function fetchWeather(city) {
+    if (!city || city.trim() === '') {
+        cityInput.focus();
+        return;
+    }
+
+    city = city.trim();
+
+    const coords = getCityCoords(city);
+    if (!coords) {
+        errorState.textContent = `❌ 未找到「${city}」，请检查输入（支持省/市/区/县）`;
+        errorState.classList.add('show');
+        weatherResult.classList.remove('show');
+        loadingState.classList.remove('show');
+        hintState.style.display = 'none';
+        searchBtn.disabled = false;
+        return;
+    }
+
+    loadingState.classList.add('show');
+    weatherResult.classList.remove('show');
+    errorState.classList.remove('show');
+    hintState.style.display = 'none';
+    searchBtn.disabled = true;
+
+    try {
+        const url = `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,pressure_msl&hourly=pressure_msl&timezone=auto`;
+
+        const resp = await fetch(url, { signal: AbortSignal.timeout(10000) });
+
+        if (!resp.ok) throw new Error('请求失败');
+
+        const data = await resp.json();
+
+        if (!data || !data.current) throw new Error('未获取到天气数据');
+
+        const current = data.current;
+        const temp = current.temperature_2m || '--';
+        const humid = current.relative_humidity_2m || '--';
+        const wind = current.wind_speed_10m || '--';
+        const weatherCode = current.weather_code || 0;
+        const desc = getWeatherDescByCode(weatherCode);
+        const icon = getWeatherIconByCode(weatherCode);
+
+        let pressureVal = '--';
+        if (current.pressure_msl !== undefined && current.pressure_msl !== null) {
+            pressureVal = current.pressure_msl;
+        } else if (data.hourly && data.hourly.pressure_msl && data.hourly.pressure_msl.length > 0) {
+            const p = data.hourly.pressure_msl.find(v => v !== null && v !== undefined);
+            if (p !== undefined) pressureVal = p;
+        }
+
+        cityName.textContent = city;
+        const now = new Date();
+        updateTime.textContent = `更新于：${now.toLocaleTimeString('zh-CN')}`;
+        temperature.innerHTML = `${temp}<span class="degree">°C</span>`;
+        weatherDesc.textContent = desc;
+        weatherIcon.textContent = icon;
+        windSpeed.textContent = wind + ' km/h';
+        humidity.textContent = humid + '%';
+        pressure.textContent = (pressureVal !== '--') ? pressureVal + ' hPa' : '--';
+
+        weatherResult.classList.add('show');
+        loadingState.classList.remove('show');
+
+    } catch (err) {
+        console.error(err);
+        errorState.textContent = `❌ ${err.message || '查询失败，请稍后重试'}`;
+        errorState.classList.add('show');
+        loadingState.classList.remove('show');
+    }
+
+    searchBtn.disabled = false;
+}
+
+// ===== 事件绑定 =====
+searchBtn.addEventListener('click', function() {
+    fetchWeather(cityInput.value);
+});
+
+cityInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchWeather(this.value);
+    }
+});
+
+// ===== 自动加载 =====
+setTimeout(() => {
+    fetchWeather('北京');
+}, 500);
+</script>
+</body>
+</html>

@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧮 进制转换器-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:420px;
+            width:100%;
+        }
+
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:#15132b;
+            box-shadow:inset 0 0 60px rgba(0,0,0,0.3);
+            padding:20px 16px;
+            min-height:360px;
+        }
+
+        /* ===== 输入区域 ===== */
+        .input-group {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
+            margin-bottom:14px;
+        }
+        .input-group label {
+            color:rgba(255,255,255,0.4);
+            font-size:0.65rem;
+            text-transform:uppercase;
+            letter-spacing:1px;
+            font-weight:500;
+        }
+        .input-group input {
+            width:100%;
+            background:rgba(255,255,255,0.06);
+            border:1px solid rgba(255,255,255,0.08);
+            border-radius:10px;
+            padding:10px 14px;
+            color:#fff;
+            font-size:0.9rem;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            outline:none;
+            transition:border-color 0.3s;
+        }
+        .input-group input:focus {
+            border-color:rgba(64,196,99,0.4);
+        }
+        .input-group input::placeholder {
+            color:rgba(255,255,255,0.2);
+        }
+
+        /* ===== 结果网格 ===== */
+        .result-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:10px;
+        }
+        .result-item {
+            background:rgba(255,255,255,0.04);
+            border:1px solid rgba(255,255,255,0.06);
+            border-radius:10px;
+            padding:12px 14px;
+            transition:border-color 0.3s;
+        }
+        .result-item .label {
+            color:rgba(255,255,255,0.25);
+            font-size:0.55rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+            font-weight:500;
+        }
+        .result-item .value {
+            color:#4ade80;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+            font-size:0.85rem;
+            font-weight:600;
+            word-break:break-all;
+            margin-top:2px;
+        }
+        .result-item .value.error {
+            color:#f87171;
+            font-size:0.7rem;
+            font-weight:400;
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-container { padding:16px 12px; min-height:320px; }
+            .result-grid { gap:8px; }
+            .result-item { padding:10px 12px; }
+            .result-item .value { font-size:0.75rem; }
+            .input-group input { font-size:0.8rem; padding:8px 12px; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+        }
+        @media (max-width: 380px) {
+            .result-grid { grid-template-columns:1fr 1fr; gap:6px; }
+            .result-item .value { font-size:0.65rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">🧮</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">🧮 进制转换</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-container">
+            <div class="input-group">
+                <label>🔢 输入数字</label>
+                <input type="text" id="inputNumber" placeholder="输入数字，如 255 或 FF" value="255">
+            </div>
+
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="label">二进制 (2)</div>
+                    <div class="value" id="binResult">11111111</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">八进制 (8)</div>
+                    <div class="value" id="octResult">377</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">十进制 (10)</div>
+                    <div class="value" id="decResult">255</div>
+                </div>
+                <div class="result-item">
+                    <div class="label">十六进制 (16)</div>
+                    <div class="value" id="hexResult">FF</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>🧮 进制转换器：</strong>
+            输入任意进制的数字，自动转换为二进制、八进制、十进制、十六进制
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · 进制转换 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+        }
+
+        // ===== 以下为进制转换核心逻辑，完整保留，未作任何修改 =====
+        const input = document.getElementById('inputNumber');
+        const binResult = document.getElementById('binResult');
+        const octResult = document.getElementById('octResult');
+        const decResult = document.getElementById('decResult');
+        const hexResult = document.getElementById('hexResult');
+
+        function convert() {
+            const text = input.value.trim();
+            if (!text) {
+                binResult.textContent = '—';
+                octResult.textContent = '—';
+                decResult.textContent = '—';
+                hexResult.textContent = '—';
+                return;
+            }
+
+            let num = null;
+
+            if (/^\d+$/.test(text)) {
+                num = BigInt(text);
+            } else if (/^0x[0-9a-fA-F]+$/.test(text)) {
+                try { num = BigInt(text); } catch (e) {}
+            } else if (/^0b[01]+$/.test(text)) {
+                try { num = BigInt(text); } catch (e) {}
+            } else if (/^0o[0-7]+$/.test(text)) {
+                try { num = BigInt(text); } catch (e) {}
+            } else if (/^[0-9a-fA-F]+$/.test(text)) {
+                try { num = BigInt('0x' + text); } catch (e) {}
+            }
+
+            if (num === null || num === undefined) {
+                binResult.textContent = '❌ 无效';
+                binResult.className = 'value error';
+                octResult.textContent = '❌ 无效';
+                octResult.className = 'value error';
+                decResult.textContent = '❌ 无效';
+                decResult.className = 'value error';
+                hexResult.textContent = '❌ 无效';
+                hexResult.className = 'value error';
+                return;
+            }
+
+            binResult.className = 'value';
+            octResult.className = 'value';
+            decResult.className = 'value';
+            hexResult.className = 'value';
+
+            try {
+                binResult.textContent = num.toString(2);
+                octResult.textContent = num.toString(8);
+                decResult.textContent = num.toString(10);
+                hexResult.textContent = num.toString(16).toUpperCase();
+            } catch (e) {
+                binResult.textContent = '❌ 错误';
+                octResult.textContent = '❌ 错误';
+                decResult.textContent = '❌ 错误';
+                hexResult.textContent = '❌ 错误';
+            }
+        }
+
+        input.addEventListener('input', convert);
+        convert();
+    </script>
+</body>
+</html>

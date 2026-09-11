@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌍 IP归属地查询-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            padding:10px;
+            padding-top:70px;
+            padding-bottom:70px;
+            position:relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width:440px;
+            width:100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 内部工具容器（浅色毛玻璃） ===== */
+        .tool-container {
+            position:relative;
+            width:100%;
+            border-radius:16px;
+            overflow:hidden;
+            background:rgba(255,255,255,0.6);
+            backdrop-filter:blur(6px);
+            -webkit-backdrop-filter:blur(6px);
+            border:1px solid rgba(0,0,0,0.04);
+            padding:16px;
+            min-height:380px;
+        }
+
+        /* ===== 我的IP卡片 ===== */
+        .my-ip-card {
+            background:rgba(33,110,57,0.04);
+            border:1px solid rgba(33,110,57,0.08);
+            border-radius:12px;
+            padding:12px 16px;
+            margin-bottom:14px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+        .my-ip-card .label {
+            color:rgba(0,0,0,0.2);
+            font-size:0.7rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+        }
+        .my-ip-card .ip {
+            color:#216E39;
+            font-size:1.1rem;
+            font-weight:600;
+            font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+        }
+        .my-ip-card .copy-btn {
+            background:none;
+            border:none;
+            color:rgba(0,0,0,0.15);
+            cursor:pointer;
+            font-size:0.8rem;
+            transition:color 0.2s;
+            padding:4px 8px;
+        }
+        .my-ip-card .copy-btn:hover { color:rgba(0,0,0,0.4); }
+        .my-ip-card .copy-btn:active { transform:scale(0.9); }
+
+        /* ===== 搜索区域 ===== */
+        .search-area {
+            display:flex;
+            gap:8px;
+            margin-bottom:12px;
+        }
+        .search-area input {
+            flex:1;
+            background:rgba(255,255,255,0.6);
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:10px;
+            padding:10px 14px;
+            color:#1a1a1a;
+            font-size:0.9rem;
+            outline:none;
+            transition:border-color 0.3s;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .search-area input:focus { border-color:#40C463; }
+        .search-area input::placeholder { color:rgba(0,0,0,0.2); }
+        .search-area button {
+            padding:10px 20px;
+            border:none;
+            border-radius:10px;
+            font-size:0.85rem;
+            font-weight:600;
+            cursor:pointer;
+            transition:transform 0.15s, opacity 0.2s;
+            color:#fff;
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            box-shadow:0 4px 20px rgba(64,196,99,0.25);
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .search-area button:active { transform:scale(0.94); }
+        .search-area button:disabled {
+            opacity:0.4;
+            cursor:not-allowed;
+            transform:none;
+        }
+
+        /* ===== 快速IP按钮 ===== */
+        .quick-ips {
+            display:flex;
+            gap:6px;
+            flex-wrap:wrap;
+            margin-bottom:14px;
+            justify-content:center;
+        }
+        .quick-ips button {
+            padding:3px 12px;
+            border:1px solid rgba(0,0,0,0.06);
+            border-radius:16px;
+            background:rgba(255,255,255,0.4);
+            color:rgba(0,0,0,0.3);
+            font-size:0.6rem;
+            cursor:pointer;
+            transition:all 0.3s;
+            font-weight:500;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .quick-ips button:hover {
+            background:rgba(255,255,255,0.8);
+            color:rgba(0,0,0,0.6);
+        }
+        .quick-ips button:active { transform:scale(0.94); }
+
+        /* ===== 结果区域 ===== */
+        .result-area {
+            display:none;
+            animation:fadeIn 0.4s ease;
+        }
+        .result-area.show { display:block; }
+        @keyframes fadeIn {
+            0% { opacity:0; transform:translateY(8px); }
+            100% { opacity:1; transform:translateY(0); }
+        }
+
+        .result-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:8px;
+        }
+        .result-item {
+            background:rgba(255,255,255,0.5);
+            border:1px solid rgba(0,0,0,0.04);
+            border-radius:10px;
+            padding:10px 12px;
+        }
+        .result-item .label {
+            color:rgba(0,0,0,0.2);
+            font-size:0.55rem;
+            text-transform:uppercase;
+            letter-spacing:0.5px;
+        }
+        .result-item .value {
+            color:rgba(0,0,0,0.8);
+            font-size:0.85rem;
+            font-weight:500;
+            word-break:break-all;
+            margin-top:2px;
+        }
+        .result-item .value.highlight { color:#216E39; font-weight:600; }
+        .result-item .value.gold { color:#b8860b; font-weight:600; }
+        .result-item .value.green { color:#216E39; }
+        .result-item .value.blue { color:#2563eb; }
+        .result-item .value.pink { color:#d9468b; }
+        .result-item.span2 { grid-column:span 2; }
+
+        /* ===== 状态提示 ===== */
+        .result-error {
+            color:#e74c3c;
+            text-align:center;
+            padding:20px 0;
+            font-size:0.9rem;
+            display:none;
+        }
+        .result-error.show { display:block; }
+
+        .result-loading {
+            text-align:center;
+            padding:30px 0;
+            color:rgba(0,0,0,0.15);
+            font-size:0.9rem;
+            display:none;
+        }
+        .result-loading.show { display:block; }
+        .result-loading .spinner {
+            display:inline-block;
+            width:30px;
+            height:30px;
+            border:3px solid rgba(0,0,0,0.05);
+            border-top-color:#40C463;
+            border-radius:50%;
+            animation:spin 0.8s linear infinite;
+            margin-bottom:8px;
+        }
+        @keyframes spin {
+            0% { transform:rotate(0deg); }
+            100% { transform:rotate(360deg); }
+        }
+
+        .result-hint {
+            color:rgba(0,0,0,0.12);
+            text-align:center;
+            padding:30px 0;
+            font-size:0.85rem;
+            line-height:1.8;
+        }
+        .result-hint .icon-big {
+            font-size:3rem;
+            display:block;
+            margin-bottom:8px;
+        }
+
+        .api-status {
+            font-size:0.55rem;
+            color:rgba(0,0,0,0.08);
+            text-align:right;
+            margin-top:6px;
+        }
+
+        /* ===== 说明 ===== */
+        .how-to-play {
+            background:rgba(0,0,0,0.04);
+            border-radius:12px;
+            padding:10px 14px;
+            margin-top:10px;
+            color:rgba(0,0,0,0.4);
+            font-size:0.75rem;
+            line-height:1.6;
+            text-align:center;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+        /* ===== Toast ===== */
+        .toast {
+            position:fixed;
+            bottom:80px;
+            left:50%;
+            transform:translateX(-50%) translateY(80px);
+            background:rgba(0,0,0,0.8);
+            backdrop-filter:blur(8px);
+            color:#fff;
+            padding:10px 24px;
+            border-radius:30px;
+            font-size:0.85rem;
+            border:1px solid rgba(255,255,255,0.06);
+            opacity:0;
+            transition:all 0.4s ease;
+            pointer-events:none;
+            z-index:100;
+            white-space:nowrap;
+            font-family:'MiSans', 'Segoe UI', sans-serif;
+        }
+        .toast.show {
+            opacity:1;
+            transform:translateX(-50%) translateY(0);
+        }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding:12px; min-height:340px; }
+            .my-ip-card { padding:10px 12px; }
+            .my-ip-card .ip { font-size:0.95rem; }
+            .search-area input { font-size:0.8rem; padding:8px 12px; }
+            .search-area button { font-size:0.75rem; padding:8px 14px; }
+            .result-item { padding:8px 10px; }
+            .result-item .value { font-size:0.75rem; }
+            .how-to-play { font-size:0.7rem; padding:8px 10px; }
+            .quick-ips button { font-size:0.55rem; padding:2px 10px; }
+            .toast { font-size:0.75rem; padding:8px 18px; bottom:70px; }
+        }
+        @media (max-width: 380px) {
+            .result-grid { grid-template-columns:1fr; }
+            .result-item.span2 { grid-column:span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== 加载动画 ===== -->
+    <div id="loader">
+        <div class="logo">🌍</div>
+        <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+        <div class="loading-status">加载中...</div>
+        <div class="loader-bar"><div class="fill"></div></div>
+    </div>
+
+    <!-- ===== 页眉 ===== -->
+    <header class="header">
+        <a href="https://lab.lruriawa.top/" class="brand">
+            <span class="logo-icon">🧪</span>
+            <span class="brand-text">槐序Lab实验室</span>
+        </a>
+        <span class="title">🌍 IP归属地</span>
+        <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+    </header>
+
+    <!-- ===== 工具主体 ===== -->
+    <div class="game-wrapper">
+        <div class="tool-header">
+            <span style="opacity:0.5;">🌍</span>
+            <span class="title-tag">IP归属地查询</span>
+        </div>
+
+        <div class="tool-container">
+            <!-- 我的IP -->
+            <div class="my-ip-card">
+                <div>
+                    <div class="label">🖥️ 我的IP</div>
+                    <div class="ip" id="myIp">检测中...</div>
+                </div>
+                <button class="copy-btn" id="copyMyIp" title="复制IP">📋</button>
+            </div>
+
+            <!-- 搜索 -->
+            <div class="search-area">
+                <input type="text" id="ipInput" placeholder="输入IP地址，如 8.8.8.8" value="8.8.8.8">
+                <button id="searchBtn">🔍 查询</button>
+            </div>
+
+            <!-- 快速IP -->
+            <div class="quick-ips">
+                <button data-ip="8.8.8.8">8.8.8.8</button>
+                <button data-ip="1.1.1.1">1.1.1.1</button>
+                <button data-ip="114.114.114.114">114.114.114.114</button>
+                <button data-ip="223.5.5.5">223.5.5.5</button>
+                <button data-ip="119.29.29.29">119.29.29.29</button>
+                <button data-ip="192.168.1.1">192.168.1.1</button>
+            </div>
+
+            <!-- 加载中 -->
+            <div class="result-loading" id="loadingState">
+                <div class="spinner"></div>
+                <div>正在查询IP归属地...</div>
+            </div>
+
+            <!-- 结果 -->
+            <div class="result-area" id="resultArea">
+                <div class="result-grid" id="resultGrid"></div>
+            </div>
+
+            <!-- 错误 -->
+            <div class="result-error" id="errorState">
+                ❌ 查询失败，请检查IP地址或网络连接
+            </div>
+
+            <!-- 空状态 -->
+            <div class="result-hint" id="hintState">
+                <span class="icon-big">🔍</span>
+                输入IP地址<br>查询归属地信息
+            </div>
+
+            <!-- API状态 -->
+            <div class="api-status" id="apiStatus">使用 ip-api.com</div>
+        </div>
+
+        <div class="how-to-play">
+            <strong>🌍 IP归属地查询：</strong>
+            输入IP地址 · 查询国家/地区 · 城市 · 运营商 · 经纬度
+        </div>
+    </div>
+
+    <!-- ===== 页脚 ===== -->
+    <footer class="footer">
+        <span class="text">
+            🧪 槐序Lab实验室 · IP归属地查询 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+            &nbsp;&nbsp;<span class="love">❤️</span>
+        </span>
+    </footer>
+
+    <!-- ===== Toast ===== -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        });
+        if (document.readyState !== 'loading') {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('hide');
+            }, 2500);
+        }
+
+        // ===== Toast =====
+        const toast = document.getElementById('toast');
+        let toastTimer = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+        }
+
+        // ===== DOM 引用 =====
+        const ipInput = document.getElementById('ipInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const myIpEl = document.getElementById('myIp');
+        const copyMyIpBtn = document.getElementById('copyMyIp');
+        const resultArea = document.getElementById('resultArea');
+        const resultGrid = document.getElementById('resultGrid');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const hintState = document.getElementById('hintState');
+        const apiStatus = document.getElementById('apiStatus');
+
+        let currentApi = 'ip-api';
+
+        // ===== 获取本机IP =====
+        async function fetchMyIP() {
+            try {
+                const resp = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+                const data = await resp.json();
+                if (data.ip) {
+                    myIpEl.textContent = data.ip;
+                }
+            } catch (e) {
+                try {
+                    const resp = await fetch('https://httpbin.org/ip', { signal: AbortSignal.timeout(5000) });
+                    const data = await resp.json();
+                    if (data.origin) {
+                        myIpEl.textContent = data.origin;
+                    }
+                } catch (e2) {
+                    myIpEl.textContent = '获取失败';
+                }
+            }
+        }
+
+        // ===== 复制我的IP =====
+        copyMyIpBtn.addEventListener('click', function() {
+            const ip = myIpEl.textContent;
+            if (!ip || ip === '检测中...' || ip === '获取失败') {
+                showToast('⚠️ 没有可复制的IP');
+                return;
+            }
+            navigator.clipboard.writeText(ip).then(() => {
+                showToast('✅ 已复制IP');
+            }).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = ip;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast('✅ 已复制IP');
+            });
+        });
+
+        // ===== 查询IP（自动切换备用API） =====
+        async function lookupIP(ip) {
+            if (!ip || ip.trim() === '') {
+                showToast('⚠️ 请输入IP地址');
+                return;
+            }
+
+            ip = ip.trim();
+
+            const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+            const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
+            if (!ipv4Regex.test(ip) && !ipv6Regex.test(ip)) {
+                showToast('⚠️ 请输入有效的IP地址');
+                return;
+            }
+
+            loadingState.classList.add('show');
+            resultArea.classList.remove('show');
+            errorState.classList.remove('show');
+            hintState.style.display = 'none';
+            searchBtn.disabled = true;
+
+            // 尝试多个 API
+            const apis = [
+                {
+                    name: 'ip-api.com',
+                    url: `https://ip-api.com/json/${encodeURIComponent(ip)}?lang=zh-CN&fields=status,message,country,regionName,city,district,isp,org,as,lat,lon,timezone,query`,
+                    parse: (data) => {
+                        if (data.status === 'fail') {
+                            throw new Error(data.message || '未找到该IP');
+                        }
+                        return {
+                            query: data.query || ip,
+                            country: data.country || '未知',
+                            regionName: data.regionName || '未知',
+                            city: data.city || '未知',
+                            district: data.district || '未知',
+                            isp: data.isp || data.org || '未知',
+                            as: data.as || '未知',
+                            timezone: data.timezone || '未知',
+                            lat: data.lat,
+                            lon: data.lon,
+                        };
+                    }
+                },
+                {
+                    name: 'ip-api.com (备用)',
+                    url: `https://ip-api.com/json/${encodeURIComponent(ip)}?lang=zh-CN&fields=status,message,country,regionName,city,district,isp,org,as,lat,lon,timezone,query`,
+                    parse: (data) => {
+                        if (data.status === 'fail') {
+                            throw new Error(data.message || '未找到该IP');
+                        }
+                        return {
+                            query: data.query || ip,
+                            country: data.country || '未知',
+                            regionName: data.regionName || '未知',
+                            city: data.city || '未知',
+                            district: data.district || '未知',
+                            isp: data.isp || data.org || '未知',
+                            as: data.as || '未知',
+                            timezone: data.timezone || '未知',
+                            lat: data.lat,
+                            lon: data.lon,
+                        };
+                    }
+                },
+                {
+                    name: 'ipinfo.io',
+                    url: `https://ipinfo.io/${encodeURIComponent(ip)}/json`,
+                    parse: (data) => {
+                        if (data.bogon) {
+                            throw new Error('该IP为内网地址或无效地址');
+                        }
+                        const loc = data.loc ? data.loc.split(',') : [null, null];
+                        return {
+                            query: data.ip || ip,
+                            country: data.country || '未知',
+                            regionName: data.region || '未知',
+                            city: data.city || '未知',
+                            district: '',
+                            isp: data.org || '未知',
+                            as: '',
+                            timezone: data.timezone || '未知',
+                            lat: loc[0] ? parseFloat(loc[0]) : null,
+                            lon: loc[1] ? parseFloat(loc[1]) : null,
+                        };
+                    }
+                }
+            ];
+
+            let lastError = '';
+
+            for (const api of apis) {
+                try {
+                    apiStatus.textContent = `⏳ 尝试 ${api.name}...`;
+                    apiStatus.style.color = 'rgba(0,0,0,0.15)';
+
+                    const resp = await fetch(api.url, { signal: AbortSignal.timeout(8000) });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                    const data = await resp.json();
+                    const result = api.parse(data);
+
+                    // 渲染结果
+                    const fields = [
+                        { label: '🌍 IP地址', value: result.query, cls: 'highlight' },
+                        { label: '📍 国家', value: result.country, cls: 'gold' },
+                        { label: '🏙️ 省份/州', value: result.regionName, cls: '' },
+                        { label: '🏛️ 城市', value: result.city, cls: '' },
+                        { label: '📍 地区', value: result.district || '—', cls: '' },
+                        { label: '📡 运营商', value: result.isp, cls: 'blue' },
+                        { label: '🔢 ASN', value: result.as || '—', cls: '' },
+                        { label: '🌐 时区', value: result.timezone, cls: '' },
+                        { label: '🗺️ 经纬度', value: result.lat && result.lon ? `${result.lat}, ${result.lon}` : '—', cls: 'pink' },
+                    ];
+
+                    let html = '';
+                    fields.forEach(item => {
+                        html += `
+                            <div class="result-item">
+                                <div class="label">${item.label}</div>
+                                <div class="value ${item.cls || ''}">${item.value}</div>
+                            </div>
+                        `;
+                    });
+                    resultGrid.innerHTML = html;
+                    resultArea.classList.add('show');
+                    loadingState.classList.remove('show');
+                    apiStatus.textContent = `✅ 使用 ${api.name}`;
+                    apiStatus.style.color = 'rgba(33,110,57,0.3)';
+
+                    searchBtn.disabled = false;
+                    showToast('✅ 查询成功');
+                    return;
+
+                } catch (err) {
+                    lastError = err.message;
+                    console.warn(`${api.name} 失败:`, err);
+                    continue;
+                }
+            }
+
+            // 所有 API 都失败
+            apiStatus.textContent = '❌ 所有 API 均不可用';
+            apiStatus.style.color = 'rgba(231,76,60,0.3)';
+            errorState.textContent = `❌ ${lastError || '查询失败，请稍后重试'}`;
+            errorState.classList.add('show');
+            loadingState.classList.remove('show');
+            searchBtn.disabled = false;
+        }
+
+        // ===== 事件绑定 =====
+        searchBtn.addEventListener('click', function() {
+            lookupIP(ipInput.value);
+        });
+
+        ipInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                lookupIP(this.value);
+            }
+        });
+
+        document.querySelectorAll('.quick-ips button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const ip = this.dataset.ip;
+                ipInput.value = ip;
+                lookupIP(ip);
+            });
+        });
+
+        // ===== 初始化 =====
+        fetchMyIP();
+        setTimeout(() => {
+            lookupIP('8.8.8.8');
+        }, 600);
+    </script>
+</body>
+</html>

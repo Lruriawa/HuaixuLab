@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🔮 万花筒镜-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+
+  /* ===== 加载动画（统一风格） ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉（毛玻璃） ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚（毛玻璃） ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 万花筒容器（毛玻璃卡片） ===== */
+  .kaleidoscope-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:500px;
+    width:100%;
+  }
+  .kaleidoscope-wrapper canvas {
+    display:block;
+    width:100%;
+    height:auto;
+    aspect-ratio:1/1;
+    background:#0d0d1a;
+    border-radius:50%;
+    box-shadow:0 0 40px rgba(0,0,0,0.02);
+    cursor:crosshair;
+    touch-action:none;
+  }
+
+  /* ===== 控制栏 ===== */
+  .controls {
+    margin-top:14px;
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+  }
+  .controls label {
+    color:rgba(0,0,0,0.5);
+    font-size:0.9rem;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:500;
+  }
+  .controls input[type="range"] {
+    width:100px;
+    height:4px;
+    -webkit-appearance:none;
+    appearance:none;
+    background:rgba(0,0,0,0.08);
+    border-radius:4px;
+    outline:none;
+    accent-color:#40C463;
+  }
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    appearance:none;
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(64,196,99,0.3);
+  }
+  .controls input[type="range"]::-moz-range-thumb {
+    width:16px;
+    height:16px;
+    border-radius:50%;
+    border:none;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    cursor:pointer;
+  }
+  .controls input[type="color"] {
+    width:36px;
+    height:36px;
+    border:2px solid rgba(0,0,0,0.06);
+    border-radius:50%;
+    padding:2px;
+    cursor:pointer;
+    background:transparent;
+  }
+  .controls input[type="color"]::-webkit-color-swatch-wrapper { padding:0; }
+  .controls input[type="color"]::-webkit-color-swatch { border:none; border-radius:50%; }
+  .controls button {
+    padding:6px 20px;
+    border:none;
+    border-radius:30px;
+    background:linear-gradient(135deg, #e74c3c, #c0392b);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:0.9rem;
+    transition:opacity 0.2s;
+    font-family:'MiSans', 'Segoe UI', sans-serif;
+  }
+  .controls button:active { transform:scale(0.95); }
+  .controls button:hover { opacity:0.85; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .kaleidoscope-wrapper { padding:12px; }
+    .controls { gap:8px; }
+    .controls label { font-size:0.8rem; }
+    .controls input[type="range"] { width:80px; }
+    .controls input[type="color"] { width:32px; height:32px; }
+    .controls button { font-size:0.8rem; padding:4px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🔮</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🔮 万花筒镜</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 万花筒主体 ===== -->
+<div class="kaleidoscope-wrapper">
+  <canvas id="canvas"></canvas>
+  <div class="controls">
+    <label>🔄 对称 <input type="range" id="segments" min="2" max="24" value="8"></label>
+    <label>🌈 <input type="color" id="colorPicker" value="#ff6b6b"></label>
+    <button id="clearBtn">🗑️ 清空</button>
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 万花筒镜 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+    setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== 以下为万花筒核心逻辑，完整保留，未作任何修改 =====
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const segSlider = document.getElementById('segments');
+const colorPicker = document.getElementById('colorPicker');
+const clearBtn = document.getElementById('clearBtn');
+
+let W, H, cx, cy;
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = '100%';
+  canvas.style.height = 'auto';
+  W = canvas.width;
+  H = canvas.height;
+  cx = W / 2;
+  cy = H / 2;
+}
+resize();
+window.addEventListener('resize', resize);
+
+let isDown = false, lastX = 0, lastY = 0;
+
+function getSeg() { return parseInt(segSlider.value); }
+
+function drawMirrored(x, y, color) {
+  const dx = x - cx, dy = y - cy;
+  const dist = Math.hypot(dx, dy);
+  if (dist < 2) return;
+  const angle = Math.atan2(dy, dx);
+  const n = getSeg();
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = color;
+  ctx.fillStyle = color;
+  for (let i = 0; i < n; i++) {
+    const a = angle + (i / n) * Math.PI * 2;
+    const px = cx + Math.cos(a) * dist;
+    const py = cy + Math.sin(a) * dist;
+    ctx.beginPath();
+    ctx.arc(px, py, 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function getCoords(e) {
+  const rect = canvas.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  return {
+    x: (clientX - rect.left) * (W / rect.width),
+    y: (clientY - rect.top) * (H / rect.height)
+  };
+}
+
+canvas.addEventListener('mousedown', function(e) {
+  isDown = true;
+  const p = getCoords(e);
+  lastX = p.x;
+  lastY = p.y;
+  drawMirrored(p.x, p.y, colorPicker.value);
+});
+
+canvas.addEventListener('mousemove', function(e) {
+  if (!isDown) return;
+  const p = getCoords(e);
+  const d = Math.hypot(p.x - lastX, p.y - lastY);
+  if (d < 2) return;
+  const steps = Math.min(15, Math.floor(d / 2));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = lastX + (p.x - lastX) * t;
+    const y = lastY + (p.y - lastY) * t;
+    drawMirrored(x, y, colorPicker.value);
+  }
+  lastX = p.x;
+  lastY = p.y;
+});
+
+canvas.addEventListener('mouseup', function() { isDown = false; });
+canvas.addEventListener('mouseleave', function() { isDown = false; });
+
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  isDown = true;
+  const p = getCoords(e);
+  lastX = p.x;
+  lastY = p.y;
+  drawMirrored(p.x, p.y, colorPicker.value);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', function(e) {
+  e.preventDefault();
+  if (!isDown) return;
+  const p = getCoords(e);
+  const d = Math.hypot(p.x - lastX, p.y - lastY);
+  if (d < 2) return;
+  const steps = Math.min(15, Math.floor(d / 2));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = lastX + (p.x - lastX) * t;
+    const y = lastY + (p.y - lastY) * t;
+    drawMirrored(x, y, colorPicker.value);
+  }
+  lastX = p.x;
+  lastY = p.y;
+}, { passive: false });
+
+canvas.addEventListener('touchend', function() { isDown = false; });
+canvas.addEventListener('touchcancel', function() { isDown = false; });
+
+clearBtn.addEventListener('click', function() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(cx, cy, Math.min(W, H) * 0.42, 0, Math.PI * 2);
+  ctx.stroke();
+});
+
+// 初始画布装饰
+ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.arc(cx, cy, Math.min(W, H) * 0.42, 0, Math.PI * 2);
+ctx.stroke();
+</script>
+</body>
+</html>

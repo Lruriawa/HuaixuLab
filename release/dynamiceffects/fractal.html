@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🌿 分形树-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    position:relative;
+    padding:10px;
+  }
+  canvas {
+    display:block;
+    width:min(95vw,700px);
+    height:min(80vh,500px);
+    background: #fafcfa;
+    border-radius:20px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    cursor:pointer;
+  }
+
+  /* ===== 加载动画 ===== */
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+  /* ===== 页眉 ===== */
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    text-decoration:none;
+    color:#1a1a1a;
+    font-weight:700;
+    font-size:1.0rem;
+  }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text {
+    background:linear-gradient(135deg, #216E39, #40C463);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .header .nav-link {
+    color:rgba(0,0,0,0.45);
+    text-decoration:none;
+    font-size:0.8rem;
+    padding:4px 14px;
+    border-radius:20px;
+    transition:all 0.3s;
+    border:1px solid rgba(0,0,0,0.04);
+  }
+  .header .nav-link:hover {
+    background:rgba(0,0,0,0.04);
+    color:#1a1a1a;
+    border-color:rgba(0,0,0,0.1);
+  }
+  .header .nav-link.primary {
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    border:none;
+    color:#fff;
+  }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title {
+    color:#1a1a1a;
+    font-size:0.95rem;
+    font-weight:500;
+    letter-spacing:0.5px;
+  }
+  .header .title span { color:rgba(0,0,0,0.2); }
+
+  /* ===== 页脚 ===== */
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text {
+    color:rgba(0,0,0,0.25);
+    font-size:0.75rem;
+    letter-spacing:0.5px;
+  }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+
+  /* ===== 控件 ===== */
+  .controls {
+    position:fixed;
+    bottom:70px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:10;
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    justify-content:center;
+    align-items:center;
+    background:rgba(255,255,255,0.80);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    padding:10px 20px;
+    border-radius:40px;
+    border:1px solid rgba(0,0,0,0.04);
+    box-shadow:0 4px 20px rgba(0,0,0,0.02);
+  }
+  .controls label {
+    color:rgba(0,0,0,0.4);
+    font-size:0.75rem;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:500;
+  }
+  .controls input[type="range"] {
+    width:80px;
+    -webkit-appearance:none;
+    appearance:none;
+    height:3px;
+    background:rgba(0,0,0,0.08);
+    border-radius:4px;
+    outline:none;
+  }
+  .controls input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance:none;
+    width:14px;
+    height:14px;
+    border-radius:50%;
+    background:#40C463;
+    cursor:pointer;
+  }
+  .controls button {
+    padding:5px 18px;
+    border:none;
+    border-radius:30px;
+    background:linear-gradient(135deg, #40C463, #30A14E);
+    color:#fff;
+    font-weight:600;
+    cursor:pointer;
+    font-size:0.75rem;
+    transition:opacity 0.2s;
+  }
+  .controls button:active { transform:scale(0.95); }
+  .controls button.btn-random {
+    background:linear-gradient(135deg, #8B5CF6, #6D28D9);
+  }
+  .controls button:hover { opacity:0.85; }
+
+  /* ===== 移动端适配 ===== */
+  @media (max-width: 640px) {
+    .header { height:48px; padding:0 14px; }
+    .header .brand { font-size:0.85rem; }
+    .header .brand .logo-icon { font-size:1.1rem; }
+    .header .title { font-size:0.75rem; }
+    .header .nav-link { font-size:0.7rem; padding:3px 10px; }
+    .footer { padding:6px 14px; }
+    .footer .text { font-size:0.6rem; }
+    .controls {
+      bottom:60px;
+      padding:8px 14px;
+      gap:10px;
+      border-radius:30px;
+    }
+    .controls label { font-size:0.65rem; }
+    .controls input[type="range"] { width:60px; }
+    .controls button { font-size:0.65rem; padding:4px 14px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="logo">🌿</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌿 分形树 <span>· 递归生成</span></span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<canvas id="canvas"></canvas>
+
+<!-- ===== 控件 ===== -->
+<div class="controls">
+  <label>🌿 角度 <input type="range" id="angleSlider" min="10" max="60" value="30"></label>
+  <label>🔢 深度 <input type="range" id="depthSlider" min="3" max="12" value="8"></label>
+  <button id="randomBtn" class="btn-random">🎲 随机</button>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 分形树 · 递归生成 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const angleSlider = document.getElementById('angleSlider');
+const depthSlider = document.getElementById('depthSlider');
+const randomBtn = document.getElementById('randomBtn');
+
+let W, H;
+
+function resize() {
+  const rect = canvas.getBoundingClientRect();
+  W = canvas.width = rect.width || 700;
+  H = canvas.height = rect.height || 500;
+}
+resize();
+window.addEventListener('resize', resize);
+
+function drawTree(x, y, len, angle, depth, maxDepth) {
+  if (depth > maxDepth || len < 2) return;
+  const rad = angle * Math.PI / 180;
+  const endX = x + Math.cos(rad) * len;
+  const endY = y - Math.sin(rad) * len;
+
+  // 浅色主题：颜色更深，饱和度适中
+  const hue = 140 + (depth / maxDepth) * 30;
+  const lightness = 20 + (depth / maxDepth) * 25;
+  const saturation = 50 + (depth / maxDepth) * 20;
+
+  ctx.strokeStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  ctx.lineWidth = Math.max(1.5, len / 10);
+  ctx.shadowBlur = 6;
+  ctx.shadowColor = `hsla(140, 50%, 30%, 0.06)`;
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  const branchAngle = 20 + Math.random() * 20;
+  const shrink = 0.72 + Math.random() * 0.06;
+  drawTree(endX, endY, len * shrink, angle - branchAngle, depth + 1, maxDepth);
+  drawTree(endX, endY, len * shrink, angle + branchAngle, depth + 1, maxDepth);
+
+  if (Math.random() > 0.6 && depth < maxDepth - 1) {
+    drawTree(endX, endY, len * shrink * 0.7, angle + (Math.random() - 0.5) * 40, depth + 2, maxDepth);
+  }
+}
+
+function generateTree() {
+  ctx.clearRect(0, 0, W, H);
+  // 浅色背景
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#fafcfa');
+  grad.addColorStop(1, '#f0f4f0');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 地面微光
+  ctx.fillStyle = 'rgba(64,196,99,0.02)';
+  ctx.fillRect(0, H - 20, W, 20);
+
+  const depth = parseInt(depthSlider.value);
+  const angle = parseInt(angleSlider.value);
+  const baseLen = Math.min(W, H) * 0.28;
+  drawTree(W / 2, H - 20, baseLen, -90, 0, depth);
+}
+
+randomBtn.addEventListener('click', function() {
+  angleSlider.value = 15 + Math.random() * 45;
+  depthSlider.value = Math.floor(4 + Math.random() * 8);
+  generateTree();
+});
+
+angleSlider.addEventListener('input', generateTree);
+depthSlider.addEventListener('input', generateTree);
+canvas.addEventListener('click', function() { randomBtn.click(); });
+
+generateTree();
+</script>
+</body>
+</html>

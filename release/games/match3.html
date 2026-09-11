@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🌟 消消乐-槐序Lab-槐序实验室</title>
+<link rel="icon" type="image/png" href="../tx.png">
+<link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+<style>
+  /* ===== 基础样式（与您之前的消消乐一致，仅增加排行榜增强样式） ===== */
+  * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+  body {
+    background: #f5f7f5;
+    background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:10px;
+    padding-top:70px;
+    padding-bottom:70px;
+    position:relative;
+  }
+  #loader {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: #f5f7f5;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+    transition:opacity 0.6s ease-out;
+  }
+  #loader.hide { opacity:0; pointer-events:none; }
+  #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+  #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+  #loader .loader-text span { color:#40C463; font-weight:600; }
+  #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+  @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+  #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+  #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+  @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+  @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+  .header {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:0 20px;
+    height:56px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+    border-bottom:1px solid rgba(0,0,0,0.04);
+  }
+  .header .brand { display:flex; align-items:center; gap:8px; text-decoration:none; color:#1a1a1a; font-weight:700; font-size:1.0rem; }
+  .header .brand .logo-icon { font-size:1.4rem; }
+  .header .brand .brand-text { background:linear-gradient(135deg, #216E39, #40C463); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .header .nav-link { color:rgba(0,0,0,0.45); text-decoration:none; font-size:0.8rem; padding:4px 14px; border-radius:20px; transition:all 0.3s; border:1px solid rgba(0,0,0,0.04); }
+  .header .nav-link:hover { background:rgba(0,0,0,0.04); color:#1a1a1a; border-color:rgba(0,0,0,0.1); }
+  .header .nav-link.primary { background:linear-gradient(135deg, #40C463, #30A14E); border:none; color:#fff; }
+  .header .nav-link.primary:hover { opacity:0.85; }
+  .header .title { color:#1a1a1a; font-size:0.95rem; font-weight:500; letter-spacing:0.5px; }
+  .header .title span { color:rgba(0,0,0,0.2); }
+  .footer {
+    position:fixed;
+    bottom:0;
+    left:0;
+    right:0;
+    z-index:10;
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(255,255,255,0.70);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-top:1px solid rgba(0,0,0,0.04);
+  }
+  .footer .text { color:rgba(0,0,0,0.25); font-size:0.75rem; letter-spacing:0.5px; }
+  .footer .text .love { color:rgba(239,68,68,0.15); }
+  .footer .text .highlight { color:#216E39; }
+  .game-wrapper {
+    background:rgba(255,255,255,0.85);
+    backdrop-filter:blur(8px);
+    -webkit-backdrop-filter:blur(8px);
+    border-radius:20px;
+    padding:16px;
+    box-shadow:0 4px 40px rgba(0,0,0,0.04);
+    border:1px solid rgba(0,0,0,0.04);
+    max-width:420px;
+    width:100%;
+  }
+  .game-header { display:flex; justify-content:space-between; align-items:center; padding:0 6px 12px 6px; color:#1a1a1a; font-weight:700; font-size:0.9rem; flex-wrap:wrap; gap:4px; }
+  .game-header .score { background:rgba(0,0,0,0.04); padding:4px 12px; border-radius:30px; font-size:0.85rem; color:#1a1a1a; }
+  .game-header .timer { background:rgba(0,0,0,0.04); padding:4px 12px; border-radius:30px; font-size:0.85rem; font-weight:600; color:#1a1a1a; min-width:65px; text-align:center; font-variant-numeric:tabular-nums; }
+  .game-header .timer.warning { color:#e74c3c; animation:pulseTimer 0.8s ease-in-out infinite; }
+  @keyframes pulseTimer { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+  .game-header .pause-btn { background:rgba(0,0,0,0.04); border:1px solid rgba(0,0,0,0.06); color:#1a1a1a; padding:4px 12px; border-radius:30px; font-size:0.75rem; cursor:pointer; transition:background 0.2s; font-weight:500; }
+  .game-header .pause-btn:active { background:rgba(0,0,0,0.1); }
+  .canvas-wrap { position:relative; width:100%; aspect-ratio:1/1; border-radius:16px; overflow:hidden; background:#ffffff; box-shadow:inset 0 0 60px rgba(0,0,0,0.02); border:1px solid rgba(0,0,0,0.04); }
+  canvas { display:block; width:100%; height:100%; background:#ffffff; cursor:pointer; touch-action:none; }
+  .how-to-play { background:rgba(0,0,0,0.04); border-radius:12px; padding:10px 14px; margin-top:10px; color:rgba(0,0,0,0.5); font-size:0.95rem; line-height:1.6; text-align:center; }
+  .how-to-play strong { color:#1a1a1a; }
+  .overlay { position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); display:flex; flex-direction:column; justify-content:center; align-items:center; color:#fff; opacity:0; pointer-events:none; transition:opacity 0.4s; border-radius:16px; z-index:10; }
+  .overlay.show { opacity:1; pointer-events:auto; }
+  .overlay h2 { font-size:2.4rem; margin-bottom:6px; }
+  .overlay .sub-text { font-size:1.2rem; opacity:0.7; margin-bottom:16px; }
+  .overlay .btn-group { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .overlay button { padding:12px 30px; border:none; border-radius:40px; font-size:1.2rem; font-weight:700; cursor:pointer; transition:transform 0.2s; }
+  .overlay button:active { transform:scale(0.94); }
+  .btn-start { background:linear-gradient(135deg, #4CAF50, #2ECC71); color:#fff; box-shadow:0 4px 20px rgba(46,204,113,0.4); }
+  .btn-restart { background:linear-gradient(135deg, #FF6B6B, #EE5A24); color:#fff; box-shadow:0 4px 20px rgba(238,90,36,0.4); }
+  .btn-home { background:rgba(255,255,255,0.15); color:#fff; border:1px solid rgba(255,255,255,0.2); }
+  .btn-resume { background:linear-gradient(135deg, #f59e0b, #f97316); color:#fff; box-shadow:0 4px 20px rgba(245,158,11,0.4); }
+  .btn-rank { background:linear-gradient(135deg, #fbbf24, #f59e0b); color:#1a1a1a; box-shadow:0 4px 20px rgba(251,191,36,0.3); }
+  .btn-stats { background:linear-gradient(135deg, #6366f1, #8b5cf6); color:#fff; box-shadow:0 4px 20px rgba(99,102,241,0.4); }
+  .btn-share { background:linear-gradient(135deg, #06b6d4, #3b82f6); color:#fff; box-shadow:0 4px 20px rgba(6,182,212,0.4); }
+
+  /* ===== 排行榜模态框增强样式 ===== */
+  .ranking-overlay {
+    position:fixed;
+    top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.3);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:100;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.4s ease;
+    padding:20px;
+  }
+  .ranking-overlay.show { opacity:1; pointer-events:auto; }
+  .ranking-card {
+    background:rgba(255,255,255,0.92);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border:1px solid rgba(0,0,0,0.04);
+    border-radius:20px;
+    padding:20px;
+    max-width:480px;
+    width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+    box-shadow:0 20px 60px rgba(0,0,0,0.08);
+    position:relative;
+  }
+  .ranking-card::-webkit-scrollbar { width:3px; }
+  .ranking-card::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.08); border-radius:10px; }
+  .ranking-close { position:absolute; top:12px; right:16px; background:none; border:none; color:rgba(0,0,0,0.15); font-size:1.4rem; cursor:pointer; }
+  .ranking-close:hover { color:#1a1a1a; }
+  .ranking-card h2 { color:#1a1a1a; font-size:1.5rem; font-weight:700; text-align:center; margin-bottom:12px; }
+  .ranking-card h2 span { color:#216E39; }
+  
+  /* 筛选栏 */
+  .rank-filters { display:flex; gap:6px; justify-content:center; margin-bottom:12px; flex-wrap:wrap; }
+  .rank-filters button { padding:4px 14px; border-radius:20px; border:1px solid rgba(0,0,0,0.06); background:rgba(0,0,0,0.03); font-size:0.75rem; cursor:pointer; transition:all 0.2s; color:rgba(0,0,0,0.4); font-weight:500; }
+  .rank-filters button.active { background:#216E39; color:#fff; border-color:#216E39; }
+  .rank-filters button:active { transform:scale(0.95); }
+
+  .rank-item { display:flex; align-items:center; gap:10px; padding:8px 10px; border-bottom:1px solid rgba(0,0,0,0.04); }
+  .rank-item:last-child { border-bottom:none; }
+  .rank-item .rank { font-size:0.7rem; font-weight:700; min-width:28px; text-align:center; color:rgba(0,0,0,0.2); }
+  .rank-item .rank.gold { color:#fbbf24; }
+  .rank-item .rank.silver { color:#a0a0a0; }
+  .rank-item .rank.bronze { color:#cd7f32; }
+  .rank-item .avatar { font-size:1.4rem; min-width:30px; text-align:center; }
+  .rank-item .name { flex:1; font-size:0.9rem; font-weight:500; color:#1a1a1a; }
+  .rank-item .score { font-size:0.9rem; font-weight:700; color:#216E39; font-family:'Consolas',monospace; }
+  .rank-item .time { font-size:0.5rem; color:rgba(0,0,0,0.15); min-width:60px; text-align:right; }
+  
+  .rank-empty { color:rgba(0,0,0,0.2); text-align:center; padding:30px 0; font-style:italic; font-size:0.9rem; }
+  
+  .rank-pagination { display:flex; justify-content:center; gap:8px; margin-top:12px; }
+  .rank-pagination button { padding:4px 12px; border-radius:16px; border:1px solid rgba(0,0,0,0.06); background:rgba(0,0,0,0.03); font-size:0.75rem; cursor:pointer; }
+  .rank-pagination button:disabled { opacity:0.3; cursor:not-allowed; }
+  .rank-pagination .page-info { font-size:0.75rem; color:rgba(0,0,0,0.3); display:flex; align-items:center; }
+
+  /* 统计面板 */
+  .stats-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; padding:10px; background:rgba(0,0,0,0.03); border-radius:12px; }
+  .stats-bar .stat { text-align:center; }
+  .stats-bar .stat .num { font-size:1.2rem; font-weight:700; color:#216E39; }
+  .stats-bar .stat .label { font-size:0.6rem; color:rgba(0,0,0,0.25); text-transform:uppercase; letter-spacing:0.5px; }
+
+  /* 成就徽章 */
+  .achievement-badge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:600; margin-top:4px; }
+
+  /* 头像选择器 */
+  .avatar-selector { display:flex; gap:8px; justify-content:center; margin-top:6px; flex-wrap:wrap; }
+  .avatar-selector .av { font-size:1.8rem; cursor:pointer; padding:4px 8px; border-radius:12px; border:2px solid transparent; transition:all 0.2s; }
+  .avatar-selector .av.selected { border-color:#216E39; background:rgba(33,110,57,0.1); }
+  .avatar-selector .av:active { transform:scale(0.9); }
+
+  .rank-toolbar { display:flex; gap:8px; justify-content:center; margin-bottom:10px; flex-wrap:wrap; }
+  .rank-toolbar button { padding:5px 14px; border-radius:20px; border:1px solid rgba(0,0,0,0.06); background:rgba(0,0,0,0.03); font-size:0.75rem; cursor:pointer; color:rgba(0,0,0,0.4); }
+  .rank-toolbar button:active { transform:scale(0.95); }
+
+  .top10-badge { display:inline-block; background:#FFD700; color:#1a1a1a; font-size:0.6rem; padding:2px 8px; border-radius:10px; font-weight:700; margin-left:4px; }
+
+  @media (max-width:640px) {
+    body { padding-top:60px; padding-bottom:60px; }
+    .game-wrapper { padding:12px; }
+    .game-header { font-size:0.8rem; }
+    .game-header .score { font-size:0.75rem; padding:2px 10px; }
+    .game-header .timer { font-size:0.75rem; padding:2px 10px; min-width:55px; }
+    .game-header .pause-btn { font-size:0.7rem; padding:3px 8px; }
+    .how-to-play { font-size:0.8rem; padding:8px 10px; }
+    .overlay h2 { font-size:2rem; }
+    .overlay .sub-text { font-size:1rem; }
+    .overlay button { padding:10px 24px; font-size:1rem; }
+    .ranking-card { padding:14px; }
+    .stats-bar { grid-template-columns:1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🌟</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<script>
+  setTimeout(function() {
+    var loader = document.getElementById('loader');
+    if (loader) loader.classList.add('hide');
+  }, 2500);
+</script>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌟 消消乐</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 游戏主体 ===== -->
+<div class="game-wrapper">
+  <div class="game-header">
+    <span style="opacity:0.4;">⭐</span>
+    <span class="score">得分 <span id="scoreDisplay">0</span></span>
+    <span class="timer" id="timerDisplay">⏱️ 2:00</span>
+    <button class="pause-btn" id="pauseBtn">⏸️ 暂停</button>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas"></canvas>
+    <div class="overlay show" id="startOverlay">
+      <h2>🌟 消消乐</h2>
+      <p class="sub-text">⏱️ 限时2分钟 · 点击相邻水果消除</p>
+      <div class="btn-group">
+        <button class="btn-start" id="startBtn">🚀 开始游戏</button>
+        <button class="btn-rank" id="rankBtn">🏆 排行榜</button>
+        <button class="btn-stats" id="statsBtn">📊 统计</button>
+        <button class="btn-home" id="homeBtn">🏠 首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="gameOverOverlay">
+      <h2>⏰ 时间到！</h2>
+      <p class="sub-text">得分：<span id="finalScore">0</span></p>
+      <div id="achievementDisplay"></div>
+      <div class="avatar-selector" id="avatarSelector">
+        <span class="av selected" data-avatar="😀">😀</span>
+        <span class="av" data-avatar="😎">😎</span>
+        <span class="av" data-avatar="🤩">🤩</span>
+        <span class="av" data-avatar="🦊">🦊</span>
+        <span class="av" data-avatar="🐱">🐱</span>
+        <span class="av" data-avatar="🐼">🐼</span>
+        <span class="av" data-avatar="⭐">⭐</span>
+        <span class="av" data-avatar="🎯">🎯</span>
+      </div>
+      <div class="btn-group">
+        <button class="btn-restart" id="restartBtn">🔄 再来一局</button>
+        <button class="btn-rank" id="rankBtn2">🏆 排行榜</button>
+        <button class="btn-home" id="homeBtn2">🏠 首页</button>
+      </div>
+    </div>
+    <div class="overlay" id="pauseOverlay">
+      <h2>⏸️ 已暂停</h2>
+      <p class="sub-text">点击「继续游戏」恢复</p>
+      <div class="btn-group">
+        <button class="btn-resume" id="resumeBtn">▶️ 继续游戏</button>
+        <button class="btn-home" id="pauseHomeBtn">🏠 首页</button>
+      </div>
+    </div>
+  </div>
+  <div class="how-to-play">
+    <strong>🎯 玩法：</strong>
+    👆 点击相邻的两个 🍎 水果交换位置，
+    三个相同水果连成一线就能消除得分！⏱️ 限时2分钟
+  </div>
+</div>
+
+<!-- ===== 排行榜模态框 ===== -->
+<div class="ranking-overlay" id="rankingOverlay">
+  <div class="ranking-card">
+    <button class="ranking-close" id="rankingClose">✕</button>
+    <h2>🏆 <span>排行榜</span></h2>
+    
+    <div class="rank-filters" id="rankFilters">
+      <button class="active" data-period="all">全部</button>
+      <button data-period="today">今日</button>
+      <button data-period="week">本周</button>
+      <button data-period="month">本月</button>
+    </div>
+    
+    <div class="rank-toolbar">
+      <button id="shareRankBtn">📤 分享</button>
+      <button id="refreshRankBtn">🔄 刷新</button>
+    </div>
+    
+    <div id="rankingList"><div class="rank-empty">加载中...</div></div>
+    
+    <div class="rank-pagination" id="rankPagination">
+      <button id="prevPage" disabled>◀</button>
+      <span class="page-info" id="pageInfo">第 1 页</span>
+      <button id="nextPage">▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 统计模态框 ===== -->
+<div class="ranking-overlay" id="statsOverlay">
+  <div class="ranking-card" style="max-width:360px;">
+    <button class="ranking-close" id="statsClose">✕</button>
+    <h2>📊 <span>数据统计</span></h2>
+    <div id="statsContent">
+      <div class="stats-bar">
+        <div class="stat"><div class="num" id="statTotal">-</div><div class="label">参与人数</div></div>
+        <div class="stat"><div class="num" id="statMax">-</div><div class="label">最高分</div></div>
+        <div class="stat"><div class="num" id="statAvg">-</div><div class="label">平均分</div></div>
+      </div>
+      <div style="text-align:center;color:rgba(0,0,0,0.2);font-size:0.8rem;padding:10px 0;">
+        数据实时更新
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · 消消乐 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<script>
+// ============================================================
+//  🚀 排行榜 API 配置
+// ============================================================
+const API_URL = 'https://api.lruriawa.top/';
+const CACHE_KEY = 'xiaoxiaole_ranking_cache';
+const CACHE_TIME = 5 * 60 * 1000; // 5分钟缓存
+
+let selectedAvatar = '😀';
+let currentPeriod = 'all';
+let currentPage = 1;
+let totalPages = 1;
+let rankingCache = null;
+let lastFetchTime = 0;
+
+// ===== 头像选择 =====
+document.querySelectorAll('#avatarSelector .av').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('#avatarSelector .av').forEach(a => a.classList.remove('selected'));
+    this.classList.add('selected');
+    selectedAvatar = this.dataset.avatar;
+  });
+});
+
+// ===== API 调用 =====
+async function fetchRanking(period = 'all', page = 1, useCache = true) {
+  const cacheKey = `${period}_${page}`;
+  const now = Date.now();
+  
+  // 检查缓存
+  if (useCache && rankingCache && rankingCache[cacheKey] && (now - lastFetchTime) < CACHE_TIME) {
+    return rankingCache[cacheKey];
+  }
+  
+  try {
+    const url = `${API_URL}?period=${period}&page=${page}&limit=10`;
+    const resp = await fetch(url);
+    const result = await resp.json();
+    if (result.success) {
+      if (!rankingCache) rankingCache = {};
+      rankingCache[cacheKey] = result;
+      lastFetchTime = now;
+      return result;
+    }
+    return null;
+  } catch (err) {
+    console.error('获取排行榜失败:', err);
+    // 返回缓存数据（如果有）
+    if (rankingCache && rankingCache[cacheKey]) {
+      return rankingCache[cacheKey];
+    }
+    return null;
+  }
+}
+
+async function fetchStats() {
+  try {
+    const resp = await fetch(`${API_URL}?stats=1`);
+    return await resp.json();
+  } catch (err) {
+    console.error('获取统计失败:', err);
+    return null;
+  }
+}
+
+async function submitScore(name, score, avatar) {
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim().slice(0, 12), score, avatar })
+    });
+    const result = await resp.json();
+    // 提交成功后清除缓存
+    rankingCache = null;
+    return result;
+  } catch (err) {
+    console.error('提交失败:', err);
+    return { success: false, error: '网络异常' };
+  }
+}
+
+// ===== 排行榜渲染 =====
+function renderRanking(data) {
+  const container = document.getElementById('rankingList');
+  if (!data || !data.data || data.data.length === 0) {
+    container.innerHTML = '<div class="rank-empty">还没有记录，快去挑战吧！</div>';
+    return;
+  }
+  
+  let html = '';
+  data.data.forEach((item, index) => {
+    const rank = (data.page - 1) * 10 + index + 1;
+    let rankClass = '';
+    if (rank === 1) rankClass = 'gold';
+    else if (rank === 2) rankClass = 'silver';
+    else if (rank === 3) rankClass = 'bronze';
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+    const timeStr = item.datetime ? item.datetime.replace('T', ' ').slice(0, 16) : item.date || '';
+    html += `
+      <div class="rank-item">
+        <span class="rank ${rankClass}">${medal}</span>
+        <span class="avatar">${item.avatar || '😀'}</span>
+        <span class="name">${escapeHtml(item.name)}</span>
+        <span class="score">${item.score}</span>
+        <span class="time">${timeStr}</span>
+      </div>
+    `;
+  });
+  container.innerHTML = html;
+  
+  // 分页
+  totalPages = data.pages || 1;
+  document.getElementById('pageInfo').textContent = `第 ${data.page || 1} / ${totalPages} 页`;
+  document.getElementById('prevPage').disabled = data.page <= 1;
+  document.getElementById('nextPage').disabled = data.page >= totalPages;
+  currentPage = data.page || 1;
+}
+
+// ===== 统计渲染 =====
+function renderStats(data) {
+  if (!data || !data.stats) return;
+  document.getElementById('statTotal').textContent = data.stats.total || 0;
+  document.getElementById('statMax').textContent = data.stats.maxScore || 0;
+  document.getElementById('statAvg').textContent = data.stats.avgScore || 0;
+}
+
+// ===== 加载排行榜 =====
+async function loadRanking(period = currentPeriod, page = 1) {
+  const container = document.getElementById('rankingList');
+  container.innerHTML = '<div class="rank-empty">加载中...</div>';
+  const data = await fetchRanking(period, page, true);
+  if (data) {
+    renderRanking(data);
+  } else {
+    container.innerHTML = '<div class="rank-empty">加载失败，请检查网络</div>';
+  }
+}
+
+// ===== 分享功能 =====
+function shareRanking() {
+  const container = document.getElementById('rankingList');
+  const items = container.querySelectorAll('.rank-item');
+  if (items.length === 0) {
+    alert('暂无排行榜数据可分享');
+    return;
+  }
+  let text = '🏆 消消乐排行榜\n';
+  items.forEach((item, idx) => {
+    const rank = item.querySelector('.rank').textContent;
+    const name = item.querySelector('.name').textContent;
+    const score = item.querySelector('.score').textContent;
+    text += `${rank} ${name} - ${score}分\n`;
+  });
+  text += `\n—— 槐序Lab消消乐 ——\n${new Date().toLocaleString()}`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert('✅ 排行榜已复制到剪贴板！');
+    }).catch(() => {
+      prompt('复制以下内容分享：', text);
+    });
+  } else {
+    prompt('复制以下内容分享：', text);
+  }
+}
+
+// ===== 辅助函数 =====
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ============================================================
+//  🎮 游戏核心逻辑（与之前相同，略作精简）
+// ============================================================
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const scoreSpan = document.getElementById('scoreDisplay');
+const finalScoreSpan = document.getElementById('finalScore');
+const timerDisplay = document.getElementById('timerDisplay');
+const startOverlay = document.getElementById('startOverlay');
+const gameOverOverlay = document.getElementById('gameOverOverlay');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseHomeBtn = document.getElementById('pauseHomeBtn');
+const homeBtns = document.querySelectorAll('.btn-home, #homeBtn, #homeBtn2');
+const rankBtn = document.getElementById('rankBtn');
+const rankBtn2 = document.getElementById('rankBtn2');
+const rankingClose = document.getElementById('rankingClose');
+const statsBtn = document.getElementById('statsBtn');
+const statsClose = document.getElementById('statsClose');
+const statsOverlay = document.getElementById('statsOverlay');
+
+let W, H, SIZE, COLS = 8, ROWS = 8;
+function resizeCanvas() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const size = Math.min(rect.width, rect.height);
+  canvas.width = size;
+  canvas.height = size;
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  W = canvas.width; H = canvas.height; SIZE = W / COLS;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const FRUITS = ['🍎', '🍊', '🍇', '🍓', '🍉', '🍑', '🍒'];
+let board = [], score = 0, selected = null, started = false, isProcessing = false, isPaused = false;
+const TOTAL_TIME = 120;
+let timeLeft = TOTAL_TIME, timerInterval = null;
+
+function updateTimerDisplay() {
+  const mins = Math.floor(timeLeft / 60);
+  const secs = timeLeft % 60;
+  timerDisplay.textContent = `⏱️ ${mins}:${String(secs).padStart(2, '0')}`;
+  if (timeLeft <= 10) timerDisplay.classList.add('warning');
+  else timerDisplay.classList.remove('warning');
+}
+function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } }
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(function() {
+    if (!isPaused && started && !gameOverOverlay.classList.contains('show')) {
+      timeLeft--;
+      updateTimerDisplay();
+      if (timeLeft <= 0) { stopTimer(); gameOverFn(); }
+    }
+  }, 1000);
+}
+function resetTimer() { stopTimer(); timeLeft = TOTAL_TIME; updateTimerDisplay(); timerDisplay.classList.remove('warning'); }
+
+function generateBoard() {
+  board = [];
+  for (let r = 0; r < ROWS; r++) {
+    board[r] = [];
+    for (let c = 0; c < COLS; c++) board[r][c] = Math.floor(Math.random() * FRUITS.length);
+  }
+  while (findMatches().length > 0) {
+    for (let m of findMatches()) board[m.r][m.c] = Math.floor(Math.random() * FRUITS.length);
+  }
+}
+
+function findMatches() {
+  let matches = [];
+  let visited = Array(ROWS).fill().map(() => Array(COLS).fill(false));
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      if (visited[r][c]) continue;
+      let val = board[r][c];
+      let group = [];
+      let queue = [{r,c}];
+      visited[r][c] = true;
+      while (queue.length > 0) {
+        let {r: cr, c: cc} = queue.shift();
+        group.push({r: cr, c: cc});
+        let dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+        for (let d of dirs) {
+          let nr = cr + d[0], nc = cc + d[1];
+          if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !visited[nr][nc] && board[nr][nc] === val) {
+            visited[nr][nc] = true;
+            queue.push({r: nr, c: nc});
+          }
+        }
+      }
+      if (group.length >= 3) { for (let g of group) matches.push(g); }
+    }
+  }
+  return matches;
+}
+
+function removeMatches() {
+  let matches = findMatches();
+  if (matches.length === 0) return false;
+  for (let m of matches) board[m.r][m.c] = -1;
+  for (let c = 0; c < COLS; c++) {
+    let writeRow = ROWS - 1;
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (board[r][c] !== -1) {
+        board[writeRow][c] = board[r][c];
+        if (writeRow !== r) board[r][c] = -1;
+        writeRow--;
+      }
+    }
+    for (let r = writeRow; r >= 0; r--) {
+      board[r][c] = Math.floor(Math.random() * FRUITS.length);
+    }
+  }
+  score += matches.length * 10;
+  updateUI();
+  return true;
+}
+
+function processMatches() {
+  if (isProcessing) return;
+  isProcessing = true;
+  let hasMatches = true;
+  let iterations = 0;
+  function step() {
+    if (iterations > 20 || !hasMatches) {
+      isProcessing = false;
+      if (findMatches().length === 0 && !hasValidMove()) shuffleBoard();
+      return;
+    }
+    hasMatches = removeMatches();
+    iterations++;
+    if (hasMatches) setTimeout(step, 150);
+    else { isProcessing = false; if (!hasValidMove()) shuffleBoard(); }
+  }
+  step();
+}
+
+function hasValidMove() {
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      let dirs = [[0,1],[1,0]];
+      for (let d of dirs) {
+        let nr = r + d[0], nc = c + d[1];
+        if (nr >= ROWS || nc >= COLS) continue;
+        [board[r][c], board[nr][nc]] = [board[nr][nc], board[r][c]];
+        let has = findMatches().length > 0;
+        [board[r][c], board[nr][nc]] = [board[nr][nc], board[r][c]];
+        if (has) return true;
+      }
+    }
+  }
+  return false;
+}
+
+function shuffleBoard() {
+  let flat = [];
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) flat.push(board[r][c]);
+  for (let i = flat.length - 1; i > 0; i--) {
+    let j = Math.floor(Math.random() * (i + 1));
+    [flat[i], flat[j]] = [flat[j], flat[i]];
+  }
+  let idx = 0;
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) board[r][c] = flat[idx++];
+  while (findMatches().length === 0) {
+    let r = Math.floor(Math.random() * ROWS);
+    let c = Math.floor(Math.random() * COLS);
+    board[r][c] = Math.floor(Math.random() * FRUITS.length);
+  }
+  processMatches();
+}
+
+function onTileClick(r, c) {
+  if (!started || isProcessing || isPaused) return;
+  if (gameOverOverlay.classList.contains('show')) return;
+  if (selected === null) { selected = {r, c}; return; }
+  if (selected.r === r && selected.c === c) { selected = null; return; }
+  let dr = Math.abs(r - selected.r);
+  let dc = Math.abs(c - selected.c);
+  if ((dr === 1 && dc === 0) || (dr === 0 && dc === 1)) {
+    [board[r][c], board[selected.r][selected.c]] = [board[selected.r][selected.c], board[r][c]];
+    let matches = findMatches();
+    if (matches.length > 0) { selected = null; processMatches(); }
+    else {
+      [board[r][c], board[selected.r][selected.c]] = [board[selected.r][selected.c], board[r][c]];
+      selected = {r, c};
+    }
+  } else { selected = {r, c}; }
+}
+
+function getPos(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = (clientX - rect.left) * scaleX;
+  const y = (clientY - rect.top) * scaleY;
+  return { r: Math.floor(y / SIZE), c: Math.floor(x / SIZE) };
+}
+
+canvas.addEventListener('click', function(e) {
+  const p = getPos(e.clientX, e.clientY);
+  if (p.r >= 0 && p.r < ROWS && p.c >= 0 && p.c < COLS) onTileClick(p.r, p.c);
+});
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const p = getPos(touch.clientX, touch.clientY);
+  if (p.r >= 0 && p.r < ROWS && p.c >= 0 && p.c < COLS) onTileClick(p.r, p.c);
+}, {passive: false});
+
+function updateUI() { scoreSpan.textContent = score; }
+
+// ===== 游戏结束 + 排行榜提交 =====
+async function gameOverFn() {
+  stopTimer();
+  started = false;
+  isPaused = false;
+  const finalScore = score;
+  finalScoreSpan.textContent = finalScore;
+  document.getElementById('achievementDisplay').innerHTML = '';
+  gameOverOverlay.classList.add('show');
+  pauseOverlay.classList.remove('show');
+  pauseBtn.textContent = '⏸️ 暂停';
+  
+  // 显示成就
+  if (finalScore >= 500) {
+    let achievementText = '';
+    if (finalScore >= 10000) achievementText = '👑 消消乐之神';
+    else if (finalScore >= 5000) achievementText = '🏆 水果大师';
+    else if (finalScore >= 2000) achievementText = '🥇 消除达人';
+    else if (finalScore >= 1000) achievementText = '⭐ 水果猎人';
+    else if (finalScore >= 500) achievementText = '🌟 初出茅庐';
+    document.getElementById('achievementDisplay').innerHTML = `<div class="achievement-badge" style="background:rgba(255,215,0,0.15);color:#b8860b;">🎖️ ${achievementText}</div>`;
+  }
+
+  if (finalScore > 0) {
+    try {
+      const ranking = await fetchRanking('all', 1, false);
+      const isTop = ranking && (ranking.data.length < 10 || finalScore > ranking.data[ranking.data.length - 1]?.score);
+      if (isTop) {
+        setTimeout(async () => {
+          const name = prompt(`🎉 恭喜！你以 ${finalScore} 分进入排行榜前十！\n请输入你的名字（最多12个字）：`, '玩家');
+          let playerName = '匿名';
+          if (name !== null && name.trim() !== '') playerName = name.trim().slice(0, 12);
+          const result = await submitScore(playerName, finalScore, selectedAvatar);
+          if (result.success) {
+            alert(result.isTop10 ? '✅ 进入前十！' : '✅ 提交成功！');
+            if (result.achievement) {
+              alert(`🎖️ 获得成就：${result.achievement.icon} ${result.achievement.name}`);
+            }
+            rankingCache = null;
+            if (document.getElementById('rankingOverlay').classList.contains('show')) {
+              await loadRanking(currentPeriod, currentPage);
+            }
+          } else {
+            alert('提交失败：' + (result.error || '未知错误'));
+          }
+        }, 500);
+      }
+    } catch (err) {
+      console.error('排行榜处理异常:', err);
+    }
+  }
+}
+
+function resetGame() {
+  stopTimer(); board = []; score = 0; selected = null; started = false; isProcessing = false; isPaused = false;
+  resetTimer();
+  gameOverOverlay.classList.remove('show');
+  pauseOverlay.classList.remove('show');
+  startOverlay.classList.add('show');
+  pauseBtn.textContent = '⏸️ 暂停';
+  updateUI();
+}
+
+function startGame() {
+  resetGame();
+  startOverlay.classList.remove('show');
+  started = true; isPaused = false; pauseBtn.textContent = '⏸️ 暂停';
+  generateBoard(); processMatches(); updateUI(); resetTimer(); startTimer();
+}
+
+function togglePause() {
+  if (!started || gameOverOverlay.classList.contains('show')) return;
+  if (pauseOverlay.classList.contains('show')) {
+    isPaused = false; pauseOverlay.classList.remove('show'); pauseBtn.textContent = '⏸️ 暂停'; startTimer();
+  } else {
+    isPaused = true; pauseOverlay.classList.add('show'); pauseBtn.textContent = '▶️ 继续'; stopTimer();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = 'rgba(0,0,0,0.06)'; ctx.lineWidth = 0.5;
+  for (let i = 1; i < COLS; i++) { ctx.beginPath(); ctx.moveTo(i * SIZE, 0); ctx.lineTo(i * SIZE, H); ctx.stroke(); }
+  for (let i = 1; i < ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i * SIZE); ctx.lineTo(W, i * SIZE); ctx.stroke(); }
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const x = c * SIZE, y = r * SIZE;
+      const val = board[r]?.[c];
+      const isSelected = selected && selected.r === r && selected.c === c;
+      if (val !== undefined && val >= 0) {
+        const cx = x + SIZE / 2, cy = y + SIZE / 2;
+        if (isSelected) {
+          ctx.shadowBlur = 25; ctx.shadowColor = 'rgba(255,215,0,0.3)';
+          ctx.strokeStyle = 'rgba(255,215,0,0.5)'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.arc(cx, cy, SIZE * 0.42, 0, Math.PI * 2); ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+        ctx.font = `${SIZE * 0.55}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#1a1a1a'; ctx.shadowBlur = 4; ctx.shadowColor = 'rgba(0,0,0,0.03)';
+        ctx.fillText(FRUITS[val], cx, cy + 2); ctx.shadowBlur = 0;
+      }
+    }
+  }
+  if (isPaused && started) {
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.font = '36px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('⏸️ 已暂停', W/2, H/2);
+  }
+}
+
+function loop() { draw(); requestAnimationFrame(loop); }
+
+// ===== 事件绑定 =====
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+resumeBtn.addEventListener('click', togglePause);
+pauseBtn.addEventListener('click', togglePause);
+
+// 排行榜
+rankBtn.addEventListener('click', function() { loadRanking(currentPeriod, 1); document.getElementById('rankingOverlay').classList.add('show'); });
+rankBtn2.addEventListener('click', function() { loadRanking(currentPeriod, 1); document.getElementById('rankingOverlay').classList.add('show'); });
+rankingClose.addEventListener('click', function() { document.getElementById('rankingOverlay').classList.remove('show'); });
+document.getElementById('rankingOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+// 筛选按钮
+document.querySelectorAll('#rankFilters button').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#rankFilters button').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentPeriod = this.dataset.period;
+    currentPage = 1;
+    loadRanking(currentPeriod, 1);
+  });
+});
+
+// 分页
+document.getElementById('prevPage').addEventListener('click', function() {
+  if (currentPage > 1) { currentPage--; loadRanking(currentPeriod, currentPage); }
+});
+document.getElementById('nextPage').addEventListener('click', function() {
+  if (currentPage < totalPages) { currentPage++; loadRanking(currentPeriod, currentPage); }
+});
+
+// 分享
+document.getElementById('shareRankBtn').addEventListener('click', shareRanking);
+
+// 刷新
+document.getElementById('refreshRankBtn').addEventListener('click', function() {
+  rankingCache = null;
+  loadRanking(currentPeriod, currentPage);
+});
+
+// 统计
+statsBtn.addEventListener('click', async function() {
+  statsOverlay.classList.add('show');
+  const data = await fetchStats();
+  renderStats(data);
+});
+statsClose.addEventListener('click', function() { statsOverlay.classList.remove('show'); });
+statsOverlay.addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+pauseHomeBtn.addEventListener('click', function() { window.location.href = 'https://lab.lruriawa.top/release/home.html'; });
+homeBtns.forEach(btn => btn.addEventListener('click', function() { window.location.href = 'https://lab.lruriawa.top/release/home.html'; }));
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    document.getElementById('rankingOverlay').classList.remove('show');
+    statsOverlay.classList.remove('show');
+  }
+});
+
+// ===== 启动 =====
+resetGame();
+loop();
+
+// 预加载排行榜
+setTimeout(() => { loadRanking('all', 1); }, 3000);
+</script>
+</body>
+</html>

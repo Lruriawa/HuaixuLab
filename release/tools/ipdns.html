@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🌐 DNS & IP 检测-槐序Lab-槐序实验室</title>
+  <link rel="icon" type="image/png" href="../tx.png">
+  <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; touch-action:none; user-select:none; -webkit-tap-highlight-color:transparent; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+    body {
+      background: #f5f7f5;
+      background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      min-height:100vh;
+      padding:10px;
+      padding-top:70px;
+      padding-bottom:70px;
+      position:relative;
+    }
+
+    /* ===== 加载动画（统一风格） ===== */
+    #loader {
+      position:fixed;
+      top:0; left:0; right:0; bottom:0;
+      background: #f5f7f5;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      z-index:9999;
+      transition:opacity 0.6s ease-out;
+    }
+    #loader.hide { opacity:0; pointer-events:none; }
+    #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+    #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+    #loader .loader-text span { color:#40C463; font-weight:600; }
+    #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+    @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+    #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+    #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+    @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+    @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+    /* ===== 页眉（毛玻璃） ===== */
+    .header {
+      position:fixed;
+      top:0;
+      left:0;
+      right:0;
+      z-index:10;
+      padding:0 20px;
+      height:56px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(16px);
+      -webkit-backdrop-filter:blur(16px);
+      border-bottom:1px solid rgba(0,0,0,0.04);
+    }
+    .header .brand {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      text-decoration:none;
+      color:#1a1a1a;
+      font-weight:700;
+      font-size:1.0rem;
+    }
+    .header .brand .logo-icon { font-size:1.4rem; }
+    .header .brand .brand-text {
+      background:linear-gradient(135deg, #216E39, #40C463);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .header .nav-link {
+      color:rgba(0,0,0,0.45);
+      text-decoration:none;
+      font-size:0.8rem;
+      padding:4px 14px;
+      border-radius:20px;
+      transition:all 0.3s;
+      border:1px solid rgba(0,0,0,0.04);
+    }
+    .header .nav-link:hover {
+      background:rgba(0,0,0,0.04);
+      color:#1a1a1a;
+      border-color:rgba(0,0,0,0.1);
+    }
+    .header .nav-link.primary {
+      background:linear-gradient(135deg, #40C463, #30A14E);
+      border:none;
+      color:#fff;
+    }
+    .header .nav-link.primary:hover { opacity:0.85; }
+    .header .title {
+      color:#1a1a1a;
+      font-size:0.95rem;
+      font-weight:500;
+      letter-spacing:0.5px;
+    }
+    .header .title span { color:rgba(0,0,0,0.2); }
+
+    /* ===== 页脚（毛玻璃） ===== */
+    .footer {
+      position:fixed;
+      bottom:0;
+      left:0;
+      right:0;
+      z-index:10;
+      padding:10px 20px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(255,255,255,0.70);
+      backdrop-filter:blur(12px);
+      -webkit-backdrop-filter:blur(12px);
+      border-top:1px solid rgba(0,0,0,0.04);
+    }
+    .footer .text {
+      color:rgba(0,0,0,0.25);
+      font-size:0.75rem;
+      letter-spacing:0.5px;
+    }
+    .footer .text .love { color:rgba(239,68,68,0.15); }
+    .footer .text .highlight { color:#216E39; }
+
+    /* ===== 工具容器（毛玻璃卡片） ===== */
+    .game-wrapper {
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(8px);
+      -webkit-backdrop-filter:blur(8px);
+      border-radius:20px;
+      padding:16px;
+      box-shadow:0 4px 40px rgba(0,0,0,0.04);
+      border:1px solid rgba(0,0,0,0.04);
+      max-width:420px;
+      width:100%;
+    }
+    .tool-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:0 6px 12px 6px;
+      color:#1a1a1a;
+      font-weight:700;
+      font-size:1.0rem;
+    }
+    .tool-header .title-tag {
+      color:rgba(0,0,0,0.3);
+      font-size:0.9rem;
+      font-weight:400;
+    }
+
+    /* ===== 内部工具容器（浅色毛玻璃） ===== */
+    .tool-container {
+      position:relative;
+      width:100%;
+      border-radius:16px;
+      overflow:hidden;
+      background:rgba(255,255,255,0.6);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      border:1px solid rgba(0,0,0,0.04);
+      display:flex;
+      flex-direction:column;
+      padding:20px 16px;
+      min-height:420px;
+    }
+
+    .detect-card {
+      background:rgba(255,255,255,0.7);
+      border:1px solid rgba(0,0,0,0.04);
+      border-radius:14px;
+      padding:14px 16px;
+      margin-bottom:12px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.02);
+    }
+    .detect-card:last-child { margin-bottom:0; }
+
+    .detect-card .label {
+      color:rgba(0,0,0,0.35);
+      font-size:0.8rem;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      margin-bottom:4px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .detect-card .value {
+      color:#1a1a1a;
+      font-size:1.05rem;
+      font-weight:600;
+      word-break:break-all;
+      font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+    }
+    .detect-card .value.loading {
+      color:rgba(0,0,0,0.2);
+      animation:pulseText 1.2s ease-in-out infinite;
+    }
+    @keyframes pulseText {
+      0%,100% { opacity:0.3; }
+      50% { opacity:1; }
+    }
+    .detect-card .value .ipv4 { color:#216E39; font-weight:700; }
+    .detect-card .value .ipv6 { color:#2563eb; font-weight:700; }
+    .detect-card .sub-info {
+      color:rgba(0,0,0,0.25);
+      font-size:0.75rem;
+      margin-top:2px;
+    }
+
+    .ip-row {
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .ip-row .ip-item {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:1.0rem;
+    }
+    .ip-row .ip-item .ip-label {
+      font-size:0.7rem;
+      color:rgba(0,0,0,0.25);
+      font-weight:400;
+      min-width:36px;
+    }
+    .ip-row .ip-item .ip-addr {
+      font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+      font-weight:600;
+      font-size:1.0rem;
+    }
+    .ip-row .ip-item .ip-addr.ipv4 { color:#216E39; }
+    .ip-row .ip-item .ip-addr.ipv6 { color:#2563eb; }
+    .ip-row .ip-item .ip-addr.not-found {
+      color:rgba(0,0,0,0.2);
+      font-weight:400;
+    }
+
+    /* ===== DNS 查询区 ===== */
+    .dns-input-group {
+      display:flex;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .dns-input-group input {
+      flex:1;
+      background:rgba(255,255,255,0.6);
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:10px;
+      padding:10px 14px;
+      color:#1a1a1a;
+      font-size:0.9rem;
+      outline:none;
+      transition:border-color 0.3s;
+      font-family:'MiSans', 'Segoe UI', sans-serif;
+    }
+    .dns-input-group input:focus {
+      border-color:#40C463;
+    }
+    .dns-input-group input::placeholder {
+      color:rgba(0,0,0,0.2);
+    }
+    .dns-input-group button {
+      padding:10px 20px;
+      border:none;
+      border-radius:10px;
+      font-size:0.85rem;
+      font-weight:600;
+      cursor:pointer;
+      transition:transform 0.15s, opacity 0.2s;
+      color:#fff;
+      background:linear-gradient(135deg, #40C463, #30A14E);
+      box-shadow:0 4px 20px rgba(64,196,99,0.25);
+      white-space:nowrap;
+      font-family:'MiSans', 'Segoe UI', sans-serif;
+    }
+    .dns-input-group button:active { transform:scale(0.94); }
+    .dns-input-group button:disabled {
+      opacity:0.4;
+      cursor:not-allowed;
+      transform:none;
+    }
+
+    /* ===== DNS 结果 ===== */
+    .dns-result {
+      background:rgba(255,255,255,0.5);
+      border-radius:10px;
+      padding:12px 14px;
+      min-height:60px;
+      max-height:180px;
+      overflow-y:auto;
+      font-size:0.8rem;
+      font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+      color:rgba(0,0,0,0.6);
+      line-height:1.8;
+      border:1px solid rgba(0,0,0,0.04);
+      display:flex;
+      flex-direction:column;
+    }
+    .dns-result::-webkit-scrollbar { width:4px; }
+    .dns-result::-webkit-scrollbar-track { background:rgba(0,0,0,0.02); border-radius:4px; }
+    .dns-result::-webkit-scrollbar-thumb { background:rgba(0,0,0,0.08); border-radius:4px; }
+
+    .dns-result .dns-page { display:none; flex:1; }
+    .dns-result .dns-page.active { display:block; }
+
+    .dns-result .dns-page .page-title {
+      font-size:0.7rem;
+      color:rgba(0,0,0,0.25);
+      margin-bottom:4px;
+      letter-spacing:1px;
+    }
+
+    .dns-result .dns-row {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:4px 0;
+      border-bottom:1px solid rgba(0,0,0,0.04);
+    }
+    .dns-result .dns-row:last-child { border-bottom:none; }
+
+    .dns-result .dns-row .dns-provider {
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:0.7rem;
+      color:rgba(0,0,0,0.3);
+      white-space:nowrap;
+      min-width:70px;
+    }
+    .dns-result .dns-row .dns-provider .dot-status {
+      display:inline-block;
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      flex-shrink:0;
+    }
+    .dns-result .dns-row .dns-provider .dot-status.success { background:#40C463; }
+    .dns-result .dns-row .dns-provider .dot-status.error { background:#e74c3c; }
+
+    .dns-result .dns-row .dns-ips {
+      display:flex;
+      flex-wrap:wrap;
+      gap:4px 10px;
+      justify-content:flex-end;
+      font-size:0.8rem;
+      font-weight:500;
+    }
+    .dns-result .dns-row .dns-ips .ip-item {
+      color:#216E39;
+      font-family:'MiSans', 'Consolas', 'Courier New', monospace;
+    }
+    .dns-result .dns-row .dns-ips .error-text {
+      color:#e74c3c;
+      font-size:0.7rem;
+      font-weight:400;
+    }
+
+    .dns-result .empty {
+      color:rgba(0,0,0,0.2);
+      font-style:italic;
+      font-size:0.75rem;
+    }
+    .dns-result .loading-text {
+      color:rgba(0,0,0,0.2);
+      animation:pulseText 1.2s ease-in-out infinite;
+    }
+    .dns-result .error {
+      color:#e74c3c;
+    }
+
+    /* ===== 分页导航 ===== */
+    .dns-pagination {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-top:8px;
+      padding-top:8px;
+      border-top:1px solid rgba(0,0,0,0.04);
+      gap:8px;
+    }
+    .dns-pagination .page-info {
+      color:rgba(0,0,0,0.25);
+      font-size:0.65rem;
+    }
+    .dns-pagination .page-btn {
+      padding:4px 16px;
+      border:1px solid rgba(0,0,0,0.06);
+      border-radius:20px;
+      font-size:0.7rem;
+      font-weight:600;
+      cursor:pointer;
+      transition:all 0.2s;
+      color:#1a1a1a;
+      background:rgba(255,255,255,0.5);
+      font-family:'MiSans', 'Segoe UI', sans-serif;
+    }
+    .dns-pagination .page-btn:hover:not(:disabled) {
+      background:rgba(255,255,255,0.8);
+    }
+    .dns-pagination .page-btn:active:not(:disabled) { transform:scale(0.94); }
+    .dns-pagination .page-btn:disabled {
+      opacity:0.3;
+      cursor:not-allowed;
+    }
+    .dns-pagination .page-btn .arrow {
+      font-size:0.8rem;
+    }
+
+    .dns-result .dns-footer {
+      margin-top:4px;
+      font-size:0.55rem;
+      color:rgba(0,0,0,0.15);
+      text-align:right;
+    }
+
+    /* ===== 状态指示灯 ===== */
+    .status-row {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      margin-top:4px;
+    }
+    .status-item {
+      display:flex;
+      align-items:center;
+      gap:6px;
+      font-size:0.8rem;
+      color:rgba(0,0,0,0.4);
+    }
+    .status-item .dot {
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      display:inline-block;
+    }
+    .status-item .dot.online { background:#40C463; box-shadow:0 0 12px rgba(64,196,99,0.3); }
+    .status-item .dot.offline { background:#e74c3c; box-shadow:0 0 12px rgba(231,76,60,0.3); }
+    .status-item .dot.checking { background:#f59e0b; animation:pulseDot 0.8s ease-in-out infinite; }
+    @keyframes pulseDot {
+      0%,100% { opacity:0.3; transform:scale(0.8); }
+      50% { opacity:1; transform:scale(1.2); }
+    }
+
+    /* ===== 检测按钮 ===== */
+    .check-btn-group {
+      display:flex;
+      gap:8px;
+      margin-top:12px;
+    }
+    .check-btn-group button {
+      flex:1;
+      padding:10px 14px;
+      border:1px solid rgba(0,0,0,0.04);
+      border-radius:10px;
+      font-size:0.85rem;
+      font-weight:600;
+      cursor:pointer;
+      transition:transform 0.15s, opacity 0.2s;
+      color:#fff;
+      background:rgba(0,0,0,0.04);
+      font-family:'MiSans', 'Segoe UI', sans-serif;
+    }
+    .check-btn-group button:active { transform:scale(0.94); }
+    .check-btn-group button:hover { opacity:0.9; }
+    .check-btn-group .btn-refresh {
+      background:linear-gradient(135deg, #3b82f6, #60a5fa);
+      box-shadow:0 4px 20px rgba(59,130,246,0.25);
+      border:none;
+    }
+
+    /* ===== 说明 ===== */
+    .how-to-play {
+      background:rgba(0,0,0,0.04);
+      border-radius:12px;
+      padding:10px 14px;
+      margin-top:10px;
+      color:rgba(0,0,0,0.4);
+      font-size:0.75rem;
+      line-height:1.6;
+      text-align:center;
+      border:1px solid rgba(0,0,0,0.04);
+    }
+    .how-to-play strong { color:rgba(0,0,0,0.6); }
+
+    /* ===== Toast ===== */
+    .toast {
+      position:fixed;
+      bottom:80px;
+      left:50%;
+      transform:translateX(-50%) translateY(80px);
+      background:rgba(0,0,0,0.8);
+      backdrop-filter:blur(8px);
+      color:#fff;
+      padding:10px 24px;
+      border-radius:30px;
+      font-size:0.85rem;
+      border:1px solid rgba(255,255,255,0.06);
+      opacity:0;
+      transition:all 0.4s ease;
+      pointer-events:none;
+      z-index:100;
+      white-space:nowrap;
+      font-family:'MiSans', 'Segoe UI', sans-serif;
+    }
+    .toast.show {
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    /* ===== 移动端适配 ===== */
+    @media (max-width: 640px) {
+      body { padding-top:60px; padding-bottom:60px; }
+      .game-wrapper { padding:12px; }
+      .tool-header { font-size:0.85rem; }
+      .tool-container { padding:16px 12px; min-height:380px; }
+      .detect-card { padding:10px 12px; }
+      .detect-card .label { font-size:0.7rem; }
+      .detect-card .value { font-size:0.9rem; }
+      .ip-row .ip-item .ip-addr { font-size:0.85rem; }
+      .dns-input-group input { font-size:0.8rem; padding:8px 12px; }
+      .dns-input-group button { font-size:0.75rem; padding:8px 14px; }
+      .dns-result { font-size:0.7rem; padding:10px 12px; max-height:150px; }
+      .dns-result .dns-row .dns-ips { font-size:0.7rem; }
+      .check-btn-group button { font-size:0.75rem; padding:8px 12px; }
+      .how-to-play { font-size:0.7rem; padding:8px 10px; }
+      .toast { font-size:0.75rem; padding:8px 18px; bottom:70px; }
+      .dns-pagination .page-btn { font-size:0.6rem; padding:3px 12px; }
+    }
+    @media (max-width: 380px) {
+      .dns-result .dns-row { flex-wrap:wrap; gap:4px; }
+      .dns-result .dns-row .dns-provider { min-width:auto; }
+      .dns-result .dns-row .dns-ips { justify-content:flex-start; }
+      .ip-row .ip-item { flex-wrap:wrap; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+  <div class="logo">🌐</div>
+  <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+  <div class="loading-status">加载中...</div>
+  <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+  <a href="https://lab.lruriawa.top/" class="brand">
+    <span class="logo-icon">🧪</span>
+    <span class="brand-text">槐序Lab实验室</span>
+  </a>
+  <span class="title">🌐 DNS & IP 检测</span>
+  <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+  <div class="tool-header">
+    <span style="opacity:0.5;">🌐</span>
+    <span class="title-tag">DNS & IP 检测</span>
+  </div>
+
+  <div class="tool-container">
+
+    <div class="detect-card">
+      <div class="label">🖥️ 本机 IP 地址</div>
+      <div class="value" id="localIP">
+        <div class="ip-row" id="ipRow">
+          <div class="ip-item">
+            <span class="ip-label">IPv4</span>
+            <span class="ip-addr ipv4 loading" id="ipv4Addr">检测中...</span>
+          </div>
+          <div class="ip-item">
+            <span class="ip-label">IPv6</span>
+            <span class="ip-addr ipv6 loading" id="ipv6Addr">检测中...</span>
+          </div>
+        </div>
+      </div>
+      <div class="sub-info" id="ipExtra">同时检测 IPv4 和 IPv6</div>
+    </div>
+
+    <div class="detect-card">
+      <div class="label">🌍 网站状态</div>
+      <div id="siteStatus">
+        <div class="status-row">
+          <span class="status-item">
+            <span class="dot checking" id="statusDot"></span>
+            <span id="statusText">检测中...</span>
+          </span>
+          <span class="status-item" id="statusPing">⏱️ --ms</span>
+        </div>
+      </div>
+      <div class="check-btn-group">
+        <button class="btn-refresh" id="checkSiteBtn">🔄 检测网站</button>
+      </div>
+    </div>
+
+    <div class="detect-card" style="margin-bottom:0;">
+      <div class="label">🔍 DNS 查询</div>
+      <div class="dns-input-group">
+        <input type="text" id="dnsInput" placeholder="输入域名，如 baidu.com" value="baidu.com">
+        <button id="dnsBtn">查询</button>
+      </div>
+      <div class="dns-result" id="dnsResult">
+        <span class="empty">输入域名后点击查询</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="how-to-play">
+    <strong>🌐 DNS & IP 检测：</strong>
+    自动检测本机 IPv4/IPv6 · 网站状态检测 · 域名 DNS 分页解析查询
+  </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+  <span class="text">
+    🧪 槐序Lab实验室 · DNS & IP 检测 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+    &nbsp;&nbsp;<span class="love">❤️</span>
+  </span>
+</footer>
+
+<!-- ===== Toast ===== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 加载动画隐藏（2.5秒） =====
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+});
+if (document.readyState !== 'loading') {
+  setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+}
+
+// ===== Toast =====
+const toast = document.getElementById('toast');
+let toastTimer = null;
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+}
+
+// ===== 以下为 DNS & IP 检测核心逻辑，完整保留 =====
+const ipv4Addr = document.getElementById('ipv4Addr');
+const ipv6Addr = document.getElementById('ipv6Addr');
+const ipExtraEl = document.getElementById('ipExtra');
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const statusPing = document.getElementById('statusPing');
+const checkSiteBtn = document.getElementById('checkSiteBtn');
+const dnsInput = document.getElementById('dnsInput');
+const dnsBtn = document.getElementById('dnsBtn');
+const dnsResult = document.getElementById('dnsResult');
+
+let dnsPages = [];
+let currentPage = 0;
+
+async function fetchLocalIP() {
+  ipv4Addr.textContent = '检测中...';
+  ipv4Addr.className = 'ip-addr ipv4 loading';
+  ipv6Addr.textContent = '检测中...';
+  ipv6Addr.className = 'ip-addr ipv6 loading';
+  ipExtraEl.textContent = '正在获取...';
+
+  let ipv4 = null, ipv6 = null;
+
+  try {
+    const resp = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+    const data = await resp.json();
+    if (data.ip) ipv4 = data.ip;
+  } catch (e) {
+    try {
+      const resp = await fetch('https://httpbin.org/ip', { signal: AbortSignal.timeout(5000) });
+      const data = await resp.json();
+      if (data.origin) ipv4 = data.origin;
+    } catch (e2) {}
+  }
+
+  try {
+    const resp = await fetch('https://api6.ipify.org?format=json', { signal: AbortSignal.timeout(5000) });
+    const data = await resp.json();
+    if (data.ip) ipv6 = data.ip;
+  } catch (e) {}
+
+  if (ipv4) { ipv4Addr.textContent = ipv4; ipv4Addr.className = 'ip-addr ipv4'; }
+  else { ipv4Addr.textContent = '未检测到'; ipv4Addr.className = 'ip-addr ipv4 not-found'; }
+
+  if (ipv6) { ipv6Addr.textContent = ipv6; ipv6Addr.className = 'ip-addr ipv6'; }
+  else { ipv6Addr.textContent = '未检测到'; ipv6Addr.className = 'ip-addr ipv6 not-found'; }
+
+  let extraText = '';
+  if (ipv4 && ipv6) extraText = '✅ IPv4 + IPv6 双栈';
+  else if (ipv4) extraText = '📌 仅 IPv4';
+  else if (ipv6) extraText = '📌 仅 IPv6';
+  else extraText = '⚠️ 未检测到 IP';
+  ipExtraEl.textContent = extraText;
+}
+
+async function checkSite() {
+  statusDot.className = 'dot checking';
+  statusText.textContent = '检测中...';
+  statusPing.textContent = '⏱️ --ms';
+
+  const sites = [
+    { name: '🌐 槐序Lab', url: 'https://lab.lruriawa.top' },
+    { name: '📝 博客', url: 'https://blog.lruriawa.top' },
+    { name: '📊 系统状态', url: 'https://zt.status.lruriawa.top' },
+    { name: '🔍 备用检测', url: 'https://www.baidu.com' }
+  ];
+
+  let anySuccess = false;
+
+  for (const site of sites) {
+    try {
+      const start = performance.now();
+      const resp = await fetch(site.url, { mode: 'no-cors', signal: AbortSignal.timeout(8000) });
+      const end = performance.now();
+      const ms = Math.round(end - start);
+      statusText.textContent = '✅ ' + site.name + ' 可访问';
+      statusDot.className = 'dot online';
+      statusPing.textContent = '⏱️ ' + ms + 'ms';
+      anySuccess = true;
+      break;
+    } catch (e) { continue; }
+  }
+
+  if (!anySuccess) {
+    try {
+      const start = performance.now();
+      const resp = await fetch('https://lab.lruriawa.top', { signal: AbortSignal.timeout(8000) });
+      const end = performance.now();
+      const ms = Math.round(end - start);
+      if (resp.ok || resp.status < 400) {
+        statusText.textContent = '✅ 槐序Lab 可访问';
+        statusDot.className = 'dot online';
+        statusPing.textContent = '⏱️ ' + ms + 'ms';
+        anySuccess = true;
+      }
+    } catch (e) {}
+  }
+
+  if (!anySuccess) {
+    statusText.textContent = '⚠️ 所有站点检测超时';
+    statusDot.className = 'dot offline';
+    statusPing.textContent = '⏱️ --ms';
+  }
+}
+
+function renderDNSPages(domain, results) {
+  const pages = [];
+  for (const r of results) {
+    const dotClass = r.success && r.ips.length > 0 ? 'success' : 'error';
+    const statusIcon = r.success && r.ips.length > 0 ? '✅' : '❌';
+    let ipsHtml = '';
+    if (r.success && r.ips.length > 0) {
+      ipsHtml = r.ips.map(ip => `<span class="ip-item">${ip}</span>`).join('');
+    } else {
+      ipsHtml = `<span class="error-text">${r.error || '无记录'}</span>`;
+    }
+    pages.push({
+      title: r.service,
+      icon: statusIcon,
+      dotClass: dotClass,
+      ipsHtml: ipsHtml,
+      success: r.success && r.ips.length > 0
+    });
+  }
+
+  dnsPages = pages;
+  currentPage = 0;
+
+  if (pages.length === 0) {
+    dnsResult.innerHTML = `<span class="empty">暂无数据</span>`;
+    return;
+  }
+
+  let html = '';
+  for (let i = 0; i < pages.length; i++) {
+    const p = pages[i];
+    const activeClass = i === 0 ? 'active' : '';
+    html += `<div class="dns-page ${activeClass}" data-page="${i}">
+      <div class="page-title">${p.icon} ${p.title}</div>
+      <div class="dns-row">
+        <span class="dns-provider">
+          <span class="dot-status ${p.dotClass}"></span>
+          解析结果
+        </span>
+        <span class="dns-ips">${p.ipsHtml}</span>
+      </div>
+    </div>`;
+  }
+
+  const totalPages = pages.length;
+  html += `<div class="dns-pagination">
+    <button class="page-btn" id="dnsPrevBtn" disabled>
+      <span class="arrow">◀</span> 上一页
+    </button>
+    <span class="page-info" id="dnsPageInfo">1 / ${totalPages}</span>
+    <button class="page-btn" id="dnsNextBtn">
+      下一页 <span class="arrow">▶</span>
+    </button>
+  </div>`;
+
+  html += `<div class="dns-footer">域名: ${domain}</div>`;
+
+  dnsResult.innerHTML = html;
+
+  const prevBtn = document.getElementById('dnsPrevBtn');
+  const nextBtn = document.getElementById('dnsNextBtn');
+  const pageInfo = document.getElementById('dnsPageInfo');
+
+  function updatePage() {
+    const pages = document.querySelectorAll('.dns-page');
+    pages.forEach((p, i) => {
+      p.classList.toggle('active', i === currentPage);
+    });
+    if (pageInfo) {
+      pageInfo.textContent = `${currentPage + 1} / ${dnsPages.length}`;
+    }
+    if (prevBtn) prevBtn.disabled = currentPage === 0;
+    if (nextBtn) nextBtn.disabled = currentPage === dnsPages.length - 1;
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function() {
+      if (currentPage > 0) { currentPage--; updatePage(); }
+    });
+  }
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      if (currentPage < dnsPages.length - 1) { currentPage++; updatePage(); }
+    });
+  }
+
+  updatePage();
+}
+
+async function dnsLookup(domain) {
+  if (!domain || domain.trim() === '') {
+    showToast('⚠️ 请输入域名');
+    return;
+  }
+
+  domain = domain.trim().toLowerCase();
+  domain = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+
+  dnsResult.innerHTML = '<span class="loading-text">⏳ 查询中...</span>';
+  dnsBtn.disabled = true;
+
+  try {
+    const services = [
+      { url: `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`, label: 'Cloudflare' },
+      { url: `https://dns.alidns.com/resolve?name=${domain}&type=A`, label: '阿里 DNS' }
+    ];
+
+    let allResults = [];
+
+    for (const svc of services) {
+      try {
+        const headers = svc.label === 'Cloudflare' ? { 'Accept': 'application/dns-json' } : {};
+        const resp = await fetch(svc.url, {
+          headers: headers,
+          signal: AbortSignal.timeout(5000)
+        });
+        const data = await resp.json();
+        if (data && data.Answer) {
+          const ips = data.Answer.filter(a => a.type === 1).map(a => a.data);
+          if (ips.length > 0) {
+            allResults.push({ service: svc.label, ips: ips, success: true });
+          } else {
+            allResults.push({ service: svc.label, ips: [], success: false, error: '无 A 记录' });
+          }
+        } else {
+          allResults.push({ service: svc.label, ips: [], success: false, error: '无响应' });
+        }
+      } catch (e) {
+        allResults.push({ service: svc.label, ips: [], success: false, error: '请求失败' });
+      }
+    }
+
+    renderDNSPages(domain, allResults);
+
+  } catch (e) {
+    console.error(e);
+    dnsResult.innerHTML = `<span class="error">❌ 查询失败: ${e.message}</span>`;
+  }
+
+  dnsBtn.disabled = false;
+}
+
+dnsBtn.addEventListener('click', () => dnsLookup(dnsInput.value));
+dnsInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') dnsLookup(dnsInput.value);
+});
+
+checkSiteBtn.addEventListener('click', checkSite);
+
+fetchLocalIP();
+checkSite();
+setTimeout(() => dnsLookup(dnsInput.value), 600);
+</script>
+</body>
+</html>

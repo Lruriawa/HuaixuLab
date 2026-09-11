@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧪 化学元素周期表-槐序Lab-槐序实验室</title>
+    <link rel="icon" type="image/png" href="../tx.png">
+    <link href="https://cdn.jsdelivr.net/gh/webfontworld/misans/MiSans.css" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'MiSans', 'Segoe UI', system-ui, sans-serif; }
+        body {
+            background: #f5f7f5;
+            background: linear-gradient(145deg, #f0f4f0 0%, #e8eee8 50%, #f5f7f5 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            padding-top: 70px;
+            padding-bottom: 70px;
+            position: relative;
+        }
+
+        /* ===== 加载动画（统一风格） ===== */
+        #loader {
+            position:fixed;
+            top:0; left:0; right:0; bottom:0;
+            background: #f5f7f5;
+            display:flex;
+            flex-direction:column;
+            justify-content:center;
+            align-items:center;
+            z-index:9999;
+            transition:opacity 0.6s ease-out;
+        }
+        #loader.hide { opacity:0; pointer-events:none; }
+        #loader .logo { font-size:5.5rem; animation: loaderPulse 1.2s ease-in-out infinite; margin-bottom:14px; }
+        #loader .loader-text { color:rgba(0,0,0,0.3); font-size:1.6rem; letter-spacing:4px; font-weight:400; margin-bottom:20px; }
+        #loader .loader-text span { color:#40C463; font-weight:600; }
+        #loader .loading-status { color:rgba(0,0,0,0.15); font-size:1rem; letter-spacing:2px; margin-bottom:16px; animation: loadingDot 1.6s ease-in-out infinite; }
+        @keyframes loadingDot { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
+        #loader .loader-bar { width:200px; height:4px; background:rgba(0,0,0,0.06); border-radius:4px; overflow:hidden; position:relative; }
+        #loader .loader-bar .fill { position:absolute; left:0; top:0; height:100%; width:0%; background:linear-gradient(90deg, #216E39, #40C463, #9BE9A8); border-radius:4px; animation: loaderFill 2.5s ease-in-out forwards; }
+        @keyframes loaderPulse { 0%,100% { transform:scale(1); } 50% { transform:scale(1.08); } }
+        @keyframes loaderFill { 0% { width:0%; } 30% { width:40%; } 60% { width:75%; } 100% { width:100%; } }
+
+        /* ===== 页眉（毛玻璃） ===== */
+        .header {
+            position:fixed;
+            top:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:0 20px;
+            height:56px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(16px);
+            -webkit-backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(0,0,0,0.04);
+        }
+        .header .brand {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            text-decoration:none;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .header .brand .logo-icon { font-size:1.4rem; }
+        .header .brand .brand-text {
+            background:linear-gradient(135deg, #216E39, #40C463);
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+        }
+        .header .nav-link {
+            color:rgba(0,0,0,0.45);
+            text-decoration:none;
+            font-size:0.8rem;
+            padding:4px 14px;
+            border-radius:20px;
+            transition:all 0.3s;
+            border:1px solid rgba(0,0,0,0.04);
+        }
+        .header .nav-link:hover {
+            background:rgba(0,0,0,0.04);
+            color:#1a1a1a;
+            border-color:rgba(0,0,0,0.1);
+        }
+        .header .nav-link.primary {
+            background:linear-gradient(135deg, #40C463, #30A14E);
+            border:none;
+            color:#fff;
+        }
+        .header .nav-link.primary:hover { opacity:0.85; }
+        .header .title {
+            color:#1a1a1a;
+            font-size:0.95rem;
+            font-weight:500;
+            letter-spacing:0.5px;
+        }
+        .header .title span { color:rgba(0,0,0,0.2); }
+
+        /* ===== 页脚（毛玻璃） ===== */
+        .footer {
+            position:fixed;
+            bottom:0;
+            left:0;
+            right:0;
+            z-index:10;
+            padding:10px 20px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:rgba(255,255,255,0.70);
+            backdrop-filter:blur(12px);
+            -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.04);
+        }
+        .footer .text {
+            color:rgba(0,0,0,0.25);
+            font-size:0.75rem;
+            letter-spacing:0.5px;
+        }
+        .footer .text .love { color:rgba(239,68,68,0.15); }
+        .footer .text .highlight { color:#216E39; }
+
+        /* ===== 工具容器（毛玻璃卡片） ===== */
+        .game-wrapper {
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px);
+            -webkit-backdrop-filter:blur(8px);
+            border-radius:20px;
+            padding:16px;
+            box-shadow:0 4px 40px rgba(0,0,0,0.04);
+            border:1px solid rgba(0,0,0,0.04);
+            max-width: 520px;
+            width: 100%;
+        }
+        .tool-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:0 6px 12px 6px;
+            color:#1a1a1a;
+            font-weight:700;
+            font-size:1.0rem;
+        }
+        .tool-header .title-tag {
+            color:rgba(0,0,0,0.3);
+            font-size:0.9rem;
+            font-weight:400;
+        }
+
+        /* ===== 周期表容器 ===== */
+        .tool-container {
+            position: relative;
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #15132b;
+            box-shadow: inset 0 0 60px rgba(0,0,0,0.3);
+            padding: 10px;
+            max-height: 520px;
+            overflow-y: auto;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .tool-container::-webkit-scrollbar { width: 3px; }
+        .tool-container::-webkit-scrollbar-track { background: transparent; }
+        .tool-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 10px; }
+
+        /* ===== 周期表网格 ===== */
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 3px;
+        }
+
+        /* ===== 元素卡片 ===== */
+        .element {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.04);
+            border-radius: 4px;
+            padding: 3px 2px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 36px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .element:hover {
+            transform: scale(1.15);
+            z-index: 2;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            border-color: rgba(255,255,255,0.15);
+        }
+        .element .symbol {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.1;
+        }
+        .element .number {
+            font-size: 0.4rem;
+            color: rgba(255,255,255,0.2);
+            line-height: 1;
+        }
+        .element .name {
+            font-size: 0.35rem;
+            color: rgba(255,255,255,0.15);
+            line-height: 1;
+            display: none;
+        }
+
+        /* ===== 元素分类颜色 ===== */
+        .element.nonmetal { background: rgba(74,222,128,0.15); border-color: rgba(74,222,128,0.15); }
+        .element.noble { background: rgba(96,165,250,0.15); border-color: rgba(96,165,250,0.15); }
+        .element.alkali { background: rgba(251,191,36,0.15); border-color: rgba(251,191,36,0.15); }
+        .element.alkaline { background: rgba(251,146,60,0.15); border-color: rgba(251,146,60,0.15); }
+        .element.transition { background: rgba(167,139,250,0.12); border-color: rgba(167,139,250,0.12); }
+        .element.post-transition { background: rgba(52,211,153,0.12); border-color: rgba(52,211,153,0.12); }
+        .element.metalloid { background: rgba(244,63,94,0.12); border-color: rgba(244,63,94,0.12); }
+        .element.halogen { background: rgba(251,146,60,0.12); border-color: rgba(251,146,60,0.12); }
+        .element.lanthanide { background: rgba(236,72,153,0.10); border-color: rgba(236,72,153,0.10); }
+        .element.actinide { background: rgba(244,63,94,0.10); border-color: rgba(244,63,94,0.10); }
+        .element.unknown { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.03); }
+
+        .element.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+            min-height: 20px;
+        }
+        .element.empty:hover { transform: none; box-shadow: none; }
+
+        /* ===== 详情弹窗（浅色主题） ===== */
+        .detail-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            padding: 20px;
+        }
+        .detail-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .detail-card {
+            background: #f5f7f5;
+            border: 1px solid rgba(0,0,0,0.04);
+            border-radius: 20px;
+            padding: 28px 24px 24px;
+            max-width: 380px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .detail-card::-webkit-scrollbar { width: 3px; }
+        .detail-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 10px; }
+
+        .detail-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: rgba(0,0,0,0.2);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .detail-close:hover { color: #1a1a1a; }
+
+        .detail-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .detail-header .big-symbol {
+            font-size: 3.2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            line-height: 1;
+            min-width: 70px;
+        }
+        .detail-header .big-info .name-cn {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .detail-header .big-info .name-en {
+            font-size: 0.9rem;
+            color: rgba(0,0,0,0.3);
+        }
+        .detail-header .big-info .number-badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.3);
+            background: rgba(0,0,0,0.04);
+            padding: 1px 10px;
+            border-radius: 20px;
+            margin-top: 2px;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 16px;
+        }
+        .detail-item .label {
+            color: rgba(0,0,0,0.3);
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .detail-item .value {
+            color: rgba(0,0,0,0.7);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .detail-item .value.highlight { color: #216E39; font-weight:600; }
+        .detail-item .value.gold { color: #b8860b; font-weight:600; }
+
+        .detail-category {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            font-size: 0.7rem;
+            color: rgba(0,0,0,0.25);
+            text-align: center;
+        }
+
+        /* ===== 底部说明 ===== */
+        .how-to-play {
+            background: rgba(0,0,0,0.04);
+            border-radius: 12px;
+            padding: 8px 12px;
+            margin-top: 10px;
+            color: rgba(0,0,0,0.4);
+            font-size: 0.65rem;
+            line-height: 1.5;
+            text-align: center;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+        .how-to-play strong { color: rgba(0,0,0,0.6); }
+
+        /* ===== 移动端适配 ===== */
+        @media (max-width: 640px) {
+            body { padding-top:60px; padding-bottom:60px; }
+            .game-wrapper { padding:12px; }
+            .tool-header { font-size:0.85rem; }
+            .tool-container { padding: 6px; max-height: 440px; }
+            .element .symbol { font-size: 0.5rem; }
+            .element .number { font-size: 0.3rem; }
+            .element { min-height: 28px; padding: 2px 1px; }
+            .periodic-table { gap: 2px; }
+            .detail-card { padding: 20px 16px; }
+            .detail-header .big-symbol { font-size: 2.4rem; min-width: 50px; }
+            .detail-header .big-info .name-cn { font-size: 1.2rem; }
+            .detail-grid { gap: 4px 10px; }
+            .detail-item .value { font-size: 0.75rem; }
+            .how-to-play { font-size:0.6rem; padding:6px 10px; }
+        }
+        @media (max-width: 400px) {
+            .element .symbol { font-size: 0.4rem; }
+            .element { min-height: 22px; }
+            .periodic-table { gap: 1px; }
+            .tool-container { max-height: 380px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== 加载动画 ===== -->
+<div id="loader">
+    <div class="logo">🧪</div>
+    <div class="loader-text">槐序<span>Lab</span>-槐序实验室</div>
+    <div class="loading-status">加载中...</div>
+    <div class="loader-bar"><div class="fill"></div></div>
+</div>
+
+<!-- ===== 页眉 ===== -->
+<header class="header">
+    <a href="https://lab.lruriawa.top/" class="brand">
+        <span class="logo-icon">🧪</span>
+        <span class="brand-text">槐序Lab实验室</span>
+    </a>
+    <span class="title">🧪 元素周期表</span>
+    <a href="https://lab.lruriawa.top/release/home.html" class="nav-link primary">🏠 首页</a>
+</header>
+
+<!-- ===== 工具主体 ===== -->
+<div class="game-wrapper">
+    <div class="tool-header">
+        <span style="opacity:0.5;">🧪</span>
+        <span class="title-tag">元素周期表</span>
+    </div>
+
+    <div class="tool-container" id="tableContainer">
+        <div class="periodic-table" id="periodicTable"></div>
+    </div>
+
+    <div class="how-to-play">
+        <strong>🧪 元素周期表：</strong> 点击任意元素查看详细信息 · 118种元素完整收录
+    </div>
+</div>
+
+<!-- ===== 页脚 ===== -->
+<footer class="footer">
+    <span class="text">
+        🧪 槐序Lab实验室 · 元素周期表 &nbsp;|&nbsp; <span class="highlight">❤️ Design by DeepSeek</span>
+        &nbsp;&nbsp;<span class="love">❤️</span>
+    </span>
+</footer>
+
+<!-- ===== 详情弹窗 ===== -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-card" id="detailCard">
+        <button class="detail-close" id="detailClose">✕</button>
+        <div class="detail-header">
+            <div class="big-symbol" id="detailSymbol">H</div>
+            <div class="big-info">
+                <div class="name-cn" id="detailNameCn">氢</div>
+                <div class="name-en" id="detailNameEn">Hydrogen</div>
+                <div class="number-badge" id="detailNumber">#1</div>
+            </div>
+        </div>
+        <div class="detail-grid" id="detailGrid"></div>
+        <div class="detail-category" id="detailCategory">非金属 · 气体</div>
+    </div>
+</div>
+
+<script>
+    // ===== 加载动画隐藏（2.5秒，与统一风格一致） =====
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+    });
+    if (document.readyState !== 'loading') {
+        setTimeout(function() { document.getElementById('loader').classList.add('hide'); }, 2500);
+    }
+
+    // ===== 以下为元素周期表核心逻辑，完整保留 =====
+    // ===== 元素数据 =====
+    const elements = [
+        // 1-10
+        { symbol: 'H', name: '氢', nameEn: 'Hydrogen', number: 1, mass: '1.008', category: 'nonmetal', group: '1', period: '1', state: '气体', color: '#4ade80' },
+        { symbol: 'He', name: '氦', nameEn: 'Helium', number: 2, mass: '4.003', category: 'noble', group: '18', period: '1', state: '气体', color: '#60a5fa' },
+        { symbol: 'Li', name: '锂', nameEn: 'Lithium', number: 3, mass: '6.941', category: 'alkali', group: '1', period: '2', state: '固体', color: '#fbbf24' },
+        { symbol: 'Be', name: '铍', nameEn: 'Beryllium', number: 4, mass: '9.012', category: 'alkaline', group: '2', period: '2', state: '固体', color: '#fb923c' },
+        { symbol: 'B', name: '硼', nameEn: 'Boron', number: 5, mass: '10.81', category: 'metalloid', group: '13', period: '2', state: '固体', color: '#f472b6' },
+        { symbol: 'C', name: '碳', nameEn: 'Carbon', number: 6, mass: '12.011', category: 'nonmetal', group: '14', period: '2', state: '固体', color: '#4ade80' },
+        { symbol: 'N', name: '氮', nameEn: 'Nitrogen', number: 7, mass: '14.007', category: 'nonmetal', group: '15', period: '2', state: '气体', color: '#4ade80' },
+        { symbol: 'O', name: '氧', nameEn: 'Oxygen', number: 8, mass: '15.999', category: 'nonmetal', group: '16', period: '2', state: '气体', color: '#4ade80' },
+        { symbol: 'F', name: '氟', nameEn: 'Fluorine', number: 9, mass: '18.998', category: 'halogen', group: '17', period: '2', state: '气体', color: '#fb923c' },
+        { symbol: 'Ne', name: '氖', nameEn: 'Neon', number: 10, mass: '20.180', category: 'noble', group: '18', period: '2', state: '气体', color: '#60a5fa' },
+
+        // 11-20
+        { symbol: 'Na', name: '钠', nameEn: 'Sodium', number: 11, mass: '22.990', category: 'alkali', group: '1', period: '3', state: '固体', color: '#fbbf24' },
+        { symbol: 'Mg', name: '镁', nameEn: 'Magnesium', number: 12, mass: '24.305', category: 'alkaline', group: '2', period: '3', state: '固体', color: '#fb923c' },
+        { symbol: 'Al', name: '铝', nameEn: 'Aluminium', number: 13, mass: '26.982', category: 'post-transition', group: '13', period: '3', state: '固体', color: '#34d399' },
+        { symbol: 'Si', name: '硅', nameEn: 'Silicon', number: 14, mass: '28.085', category: 'metalloid', group: '14', period: '3', state: '固体', color: '#f472b6' },
+        { symbol: 'P', name: '磷', nameEn: 'Phosphorus', number: 15, mass: '30.974', category: 'nonmetal', group: '15', period: '3', state: '固体', color: '#4ade80' },
+        { symbol: 'S', name: '硫', nameEn: 'Sulfur', number: 16, mass: '32.065', category: 'nonmetal', group: '16', period: '3', state: '固体', color: '#4ade80' },
+        { symbol: 'Cl', name: '氯', nameEn: 'Chlorine', number: 17, mass: '35.453', category: 'halogen', group: '17', period: '3', state: '气体', color: '#fb923c' },
+        { symbol: 'Ar', name: '氩', nameEn: 'Argon', number: 18, mass: '39.948', category: 'noble', group: '18', period: '3', state: '气体', color: '#60a5fa' },
+        { symbol: 'K', name: '钾', nameEn: 'Potassium', number: 19, mass: '39.098', category: 'alkali', group: '1', period: '4', state: '固体', color: '#fbbf24' },
+        { symbol: 'Ca', name: '钙', nameEn: 'Calcium', number: 20, mass: '40.078', category: 'alkaline', group: '2', period: '4', state: '固体', color: '#fb923c' },
+
+        // 21-30
+        { symbol: 'Sc', name: '钪', nameEn: 'Scandium', number: 21, mass: '44.956', category: 'transition', group: '3', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ti', name: '钛', nameEn: 'Titanium', number: 22, mass: '47.867', category: 'transition', group: '4', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'V', name: '钒', nameEn: 'Vanadium', number: 23, mass: '50.942', category: 'transition', group: '5', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Cr', name: '铬', nameEn: 'Chromium', number: 24, mass: '51.996', category: 'transition', group: '6', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Mn', name: '锰', nameEn: 'Manganese', number: 25, mass: '54.938', category: 'transition', group: '7', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Fe', name: '铁', nameEn: 'Iron', number: 26, mass: '55.845', category: 'transition', group: '8', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Co', name: '钴', nameEn: 'Cobalt', number: 27, mass: '58.933', category: 'transition', group: '9', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ni', name: '镍', nameEn: 'Nickel', number: 28, mass: '58.693', category: 'transition', group: '10', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Cu', name: '铜', nameEn: 'Copper', number: 29, mass: '63.546', category: 'transition', group: '11', period: '4', state: '固体', color: '#a78bfa' },
+        { symbol: 'Zn', name: '锌', nameEn: 'Zinc', number: 30, mass: '65.380', category: 'transition', group: '12', period: '4', state: '固体', color: '#a78bfa' },
+
+        // 31-40
+        { symbol: 'Ga', name: '镓', nameEn: 'Gallium', number: 31, mass: '69.723', category: 'post-transition', group: '13', period: '4', state: '固体', color: '#34d399' },
+        { symbol: 'Ge', name: '锗', nameEn: 'Germanium', number: 32, mass: '72.630', category: 'metalloid', group: '14', period: '4', state: '固体', color: '#f472b6' },
+        { symbol: 'As', name: '砷', nameEn: 'Arsenic', number: 33, mass: '74.922', category: 'metalloid', group: '15', period: '4', state: '固体', color: '#f472b6' },
+        { symbol: 'Se', name: '硒', nameEn: 'Selenium', number: 34, mass: '78.960', category: 'nonmetal', group: '16', period: '4', state: '固体', color: '#4ade80' },
+        { symbol: 'Br', name: '溴', nameEn: 'Bromine', number: 35, mass: '79.904', category: 'halogen', group: '17', period: '4', state: '液体', color: '#fb923c' },
+        { symbol: 'Kr', name: '氪', nameEn: 'Krypton', number: 36, mass: '83.798', category: 'noble', group: '18', period: '4', state: '气体', color: '#60a5fa' },
+        { symbol: 'Rb', name: '铷', nameEn: 'Rubidium', number: 37, mass: '85.468', category: 'alkali', group: '1', period: '5', state: '固体', color: '#fbbf24' },
+        { symbol: 'Sr', name: '锶', nameEn: 'Strontium', number: 38, mass: '87.620', category: 'alkaline', group: '2', period: '5', state: '固体', color: '#fb923c' },
+        { symbol: 'Y', name: '钇', nameEn: 'Yttrium', number: 39, mass: '88.906', category: 'transition', group: '3', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Zr', name: '锆', nameEn: 'Zirconium', number: 40, mass: '91.224', category: 'transition', group: '4', period: '5', state: '固体', color: '#a78bfa' },
+
+        // 41-50
+        { symbol: 'Nb', name: '铌', nameEn: 'Niobium', number: 41, mass: '92.906', category: 'transition', group: '5', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Mo', name: '钼', nameEn: 'Molybdenum', number: 42, mass: '95.950', category: 'transition', group: '6', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Tc', name: '锝', nameEn: 'Technetium', number: 43, mass: '98.000', category: 'transition', group: '7', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ru', name: '钌', nameEn: 'Ruthenium', number: 44, mass: '101.070', category: 'transition', group: '8', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Rh', name: '铑', nameEn: 'Rhodium', number: 45, mass: '102.906', category: 'transition', group: '9', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Pd', name: '钯', nameEn: 'Palladium', number: 46, mass: '106.420', category: 'transition', group: '10', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ag', name: '银', nameEn: 'Silver', number: 47, mass: '107.868', category: 'transition', group: '11', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'Cd', name: '镉', nameEn: 'Cadmium', number: 48, mass: '112.414', category: 'transition', group: '12', period: '5', state: '固体', color: '#a78bfa' },
+        { symbol: 'In', name: '铟', nameEn: 'Indium', number: 49, mass: '114.818', category: 'post-transition', group: '13', period: '5', state: '固体', color: '#34d399' },
+        { symbol: 'Sn', name: '锡', nameEn: 'Tin', number: 50, mass: '118.710', category: 'post-transition', group: '14', period: '5', state: '固体', color: '#34d399' },
+
+        // 51-60
+        { symbol: 'Sb', name: '锑', nameEn: 'Antimony', number: 51, mass: '121.760', category: 'metalloid', group: '15', period: '5', state: '固体', color: '#f472b6' },
+        { symbol: 'Te', name: '碲', nameEn: 'Tellurium', number: 52, mass: '127.600', category: 'metalloid', group: '16', period: '5', state: '固体', color: '#f472b6' },
+        { symbol: 'I', name: '碘', nameEn: 'Iodine', number: 53, mass: '126.904', category: 'halogen', group: '17', period: '5', state: '固体', color: '#fb923c' },
+        { symbol: 'Xe', name: '氙', nameEn: 'Xenon', number: 54, mass: '131.293', category: 'noble', group: '18', period: '5', state: '气体', color: '#60a5fa' },
+        { symbol: 'Cs', name: '铯', nameEn: 'Caesium', number: 55, mass: '132.905', category: 'alkali', group: '1', period: '6', state: '固体', color: '#fbbf24' },
+        { symbol: 'Ba', name: '钡', nameEn: 'Barium', number: 56, mass: '137.327', category: 'alkaline', group: '2', period: '6', state: '固体', color: '#fb923c' },
+        { symbol: 'La', name: '镧', nameEn: 'Lanthanum', number: 57, mass: '138.905', category: 'lanthanide', group: '3', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Ce', name: '铈', nameEn: 'Cerium', number: 58, mass: '140.116', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Pr', name: '镨', nameEn: 'Praseodymium', number: 59, mass: '140.908', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Nd', name: '钕', nameEn: 'Neodymium', number: 60, mass: '144.243', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+
+        // 61-70
+        { symbol: 'Pm', name: '钷', nameEn: 'Promethium', number: 61, mass: '145.000', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Sm', name: '钐', nameEn: 'Samarium', number: 62, mass: '150.362', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Eu', name: '铕', nameEn: 'Europium', number: 63, mass: '151.964', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Gd', name: '钆', nameEn: 'Gadolinium', number: 64, mass: '157.250', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Tb', name: '铽', nameEn: 'Terbium', number: 65, mass: '158.925', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Dy', name: '镝', nameEn: 'Dysprosium', number: 66, mass: '162.500', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Ho', name: '钬', nameEn: 'Holmium', number: 67, mass: '164.930', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Er', name: '铒', nameEn: 'Erbium', number: 68, mass: '167.259', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Tm', name: '铥', nameEn: 'Thulium', number: 69, mass: '168.934', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Yb', name: '镱', nameEn: 'Ytterbium', number: 70, mass: '173.045', category: 'lanthanide', group: '-', period: '6', state: '固体', color: '#ec4899' },
+
+        // 71-80
+        { symbol: 'Lu', name: '镥', nameEn: 'Lutetium', number: 71, mass: '174.967', category: 'lanthanide', group: '3', period: '6', state: '固体', color: '#ec4899' },
+        { symbol: 'Hf', name: '铪', nameEn: 'Hafnium', number: 72, mass: '178.490', category: 'transition', group: '4', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ta', name: '钽', nameEn: 'Tantalum', number: 73, mass: '180.948', category: 'transition', group: '5', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'W', name: '钨', nameEn: 'Tungsten', number: 74, mass: '183.840', category: 'transition', group: '6', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Re', name: '铼', nameEn: 'Rhenium', number: 75, mass: '186.207', category: 'transition', group: '7', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Os', name: '锇', nameEn: 'Osmium', number: 76, mass: '190.230', category: 'transition', group: '8', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ir', name: '铱', nameEn: 'Iridium', number: 77, mass: '192.217', category: 'transition', group: '9', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Pt', name: '铂', nameEn: 'Platinum', number: 78, mass: '195.084', category: 'transition', group: '10', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Au', name: '金', nameEn: 'Gold', number: 79, mass: '196.967', category: 'transition', group: '11', period: '6', state: '固体', color: '#a78bfa' },
+        { symbol: 'Hg', name: '汞', nameEn: 'Mercury', number: 80, mass: '200.590', category: 'post-transition', group: '12', period: '6', state: '液体', color: '#34d399' },
+
+        // 81-90
+        { symbol: 'Tl', name: '铊', nameEn: 'Thallium', number: 81, mass: '204.380', category: 'post-transition', group: '13', period: '6', state: '固体', color: '#34d399' },
+        { symbol: 'Pb', name: '铅', nameEn: 'Lead', number: 82, mass: '207.200', category: 'post-transition', group: '14', period: '6', state: '固体', color: '#34d399' },
+        { symbol: 'Bi', name: '铋', nameEn: 'Bismuth', number: 83, mass: '208.980', category: 'post-transition', group: '15', period: '6', state: '固体', color: '#34d399' },
+        { symbol: 'Po', name: '钋', nameEn: 'Polonium', number: 84, mass: '209.000', category: 'post-transition', group: '16', period: '6', state: '固体', color: '#34d399' },
+        { symbol: 'At', name: '砹', nameEn: 'Astatine', number: 85, mass: '210.000', category: 'halogen', group: '17', period: '6', state: '固体', color: '#fb923c' },
+        { symbol: 'Rn', name: '氡', nameEn: 'Radon', number: 86, mass: '222.000', category: 'noble', group: '18', period: '6', state: '气体', color: '#60a5fa' },
+        { symbol: 'Fr', name: '钫', nameEn: 'Francium', number: 87, mass: '223.000', category: 'alkali', group: '1', period: '7', state: '固体', color: '#fbbf24' },
+        { symbol: 'Ra', name: '镭', nameEn: 'Radium', number: 88, mass: '226.000', category: 'alkaline', group: '2', period: '7', state: '固体', color: '#fb923c' },
+        { symbol: 'Ac', name: '锕', nameEn: 'Actinium', number: 89, mass: '227.000', category: 'actinide', group: '3', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Th', name: '钍', nameEn: 'Thorium', number: 90, mass: '232.038', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+
+        // 91-100
+        { symbol: 'Pa', name: '镤', nameEn: 'Protactinium', number: 91, mass: '231.036', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'U', name: '铀', nameEn: 'Uranium', number: 92, mass: '238.029', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Np', name: '镎', nameEn: 'Neptunium', number: 93, mass: '237.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Pu', name: '钚', nameEn: 'Plutonium', number: 94, mass: '244.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Am', name: '镅', nameEn: 'Americium', number: 95, mass: '243.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Cm', name: '锔', nameEn: 'Curium', number: 96, mass: '247.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Bk', name: '锫', nameEn: 'Berkelium', number: 97, mass: '247.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Cf', name: '锎', nameEn: 'Californium', number: 98, mass: '251.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Es', name: '锿', nameEn: 'Einsteinium', number: 99, mass: '252.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Fm', name: '镄', nameEn: 'Fermium', number: 100, mass: '257.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+
+        // 101-110
+        { symbol: 'Md', name: '钔', nameEn: 'Mendelevium', number: 101, mass: '258.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'No', name: '锘', nameEn: 'Nobelium', number: 102, mass: '259.000', category: 'actinide', group: '-', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Lr', name: '铹', nameEn: 'Lawrencium', number: 103, mass: '266.000', category: 'actinide', group: '3', period: '7', state: '固体', color: '#f43f5e' },
+        { symbol: 'Rf', name: '𬬻', nameEn: 'Rutherfordium', number: 104, mass: '267.000', category: 'transition', group: '4', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Db', name: '𬭊', nameEn: 'Dubnium', number: 105, mass: '268.000', category: 'transition', group: '5', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Sg', name: '𬭳', nameEn: 'Seaborgium', number: 106, mass: '269.000', category: 'transition', group: '6', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Bh', name: '𬭛', nameEn: 'Bohrium', number: 107, mass: '270.000', category: 'transition', group: '7', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Hs', name: '𬭶', nameEn: 'Hassium', number: 108, mass: '277.000', category: 'transition', group: '8', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Mt', name: '鿏', nameEn: 'Meitnerium', number: 109, mass: '278.000', category: 'transition', group: '9', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Ds', name: '𫟼', nameEn: 'Darmstadtium', number: 110, mass: '281.000', category: 'transition', group: '10', period: '7', state: '固体', color: '#a78bfa' },
+
+        // 111-118
+        { symbol: 'Rg', name: '𬬭', nameEn: 'Roentgenium', number: 111, mass: '282.000', category: 'transition', group: '11', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Cn', name: '鎶', nameEn: 'Copernicium', number: 112, mass: '285.000', category: 'transition', group: '12', period: '7', state: '固体', color: '#a78bfa' },
+        { symbol: 'Nh', name: '鉨', nameEn: 'Nihonium', number: 113, mass: '286.000', category: 'post-transition', group: '13', period: '7', state: '固体', color: '#34d399' },
+        { symbol: 'Fl', name: '𫓧', nameEn: 'Flerovium', number: 114, mass: '289.000', category: 'post-transition', group: '14', period: '7', state: '固体', color: '#34d399' },
+        { symbol: 'Mc', name: '镆', nameEn: 'Moscovium', number: 115, mass: '290.000', category: 'post-transition', group: '15', period: '7', state: '固体', color: '#34d399' },
+        { symbol: 'Lv', name: '𫟷', nameEn: 'Livermorium', number: 116, mass: '293.000', category: 'post-transition', group: '16', period: '7', state: '固体', color: '#34d399' },
+        { symbol: 'Ts', name: '鿬', nameEn: 'Tennessine', number: 117, mass: '294.000', category: 'halogen', group: '17', period: '7', state: '固体', color: '#fb923c' },
+        { symbol: 'Og', name: '鿫', nameEn: 'Oganesson', number: 118, mass: '294.000', category: 'noble', group: '18', period: '7', state: '气体', color: '#60a5fa' }
+    ];
+
+    // ===== 元素分类中文名 =====
+    const categoryNames = {
+        'nonmetal': '非金属',
+        'noble': '惰性气体',
+        'alkali': '碱金属',
+        'alkaline': '碱土金属',
+        'transition': '过渡金属',
+        'post-transition': '贫金属',
+        'metalloid': '类金属',
+        'halogen': '卤素',
+        'lanthanide': '镧系元素',
+        'actinide': '锕系元素',
+        'unknown': '未知'
+    };
+
+    // ===== 渲染周期表 =====
+    function renderTable() {
+        const container = document.getElementById('periodicTable');
+        container.innerHTML = '';
+
+        // 镧系和锕系位置
+        const lanthanideStart = 56; // La 的索引
+        const actinideStart = 88;   // Ac 的索引
+
+        for (let i = 0; i < elements.length; i++) {
+            const el = elements[i];
+            // 镧系和锕系单独放在底部，跳过主表位置
+            if (i >= 56 && i <= 70) continue;
+            if (i >= 88 && i <= 102) continue;
+
+            const div = document.createElement('div');
+            div.className = `element ${el.category}`;
+            div.innerHTML = `
+                <span class="number">${el.number}</span>
+                <span class="symbol">${el.symbol}</span>
+                <span class="name">${el.name}</span>
+            `;
+            div.dataset.index = i;
+            div.addEventListener('click', function() {
+                showDetail(parseInt(this.dataset.index));
+            });
+            container.appendChild(div);
+        }
+
+        // 添加镧系 (57-71) 放在底部
+        for (let i = 56; i <= 70; i++) {
+            const el = elements[i];
+            const div = document.createElement('div');
+            div.className = `element ${el.category}`;
+            div.innerHTML = `
+                <span class="number">${el.number}</span>
+                <span class="symbol">${el.symbol}</span>
+                <span class="name">${el.name}</span>
+            `;
+            div.dataset.index = i;
+            div.addEventListener('click', function() {
+                showDetail(parseInt(this.dataset.index));
+            });
+            container.appendChild(div);
+        }
+
+        // 添加锕系 (89-103) 放在底部
+        for (let i = 88; i <= 102; i++) {
+            const el = elements[i];
+            const div = document.createElement('div');
+            div.className = `element ${el.category}`;
+            div.innerHTML = `
+                <span class="number">${el.number}</span>
+                <span class="symbol">${el.symbol}</span>
+                <span class="name">${el.name}</span>
+            `;
+            div.dataset.index = i;
+            div.addEventListener('click', function() {
+                showDetail(parseInt(this.dataset.index));
+            });
+            container.appendChild(div);
+        }
+    }
+
+    // ===== 显示详情 =====
+    function showDetail(index) {
+        const el = elements[index];
+        if (!el) return;
+
+        document.getElementById('detailSymbol').textContent = el.symbol;
+        document.getElementById('detailSymbol').style.color = el.color || '#1a1a1a';
+        document.getElementById('detailNameCn').textContent = el.name;
+        document.getElementById('detailNameEn').textContent = el.nameEn;
+        document.getElementById('detailNumber').textContent = '#' + el.number;
+
+        const grid = document.getElementById('detailGrid');
+        grid.innerHTML = `
+            <div class="detail-item"><div class="label">原子序数</div><div class="value highlight">${el.number}</div></div>
+            <div class="detail-item"><div class="label">原子量</div><div class="value gold">${el.mass}</div></div>
+            <div class="detail-item"><div class="label">族</div><div class="value">${el.group}</div></div>
+            <div class="detail-item"><div class="label">周期</div><div class="value">${el.period}</div></div>
+            <div class="detail-item"><div class="label">状态</div><div class="value">${el.state}</div></div>
+            <div class="detail-item"><div class="label">分类</div><div class="value">${categoryNames[el.category] || el.category}</div></div>
+        `;
+
+        document.getElementById('detailCategory').textContent =
+            `${categoryNames[el.category] || el.category} · ${el.state} · 第${el.period}周期 ${el.group}族`;
+
+        document.getElementById('detailOverlay').classList.add('show');
+    }
+
+    // ===== 关闭详情 =====
+    document.getElementById('detailClose').addEventListener('click', function() {
+        document.getElementById('detailOverlay').classList.remove('show');
+    });
+
+    document.getElementById('detailOverlay').addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.classList.remove('show');
+        }
+    });
+
+    // ===== 键盘 ESC 关闭 =====
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.getElementById('detailOverlay').classList.remove('show');
+        }
+    });
+
+    // ===== 初始化 =====
+    renderTable();
+</script>
+</body>
+</html>
