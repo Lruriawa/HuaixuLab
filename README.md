@@ -33,16 +33,17 @@
 ---
 
 ## 📁 目录结构
-lab.lruriawa.top/
-├── index.html # 首页（实验室概览）
-├── release/
-│ ├── home.html # 项目列表页
-│ ├── games/ # 小游戏（21款）
-│ ├── tools/ # 实用工具（35款）
-│ ├── visualarts/ # 视觉艺术（10款）
-│ ├── interactivetool/ # 交互工具（11款）
-│ └── dynamiceffects/ # 动态特效（9款）
-└── ...
+
+- `lab.lruriawa.top/`
+  - `index.html` — 首页（实验室概览）
+  - `release/`
+    - `home.html` — 项目列表页
+    - `games/` — 小游戏（21款）
+    - `tools/` — 实用工具（35款）
+    - `visualarts/` — 视觉艺术（10款）
+    - `interactivetool/` — 交互工具（11款）
+    - `dynamiceffects/` — 动态特效（9款）
+  - `...` — 其他资源文件（图标、字体等）
 
 ---
 
@@ -99,12 +100,13 @@ lab.lruriawa.top/
 
 1. **克隆仓库**
    ```bash
-   git clone https://github.com/Lruriawa/HuaixuLab.git
-直接打开
-无需构建，直接用浏览器打开 index.html 即可。
+   git clone https://github.com/your-username/lab.lruriawa.top.git
+    直接打开
+    无需构建，直接用浏览器打开 index.html 即可。
 
-部署
-将整个目录上传至任意静态服务器（如 Nginx、Apache、Vercel、Netlify）即可。
+    部署
+    将整个目录上传至任意静态服务器（如 Nginx、Apache、Vercel、Netlify）即可。
+
 # 🤝 参与贡献
 
 这是一个个人项目，但非常欢迎你提出建议或反馈。
@@ -119,7 +121,7 @@ lab.lruriawa.top/
 
 本项目采用 MIT License 开源协议。
 你可以自由使用、修改、分发，但需保留原作者版权声明。
-🙏 致谢
+# 🙏 致谢
 
     感谢 DeepSeek 提供的设计灵感与代码支持
 
